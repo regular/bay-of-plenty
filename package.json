@@ -1,5 +1,5 @@
 {
-  "name": "patchwork-builder",
+  "name": "tre-builder",
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
@@ -19,7 +19,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "build": {
-    "appId": "org.ssbc.patchwork",
+    "appId": "codes.regular.bay-of-plenty",
     "asarUnpack": [
       "node_modules/sodium-native/prebuilds"
     ],
@@ -51,7 +51,7 @@
     },
     "win": {
       "icon": "build/icon.ico",
-      "publisherName": "Secure Scuttlebutt Consortium",
+      "publisherName": "regular",
       "files": [
         "node_modules/sodium-native/prebuilds/win32-${arch}/electron-57.node",
         "node_modules/sodium-native/prebuilds/win32-${arch}/libsodium.*"
@@ -59,17 +59,17 @@
     },
     "dmg": {
       "icon": "build/dmg-icon.icns",
-      "artifactName": "Patchwork-${version}-mac.${ext}"
+      "artifactName": "BayOfPlenty-${version}-mac.${ext}"
     },
     "appImage": {
-      "artifactName": "Patchwork-${version}-linux-${arch}.${ext}"
+      "artifactName": "BayOfPlenty-${version}-linux-${arch}.${ext}"
     },
     "nsis": {
       "installerIcon": "build/setup-icon.ico",
-      "artifactName": "Patchwork-${version}-windows.${ext}"
+      "artifactName": "BayOfPlenty-${version}-windows.${ext}"
     }
   },
-  "author": "Secure Scuttlebutt Consortium",
+  "author": "regular",
   "license": "ISC",
   "devDependencies": {
     "electron": "~2.0.13",
