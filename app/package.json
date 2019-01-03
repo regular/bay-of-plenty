@@ -1,0 +1,17 @@
+{
+  "name": "bay-of-plenty",
+  "version": "1.0.0",
+  "description": "Experimental client for the Scuttleverse",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jan Bölsche <jan@lagomorph.de> (http://regular.codes/)",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^4.1.1",
+    "mkdirp": "^0.5.1",
+    "mutant": "^3.22.1",
+    "scuttlebot-release": "11.3.x"
+  }
+}

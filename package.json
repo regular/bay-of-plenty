@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "electron app/index.js",
     "pack": "build --dir",
     "pack:all": "build --dir -mlw",
     "pack:mac": "build --dir -m",

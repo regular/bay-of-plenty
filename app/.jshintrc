@@ -1,0 +1,8 @@
+{
+  "esversion": 6,
+  "indent": 2,
+  "asi": true,
+  "node": true,
+  "browser": true,
+  "boss": true
+}
