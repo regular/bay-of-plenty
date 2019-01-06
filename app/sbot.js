@@ -1,9 +1,37 @@
 const fs = require('fs')
 const {join, resolve} = require('path')
-const createSbot = require('scuttlebot-release/node_modules/scuttlebot')
 const ssbKeys = require('scuttlebot-release/node_modules/ssb-keys')
 const mkdirp = require('mkdirp')
 const log = require('./log')('bop:sbot')
+
+// load plugins from scuttlebot-release, so the versions are shrinkwrapped
+const scuttlebot_modpath = 'scuttlebot-release/node_modules/'
+let createSbot = require(join(scuttlebot_modpath, 'scuttlebot'))
+const plugins = [
+  'scuttlebot/plugins/master',
+  'scuttlebot/plugins/gossip',
+  'scuttlebot/plugins/replicate',
+  'ssb-friends',
+  'ssb-blobs',
+  'scuttlebot/plugins/invite',
+  'scuttlebot/plugins/local',
+  'scuttlebot/plugins/logging',
+  'ssb-query',
+  'ssb-links',
+  'ssb-ws',
+  'ssb-ebt'
+]
+plugins.forEach( p => {
+  createSbot.use(require(join(scuttlebot_modpath, p)))
+})
+
+createSbot
+  .use(require('ssb-autofollow'))
+  .use(require('ssb-autoname'))
+  .use(require('ssb-autoinvite'))
+  .use(require('ssb-revisions'))
+  .use(require('tre-client'))
+  .use(require('tre-parts'))
 
 module.exports = function(networks, cb) {
   networks = networks || {}
@@ -28,7 +56,8 @@ module.exports = function(networks, cb) {
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,
-    path
+    path,
+    master: [browserKeys.public]
   }))
   setTimeout( () => {
     ssb.whoami( (err, feed) => {

@@ -12,6 +12,12 @@
     "debug": "^4.1.1",
     "mkdirp": "^0.5.1",
     "mutant": "^3.22.1",
-    "scuttlebot-release": "11.3.x"
+    "scuttlebot-release": "11.3.x",
+    "ssb-autofollow": "^1.0.0",
+    "ssb-autoinvite": "^1.0.0",
+    "ssb-autoname": "^1.1.1",
+    "ssb-revisions": "^1.0.1",
+    "tre-client": "^1.2.1",
+    "tre-parts": "^1.0.1"
   }
 }
