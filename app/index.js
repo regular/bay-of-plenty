@@ -3,7 +3,13 @@ const fs = require('fs')
 const sbot = require('./sbot')
 const log = require('./log')('bop:index')
 
+const old_console_log = console.log
+console.log = (...args) => {
+  fs.appendFileSync(process.env.HOME + '/bay-of-plenty.log', args + '\n')
+}
+
 log(`node version ${process.version}`)
+log(`process.env.DEBUG ${process.env.DEBUG}`)
 
 let win
 app.on('ready', start)
@@ -16,12 +22,17 @@ function start() {
   })
   win.openDevTools()
 
-  client({}, (err, ssb) => {
-    log(err)
+  server({}, (err, ssb, config, myid) => {
+    if (err) {
+      log('sbot failed' + err.message)
+    } else {
+      log('sbot started')
+      win.loadURL(`http://localhost:${config.ws.port}/msg/${encodeURIComponent(config.boot)}`)
+    }
   })
 }
 
-function client(networks, cb) {
+function server(networks, cb) {
   sbot(networks, (err, ssb, config, myid) => {
     if (err) {
       log(err.message)
@@ -30,7 +41,7 @@ function client(networks, cb) {
       }
       return askForNetworks( (err, networks) => {
         if (err) return cb(err)
-        return client(networks, cb)
+        return server(networks, cb)
       })
     }
     log(`ssb id ${myid}`)

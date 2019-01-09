@@ -6,7 +6,7 @@ const log = require('./log')('bop:sbot')
 
 // load plugins from scuttlebot-release, so the versions are shrinkwrapped
 const scuttlebot_modpath = 'scuttlebot-release/node_modules/'
-let createSbot = require(join(scuttlebot_modpath, 'scuttlebot'))
+let {createSbot} = require(join(scuttlebot_modpath, 'scuttlebot'))
 const plugins = [
   'scuttlebot/plugins/master',
   'scuttlebot/plugins/gossip',
@@ -21,11 +21,13 @@ const plugins = [
   'ssb-ws',
   'ssb-ebt'
 ]
+createSbot = createSbot()
 plugins.forEach( p => {
-  createSbot.use(require(join(scuttlebot_modpath, p)))
+  createSbot = createSbot.use(require(join(scuttlebot_modpath, p)))
 })
 
-createSbot
+createSbot = createSbot
+  .use(require('./plugin'))
   .use(require('ssb-autofollow'))
   .use(require('ssb-autoname'))
   .use(require('ssb-autoinvite'))
@@ -48,11 +50,15 @@ module.exports = function(networks, cb) {
     }
   }
   const path = join(process.env.HOME, config.caps.shs)
-  log(`mkdir ${path}`)
+  log(`mkdirp ${path}`)
   mkdirp.sync(path)
 
   const keys = ssbKeys.loadOrCreateSync(join(path, 'secret'))
   const browserKeys = ssbKeys.loadOrCreateSync(join(path, 'browser-keys'))
+
+  if (!config.port) config.port = Math.floor(50000 + 15000 * Math.random())
+  if (!config.ws) config.ws = {}
+  if (!config.ws.port) config.ws.port = config.port + 1
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,
