@@ -49,12 +49,14 @@ module.exports = function(networks, cb) {
       return cb(err)
     }
   }
-  const path = join(process.env.HOME, config.caps.shs)
-  log(`mkdirp ${path}`)
-  mkdirp.sync(path)
+  const safe_caps = config.caps.shs.replace(/\//g, '-').replace(/\?/g, '_')
+  config.path = join(process.env.HOME, '.bay-of-plenty', safe_caps)
+    
+  log(`mkdirp ${config.path}`)
+  mkdirp.sync(config.path)
 
-  const keys = ssbKeys.loadOrCreateSync(join(path, 'secret'))
-  const browserKeys = ssbKeys.loadOrCreateSync(join(path, 'browser-keys'))
+  const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
+  const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
 
   if (!config.port) config.port = Math.floor(50000 + 15000 * Math.random())
   if (!config.ws) config.ws = {}
@@ -62,7 +64,6 @@ module.exports = function(networks, cb) {
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,
-    path,
     master: [browserKeys.public]
   }))
   setTimeout( () => {
