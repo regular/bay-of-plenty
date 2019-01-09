@@ -33,6 +33,7 @@ createSbot = createSbot
   .use(require('ssb-autoinvite'))
   .use(require('ssb-revisions'))
   .use(require('tre-client'))
+  .use(require('tre-boot'))
   .use(require('tre-parts'))
 
 module.exports = function(networks, cb) {
