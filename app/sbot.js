@@ -71,7 +71,7 @@ module.exports = function(networks, cb) {
       if (err) return cb(err)
       log(`pub key ${feed.id}`)
       log(`app key ${config.caps.shs}`)
-      return cb(null, ssb, config, feed.id)
+      return cb(null, ssb, config, feed.id, browserKeys)
     })
   }, 200)
 }

@@ -22,18 +22,23 @@ function start() {
   })
   win.openDevTools()
 
-  server({}, (err, ssb, config, myid) => {
+  server({}, (err, ssb, config, myid, browserKeys) => {
     if (err) {
       log('sbot failed' + err.message)
     } else {
       log('sbot started')
       win.loadURL(`http://localhost:${config.ws.port}/msg/${encodeURIComponent(config.boot)}`)
+      win.webContents.executeJavaScript(`localStorage.setItem('tre-keypair', '${JSON.stringify(browserKeys)}')`)
+      .then( ()=>{
+        log('set browser keys')
+        win.loadURL(`http://localhost:${config.ws.port}/boot`)
+      })
     }
   })
 }
 
 function server(networks, cb) {
-  sbot(networks, (err, ssb, config, myid) => {
+  sbot(networks, (err, ssb, config, myid, browserKeys) => {
     if (err) {
       log(err.message)
       if (!/ENOENT/.test(err.message)) {
@@ -45,7 +50,7 @@ function server(networks, cb) {
       })
     }
     log(`ssb id ${myid}`)
-    cb(null, ssb, config, myid)
+    cb(null, ssb, config, myid, browserKeys)
   })
 }
 
