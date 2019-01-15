@@ -42,7 +42,7 @@ function getNetworks(cb) {
             }
           } else {
             config.network = `*${config.caps && config.caps.shs || defaultCap}.random`
-i         }
+          }
 
           let networks = {}
           try {

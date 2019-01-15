@@ -27,6 +27,7 @@ function start() {
       log('sbot failed' + err.message)
     } else {
       log('sbot started')
+      // set browserkeys
       win.loadURL(`http://localhost:${config.ws.port}/msg/${encodeURIComponent(config.boot)}`)
       win.webContents.executeJavaScript(`localStorage.setItem('tre-keypair', '${JSON.stringify(browserKeys)}')`)
       .then( ()=>{
