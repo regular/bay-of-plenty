@@ -1,0 +1,16 @@
+<html>
+  <body>
+    <h1>Please enter invite code</h1>
+    <form action="/add-network">
+      <textarea autocomplete="off" autoficus cols="40" rows="5" required spellcheck="false" wrap="hard" placeholder"Your invite code goes here"></textarea>
+      <input type="submit">
+    </form>
+  </body>
+  <script>
+    const textarea = document.body.querySelector('textarea')
+    const button = document.body.querySelector('[type=submit]')
+    button.addEventListener('click', e => {
+      localStorage.setItem('invite', textarea.value)
+    })
+  </script>
+</html>

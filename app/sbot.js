@@ -3,6 +3,7 @@ const {join, resolve} = require('path')
 const ssbKeys = require('scuttlebot-release/node_modules/ssb-keys')
 const mkdirp = require('mkdirp')
 const log = require('./log')('bop:sbot')
+const defaultCap = require('scuttlebot-release/node_modules/scuttlebot/lib/ssb-cap').toString('base64')
 
 // load plugins from scuttlebot-release, so the versions are shrinkwrapped
 const scuttlebot_modpath = 'scuttlebot-release/node_modules/'
@@ -62,6 +63,14 @@ module.exports = function(networks, cb) {
   if (!config.port) config.port = Math.floor(50000 + 15000 * Math.random())
   if (!config.ws) config.ws = {}
   if (!config.ws.port) config.ws.port = config.port + 1
+  if (config.network) {
+    if (!config.capss || !config.caps.shs) {
+      config.caps = config.caps || {}
+      config.caps.shs = config.network.slice(1).replace(/\.[^.]+$/, '')
+    }
+  } else {
+    config.network = `*${config.caps && config.caps.shs || defaultCap}.random`
+  }
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,
