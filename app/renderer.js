@@ -1,6 +1,8 @@
 const h = require('mutant/html-element')
 const Value = require('mutant/value')
 const { ipcRenderer } = require('electron')
+const inviteCode = require('tre-invite-code')
+const defaultCap = require('scuttlebot-release/node_modules/scuttlebot/lib/ssb-cap').toString('base64')
 
 getNetworks( (err, networks) => {
   ipcRenderer.send('networks', err, networks)
@@ -27,15 +29,26 @@ function getNetworks(cb) {
           const code = textarea.value
           let config
           try {
-            config = JSON.parse(code)
+            config = inviteCode.parse(code)
+            if (!config) config = JSON.parse(code)
           } catch(err) {
             return message.set(err.message)
           }
+  
+          if (config.network) {
+            if (!config.capss || !config.caps.shs) {
+              config.caps = config.caps || {}
+              config.caps.shs = config.network.slice(1).replace(/\.[^.]+$/, '')
+            }
+          } else {
+            config.network = `*${config.caps && config.caps.shs || defaultCap}.random`
+i         }
+
           let networks = {}
           try {
             networks = JSON.parse(localStorage.networks || '{}')
           } catch(e) {}
-          networks[config.caps && config.caps.shs || 'default'] = config
+          networks[config.network] = config
           localStorage.networks = JSON.stringify(networks)
           cb(null, networks)
         }
