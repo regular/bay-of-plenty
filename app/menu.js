@@ -1,4 +1,4 @@
-module.exports = function menuTemplate() {
+module.exports = function menuTemplate(app) {
   return [
     { label: "Application",
       submenu: [

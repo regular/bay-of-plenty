@@ -2,7 +2,7 @@ const fs = require('fs')
 const {join, resolve} = require('path')
 const ssbKeys = require('scuttlebot-release/node_modules/ssb-keys')
 const mkdirp = require('mkdirp')
-const log = require('./log')('bop:sbot')
+const log = require('./log')(fs, 'bop:sbot')
 const defaultCap = require('scuttlebot-release/node_modules/scuttlebot/lib/ssb-cap').toString('base64')
 
 // load plugins from scuttlebot-release, so the versions are shrinkwrapped
@@ -51,8 +51,10 @@ module.exports = function(networks, cb) {
       return cb(err)
     }
   }
-  const safe_caps = config.caps.shs.replace(/\//g, '-').replace(/\?/g, '_')
-  config.path = join(process.env.HOME, '.bay-of-plenty', safe_caps)
+  
+  const unsafe_caps = config.caps && config.caps.shs || config.network && config.network.slice(1).replace(/\.[^.]+$/, '')
+  const safe_caps = unsafe_caps.replace(/\//g, '-').replace(/\?/g, '_')
+  config.path = join(process.env.HOME, '.bay-of-plenty', 'networks', safe_caps)
     
   log(`mkdirp ${config.path}`)
   mkdirp.sync(config.path)
@@ -71,6 +73,7 @@ module.exports = function(networks, cb) {
   } else {
     config.network = `*${config.caps && config.caps.shs || defaultCap}.random`
   }
+  fs.writeFileSync(join(config.path, 'config'), JSON.stringify(config, null, 2), 'utf8')
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,

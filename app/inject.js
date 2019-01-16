@@ -1,6 +1,8 @@
 const Httpd = require('./httpd')
 const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
+const {parse} = require('url')
+const qs = require('query-string')
 
 module.exports = function inject(electron, fs, log, sbot) {
   const {app, ipcMain, BrowserWindow, Menu} = electron
@@ -18,7 +20,7 @@ module.exports = function inject(electron, fs, log, sbot) {
   app.on('ready', start)
 
   function start() {
-    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate()))
+    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app)))
     win = new BrowserWindow({ width: 800, height: 600 })
     win.on('closed', () => {
       win = null
@@ -63,6 +65,7 @@ module.exports = function inject(electron, fs, log, sbot) {
           log('Failed to ask for invite code:', err.message)
           return cb(err)
         }
+        invite = invite.replace(/\s*/g,'')
         log('success, invite is:', invite)
         const netconf = invites.parse(invite)
         if (!netconf) {
@@ -76,9 +79,10 @@ module.exports = function inject(electron, fs, log, sbot) {
   }
 
   function getLocalStorageItem(key, cb) { 
-    win.webContents.executeJavaScript(
-      `localStorage.getItem("${key}")`
-    ).then( value =>{
+    const code = `localStorage["${key}"]`
+    log('executing', code)
+    win.webContents.executeJavaScript(code).then(value=>{
+      log('executeJavaScript returns', value)
       cb(null, value)
     }).catch(err => {
       log(`getLocalStorageItem ${key} failed: ${err.message}`)
@@ -89,6 +93,8 @@ module.exports = function inject(electron, fs, log, sbot) {
   function askForInvite(cb) {
     let done = false
     function onGetInvite(httpd, _cb) {
+      return
+
       if (done) return
       done = true
       log('Closing httpd')
@@ -107,13 +113,27 @@ module.exports = function inject(electron, fs, log, sbot) {
     
     const port = 18484
     log('starting http ..')
-    Httpd(port, onGetInvite, (err, httpd) => {
+    let httpd
+    httpd = Httpd(port, onGetInvite, err => {
       if (err) {
         log('httpd failed', err.message)
         return cb(err)
       }
       log('httpd listening on', port)
       win.loadURL(`httP://127.0.0.1:${port}/invite.html`)
+      win.webContents.once('will-navigate', (e, url) =>{
+        e.preventDefault()
+        httpd.close()
+        log('Prevented attempt to navigate to', url)
+        const query = parse(url).query
+        log('query is', query)
+        if (!query) return cb(new Error('No query in add-network URL'))
+        const fields = qs.parse(query)
+        const code = fields.code
+        log('code is', code)
+        if (!code) return cb(new Error('No code in query in add-network URL'))
+        cb(null, code)
+      })
     })
   }
 

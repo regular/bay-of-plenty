@@ -2,15 +2,19 @@
   <body>
     <h1>Please enter invite code</h1>
     <form action="/add-network">
-      <textarea autocomplete="off" autoficus cols="40" rows="5" required spellcheck="false" wrap="hard" placeholder"Your invite code goes here"></textarea>
+      <textarea name="code" autocomplete="off" autoficus cols="50" rows="6" required spellcheck="false" wrap="hard" placeholder"Your invite code goes here"></textarea>
       <input type="submit">
     </form>
   </body>
   <script>
-    const textarea = document.body.querySelector('textarea')
+    const textarea = document.body.querySelector('textarea[name=code]')
     const button = document.body.querySelector('[type=submit]')
     button.addEventListener('click', e => {
-      localStorage.setItem('invite', textarea.value)
+      setTimeout( ()=>{
+        button.disabled = true
+      }, 10)
+      const code = textarea.value
+      console.log('invite code', code)
     })
   </script>
 </html>
