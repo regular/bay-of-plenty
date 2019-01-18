@@ -3,6 +3,7 @@ const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
+const btoa = require('btoa')
 
 module.exports = function inject(electron, fs, log, sbot) {
   const {app, ipcMain, BrowserWindow, Menu} = electron
@@ -21,7 +22,13 @@ module.exports = function inject(electron, fs, log, sbot) {
 
   function start() {
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app)))
-    win = new BrowserWindow({ width: 800, height: 600 })
+    win = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+        nodeIntegration: false
+      }
+    })
     win.on('closed', () => {
       win = null
     })
@@ -33,19 +40,30 @@ module.exports = function inject(electron, fs, log, sbot) {
         return
       }
       log('sbot started')
+
       // set browserkeys
+      log('load about page')
       win.loadURL(`http://localhost:${config.ws.port}/about`)
-      // TODO: wait for ready?
-      win.webContents.executeJavaScript(
-        `localStorage.setItem('tre-keypair', '${JSON.stringify(browserKeys)}')`
-      ) .then( ()=>{
-        log('done setting browser keys')
-        win.loadURL(`http://localhost:${config.ws.port}/boot`)
-      })
-      .catch(err=>{
-        log('error setting browser keys', err.message)
+      log('Waiting for navigation to /about.')
+      win.webContents.once('did-navigate', e => {
+        log('Waiting for dom-ready on obbout page ..')
+
+        win.webContents.once('dom-ready', e => {
+          log('dom ready on about page')
+          const b64 = btoa(JSON.stringify(browserKeys)).toString('base64')
+          const code = `
+            console.log("setting keys");
+            localStorage["tre-keypair"] = atob("${b64}");
+            console.log("done setting keys");
+            setTimeout( () => {
+              document.location.href="/boot"
+            }, 7000);
+          `
+          log('executing', code)
+          win.webContents.executeJavaScript(code)        })
       })
     })
+      
   }
 
   function server(networks, cb) {
@@ -78,37 +96,10 @@ module.exports = function inject(electron, fs, log, sbot) {
     })
   }
 
-  function getLocalStorageItem(key, cb) { 
-    const code = `localStorage["${key}"]`
-    log('executing', code)
-    win.webContents.executeJavaScript(code).then(value=>{
-      log('executeJavaScript returns', value)
-      cb(null, value)
-    }).catch(err => {
-      log(`getLocalStorageItem ${key} failed: ${err.message}`)
-      cb(err)
-    })
-  }
-
   function askForInvite(cb) {
     let done = false
     function onGetInvite(httpd, _cb) {
       return
-
-      if (done) return
-      done = true
-      log('Closing httpd')
-      httpd.close()
-
-      getLocalStorageItem('invite', (err, invite) => {
-        if (err) {
-          log('error getting invite', err.message)
-          cb(err); _cb(err)
-          return
-        }
-        log('got invite from localStorage', invite)
-        cb(null, invite); _cb(null)
-      })
     }
     
     const port = 18484
