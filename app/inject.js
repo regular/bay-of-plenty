@@ -3,7 +3,6 @@ const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
-const btoa = require('btoa')
 
 module.exports = function inject(electron, fs, log, sbot) {
   const {app, ipcMain, BrowserWindow, Menu} = electron
@@ -41,7 +40,7 @@ module.exports = function inject(electron, fs, log, sbot) {
       }
       log('sbot started')
 
-      // set browserkeys
+      // set browserKeys
       log('load about page')
       win.loadURL(`http://localhost:${config.ws.port}/about`)
       log('Waiting for navigation to /about.')
@@ -50,17 +49,8 @@ module.exports = function inject(electron, fs, log, sbot) {
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
-          const b64 = btoa(JSON.stringify(browserKeys)).toString('base64')
-          const code = `
-            console.log("setting keys");
-            localStorage["tre-keypair"] = atob("${b64}");
-            console.log("done setting keys");
-            setTimeout( () => {
-              document.location.href="/boot"
-            }, 7000);
-          `
-          log('executing', code)
-          win.webContents.executeJavaScript(code)        })
+          ssb.bayofplenty.addWindow(wim, browserKeys)
+        })
       })
     })
       
