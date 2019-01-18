@@ -21,7 +21,7 @@ exports.init = function (ssb, config) {
   let windows = []
   const queue = []
 
-  ssb.on('log:info', log)
+  ssb.on('log:info', (...args) => log('info', ...args))
 
   ssb.ws.use(function (req, res, next) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
@@ -29,7 +29,7 @@ exports.init = function (ssb, config) {
     if (u.pathname == '/about') {
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
-      sendAboutPage(res)
+      module.exports.sendAboutPage(res)
       return
     }
     next()
@@ -71,9 +71,11 @@ exports.init = function (ssb, config) {
       const msg = queue.shift()
       const b64 = btoa(JSON.stringify(msg))
       const code = `
-        const msg = JSON.parse(atob('${b64}'));
-        const {type, args} = msg;
-        (${client_log.toString()})(type, ...args);
+        (function(){
+          const msg = JSON.parse(atob('${b64}'));
+          const {type, args} = msg;
+          (${client_log.toString()})(type, ...args);
+        })();
       `
       windows.forEach(exec(code, rm))
       // jshint -W083

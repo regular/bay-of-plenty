@@ -49,7 +49,7 @@ module.exports = function inject(electron, fs, log, sbot) {
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
-          ssb.bayofplenty.addWindow(wim, browserKeys)
+          ssb.bayofplenty.addWindow(win, browserKeys)
         })
       })
     })
