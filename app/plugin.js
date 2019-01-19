@@ -105,7 +105,9 @@ function client_log(type, ...args) {
 
 module.exports.sendAboutPage = function sendAboutPage(res) {
   const body = BufferList()
-  body.append(h('div.bayofplenty', [
+  body.append(h('div.bayofplenty', {
+    style: 'opacity: 0'
+  }, [
     h('h1', 'Bay of Plenty'),
     h('h2', 'Versions'),
     h('ul.versions', 
