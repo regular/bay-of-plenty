@@ -117,7 +117,7 @@ module.exports.sendAboutPage = function sendAboutPage(res) {
   const hs = hyperstream({body})
 
   const browserify = Browserify()
-  browserify.plugin('brfs')
+  browserify.transform(require('brfs'))
   browserify.add(join(__dirname, 'about.js'))
   browserify.bundle()
     .pipe(indexhtmlify())

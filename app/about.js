@@ -17,18 +17,39 @@ setStyles(`
     overflow-y: scroll;
     font-family: monospace;
   }
+  body {
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    height: 100%;
+  }
+  .bayofplenty {
+    grid-row: 1;
+    grid-column: 1;
+    opacity: 0;
+  }
+  img.tre-activityIndicator {
+    grid-row: 1;
+    grid-column: 1;
+    place-self: center center;
+    opacity: .4;
+  }
 `)
 
 const activityIndicator = ActivityIndicator({
-  width: 100,
-  height: 100,
+  width: 150,
+  height: 150,
   color: '#777'
 })
-document.body.appendChild( activityIndicator)
-
-checkBlob(activityIndicator)
+document.body.appendChild(activityIndicator)
 
 const container = document.querySelector('.bayofplenty')
+checkBlob(container, activityIndicator)
+
+setTimeout( ()=>{
+  container.style.opacity = 1
+})
+
 container.appendChild(
   h('div#log', [
     h('h3', 'Boot Log'),
@@ -36,9 +57,9 @@ container.appendChild(
   ])
 )
 
-function checkBlob(activityIndicator) {
+function checkBlob(container, activityIndicator) {
   const el = h('.boot', 'checking blob ...')
-  document.body.appendChild(el)
+  container.appendChild(el)
   fetch('/boot', {
     method: 'HEAD'
   }).then(response => {
