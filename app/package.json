@@ -21,7 +21,7 @@
     "module-styles": "^1.0.0",
     "mutant": "^3.22.1",
     "query-string": "^6.2.0",
-    "scuttlebot-release": "11.3.x",
+    "scuttlebot-release": "ssbc/scuttlebot-release#11.3.x-fixups",
     "server-static": "^2.0.5",
     "ssb-autofollow": "^1.0.0",
     "ssb-autoinvite": "^1.0.1",
