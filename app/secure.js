@@ -6,7 +6,7 @@ const debug = require('debug')('bop:security')
 function isURLAllowed(url) {
   if (url.startsWith('https://127.0.0.1/')) return true
   // TODO: remove non-https
-  if (url.startsWith('http://127.0.0.1/')) return true
+  if (url.startsWith('http://127.0.0.1')) return true
   debug('URL not ok', url)
   return false
 }
@@ -34,7 +34,7 @@ module.exports = function(app) {
 
   // 6) Define a Content Security Policy
   sess.webRequest.onHeadersReceived((details, cb) => {
-    debug('Header received')
+    debug('Response header received for %s %s', details.method, details.url)
     if (Object.keys(details.responseHeaders).map(x=>x.toLowerCase()).includes(
       'content-security-policy'
     )) {

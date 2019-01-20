@@ -46,7 +46,7 @@ module.exports = function inject(electron, fs, log, sbot) {
 
       // set browserKeys
       log('load about page')
-      win.loadURL(`http://localhost:${config.ws.port}/about`)
+      win.loadURL(`http://127.0.0.1:${config.ws.port}/about`)
       log('Waiting for navigation to /about.')
       win.webContents.once('did-navigate', e => {
         log('Waiting for dom-ready on obbout page ..')
