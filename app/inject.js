@@ -1,8 +1,8 @@
-const Httpd = require('./httpd')
 const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
+const secure = require('./secure')
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
@@ -22,6 +22,7 @@ module.exports = function inject(electron, fs, log, sbot) {
   app.on('ready', start)
 
   function start() {
+    secure(app)  
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app)))
     win = new BrowserWindow({
       width: 800,
@@ -91,33 +92,20 @@ module.exports = function inject(electron, fs, log, sbot) {
 
   function askForInvite(cb) {
     let done = false
-    function onGetInvite(httpd, _cb) {
-      return
-    }
     
     const port = 18484
-    log('starting http ..')
-    let httpd
-    httpd = Httpd(port, onGetInvite, err => {
-      if (err) {
-        log('httpd failed', err.message)
-        return cb(err)
-      }
-      log('httpd listening on', port)
-      win.loadURL(`httP://127.0.0.1:${port}/invite.html`)
-      win.webContents.once('will-navigate', (e, url) =>{
-        e.preventDefault()
-        httpd.close()
-        log('Prevented attempt to navigate to', url)
-        const query = parse(url).query
-        log('query is', query)
-        if (!query) return cb(new Error('No query in add-network URL'))
-        const fields = qs.parse(query)
-        const code = fields.code
-        log('code is', code)
-        if (!code) return cb(new Error('No code in query in add-network URL'))
-        cb(null, code)
-      })
+    win.loadFile(__dirname + '/public/invite.html')
+    win.webContents.once('will-navigate', (e, url) =>{
+      e.preventDefault()
+      log('Prevented attempt to navigate to', url)
+      const query = parse(url).query
+      log('query is', query)
+      if (!query) return cb(new Error('No query in add-network URL'))
+      const fields = qs.parse(query)
+      const code = fields.code
+      log('code is', code)
+      if (!code) return cb(new Error('No code in query in add-network URL'))
+      cb(null, code)
     })
   }
 

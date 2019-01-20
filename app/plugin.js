@@ -7,6 +7,7 @@ const indexhtmlify = require('indexhtmlify')
 const BufferList = require('bl')
 const hyperstream = require('hyperstream')
 const h = require('hyperscript')
+const crypto = require('crypto')
 //jshint -W079
 const btoa = require('btoa')
 
@@ -30,6 +31,7 @@ exports.init = function (ssb, config) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
     if (u.pathname == '/about') {
+      debug('request for about page')
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
       module.exports.sendAboutPage(res)
@@ -52,7 +54,7 @@ exports.init = function (ssb, config) {
       window.localStorage["tre-keypair"] = atob("${b64}");
       console.log("done setting keys");
     `
-    debug('executing', code)
+    //debug('executing', code)
     win.webContents.executeJavaScript(code)
     emptyQueue()
   }
@@ -62,7 +64,7 @@ exports.init = function (ssb, config) {
     if (!windows.length) return
     function exec(code, rm) {
       return function(win) {
-        debug('executing', code)
+        //debug('executing', code)
         win.webContents.executeJavaScript(code, (err, v) =>{
           if (err) return console.log(err.message)
           if (v == false) {
@@ -127,11 +129,37 @@ module.exports.sendAboutPage = function sendAboutPage(res) {
   browserify.transform(require('brfs'))
   browserify.add(join(__dirname, 'about.js'))
   browserify.bundle()
-    .pipe(indexhtmlify())
-    .pipe(hs)
-    .pipe(res)
-}
+    .pipe(BufferList( (err, buffer) => {
+      if (err) {
+        res.statusCode = 503
+        res.end(err.message)
+        return
+      }
+      const bl_hash = BufferList()
+      bl_hash.append('\n')
+      bl_hash.append(buffer)
+      /*
+      buffer_hash = Buffer.from('\nconsole.log("hello")')
+      buffer = Buffer.from('console.log("hello")')
+      */
+      const sha = crypto.createHash('sha256')
+        .update(bl_hash.slice())
+        .digest('base64')
 
+      console.log('sha', sha)
+      
+      res.setHeader(
+        'Content-Security-Policy', 
+        `script-src 'sha256-${sha}';`
+      )
+
+      const doc = BufferList()
+      doc.append(buffer)
+      doc.pipe(indexhtmlify())
+        .pipe(hs)
+        .pipe(res)
+    }))
+}
 
 function logging(server) {
   const handlers = {}

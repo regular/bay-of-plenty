@@ -24,6 +24,7 @@
     "query-string": "^6.2.0",
     "scuttlebot-release": "ssbc/scuttlebot-release#11.3.x-fixups",
     "server-static": "^2.0.5",
+    "sjcl": "^1.0.8",
     "ssb-autofollow": "^1.1.0",
     "ssb-autoinvite": "^1.1.0",
     "ssb-autoname": "^1.2.1",
