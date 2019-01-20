@@ -4,6 +4,8 @@ const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
 
+process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
+
 module.exports = function inject(electron, fs, log, sbot) {
   const {app, ipcMain, BrowserWindow, Menu} = electron
 
@@ -25,7 +27,8 @@ module.exports = function inject(electron, fs, log, sbot) {
       width: 800,
       height: 600,
       webPreferences: {
-        nodeIntegration: false
+        nodeIntegration: false,
+        contextIsolation: true
       }
     })
     win.on('closed', () => {

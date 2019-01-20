@@ -26,10 +26,10 @@
     "server-static": "^2.0.5",
     "ssb-autofollow": "^1.1.0",
     "ssb-autoinvite": "^1.1.0",
-    "ssb-autoname": "^1.2.0",
+    "ssb-autoname": "^1.2.1",
     "ssb-revisions": "^1.1.0",
     "tre-activity-indicator": "^1.0.0",
-    "tre-boot": "^1.1.2",
+    "tre-boot": "^1.2.0",
     "tre-client": "^1.3.0",
     "tre-invite-code": "^1.0.1",
     "tre-parts": "^1.0.1"

@@ -58,7 +58,7 @@ checkBlob(container, activityIndicator)
 
 setTimeout( ()=>{
   container.style.opacity = 1
-}, 2000)
+}, 5000)
 
 container.appendChild(
   h('div#log', [

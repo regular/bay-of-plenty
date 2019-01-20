@@ -54,9 +54,12 @@ exports.init = function (ssb, config) {
     `
     debug('executing', code)
     win.webContents.executeJavaScript(code)
+    emptyQueue()
   }
 
   function emptyQueue() {
+    // make sure first window receives all messages
+    if (!windows.length) return
     function exec(code, rm) {
       return function(win) {
         debug('executing', code)
