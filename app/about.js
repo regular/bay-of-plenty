@@ -16,6 +16,16 @@ setStyles(`
     max-height: 15em;
     overflow-y: scroll;
     font-family: monospace;
+    font-size: 16pt;
+  }
+  div#log .message {
+    font-weight: bold;
+  }
+  div#log .message.info {
+    font-weight: normal;
+  }
+  div#log span {
+    margin-left: .6em;
   }
   body {
     display: grid;
@@ -68,7 +78,7 @@ function checkBlob(container, activityIndicator) {
         level: 'error', 
         plug: 'boot',
         verb: 'Server response for /boot',
-        data: response.statusText
+        data: [response.statusText]
       })
       el.innerText = response.statusText
       activityIndicator.style.display = 'none'
@@ -79,9 +89,9 @@ function checkBlob(container, activityIndicator) {
       level: 'notice', 
       plug: 'boot',
       verb: 'Blob available',
-      data: etag
+      data: [etag]
     })
-    el.innerText = etag
+    el.innerText = `boot blob is available: ${etag}`
     setTimeout( ()=>{
       location.href = '/boot'
     })
@@ -90,7 +100,7 @@ function checkBlob(container, activityIndicator) {
       level: 'error', 
       plug: 'boot',
       verb: 'Error requesting HEAD /boot',
-      data: err.message
+      data: [err.message]
     })
     el.innerText = 'FAIL'
     activityIndicator.style.display = 'none'
@@ -98,16 +108,19 @@ function checkBlob(container, activityIndicator) {
 }
 
 function log(msg) {
-  const {level, plug, verb, data} = msg
-  console.log(level, plug, verb, data || '')
+  let {level, plug, id, verb, data} = msg
+  id = id && id.substr(0,15) || ''
+  if (!data) data = []
+  if (!Array.isArray(data)) data = [data]
+  console.log(level, plug, id, verb, data.join(' '))
   const el = document.querySelector('#log .container')
   if (!el) {
     console.error('#log element not found.')
     return false
   }
   el.appendChild(
-    h(`div.message.${type}.${plug}`, 
-      [type, plug, verb, ...data].map(x => h('span', x))
+    h(`div.message.${level}.${plug}`, 
+      [level, plug, id, verb, data.join(' ')].map(x => h('span', x))
     )
   )
   const p = el.parentElement

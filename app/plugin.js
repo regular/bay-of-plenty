@@ -156,9 +156,7 @@ function logging(server) {
     function formatter(id, level) {
       return function (ary) {
         const [plug, id, verb, ...data] = ary
-        const _data = (data.length == 1 && typeof data[0] == 'string' ?
-          data[0] : JSON.stringify(data)) || ''
-        onLog({level, plug, id, verb, data: _data})
+        onLog({level, plug, id, verb, data})
       }
     }
   }
