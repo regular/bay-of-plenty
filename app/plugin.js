@@ -15,13 +15,16 @@ exports.version = require('./package.json').version
 exports.manifest = {
   close: 'async'
 }
+const LOG_LEVELS = 'error warning notice info'.split(' ')
+const LOG_LEVEL = 4
 
 exports.init = function (ssb, config) {
   debug('INFO: plugin init')
   let windows = []
   const queue = []
 
-  ssb.on('log:info', (...args) => log('info', ...args))
+  const logger = logging(ssb)
+  logger.subscribe(ssb.id, LOG_LEVEL, log)
 
   ssb.ws.use(function (req, res, next) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
@@ -36,7 +39,7 @@ exports.init = function (ssb, config) {
   })
 
   function close(cb) {
-    ssb.off('log:info', log)
+    logger.unsubscribe(LOG_LEVEL, log)
     windows = []
     cb(null)
   }  
@@ -73,8 +76,7 @@ exports.init = function (ssb, config) {
       const code = `
         (function(){
           const msg = JSON.parse(atob('${b64}'));
-          const {type, args} = msg;
-          (${client_log.toString()})(type, ...args);
+          (${client_log.toString()})(msg);
         })();
       `
       windows.forEach(exec(code, rm))
@@ -84,8 +86,8 @@ exports.init = function (ssb, config) {
     }
   }
 
-  function log(type, ...args) {
-    queue.push({type, args})
+  function log(msg) {
+    queue.push(msg)
     emptyQueue()
   }
 
@@ -97,10 +99,10 @@ exports.init = function (ssb, config) {
 }
 
 // evaluated in browser context
-function client_log(type, ...args) {
+function client_log(msg) {
   const bop = window.bayofplenty
   if (!bop) return false // don't try again
-  return bop.log(type, ...args)
+  return bop.log(msg)
 }
 
 module.exports.sendAboutPage = function sendAboutPage(res) {
@@ -125,4 +127,43 @@ module.exports.sendAboutPage = function sendAboutPage(res) {
     .pipe(indexhtmlify())
     .pipe(hs)
     .pipe(res)
+}
+
+
+function logging(server) {
+  const handlers = {}
+
+  function unsubscribe(level, onLog) {
+    LOG_LEVELS.forEach(l => {
+      if (level >= LOG_LEVELS.indexOf(l)) {
+        const type = `log:${l}`
+        if (handlers[type]) {
+          server.off(type, handlers[type])
+          delete handlers[type]
+        }
+      }
+    })
+  }
+
+  function subscribe(id, level, onLog) {
+    LOG_LEVELS.forEach(l => {
+      if (level >= LOG_LEVELS.indexOf(l)) {
+        const type = `log:${l}`
+        let handler = handlers[type] = formatter(id, l)
+        server.on(type, handler)
+      }
+    })
+    function formatter(id, level) {
+      return function (ary) {
+        const [plug, id, verb, ...data] = ary
+        const _data = (data.length == 1 && typeof data[0] == 'string' ?
+          data[0] : JSON.stringify(data)) || ''
+        onLog({level, plug, id, verb, data: _data})
+      }
+    }
+  }
+  return {
+    subscribe,
+    unsubscribe
+  }
 }

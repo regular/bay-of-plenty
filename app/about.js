@@ -64,34 +64,50 @@ function checkBlob(container, activityIndicator) {
     method: 'HEAD'
   }).then(response => {
     if (!response.ok) {
-      log('error', 'Server response for /boot', response.statusText)
+      log({
+        level: 'error', 
+        plug: 'boot',
+        verb: 'Server response for /boot',
+        data: response.statusText
+      })
       el.innerText = response.statusText
       activityIndicator.style.display = 'none'
       return
     }
     const etag = response.headers.get('etag')
-    log('important', `Blob available: ${etag}`)
+    log({
+      level: 'notice', 
+      plug: 'boot',
+      verb: 'Blob available',
+      data: etag
+    })
     el.innerText = etag
     setTimeout( ()=>{
       location.href = '/boot'
     })
   }).catch(err => {
-    log('error', 'Failure requesting HEAD /boot', err.message)
+    log({
+      level: 'error', 
+      plug: 'boot',
+      verb: 'Error requesting HEAD /boot',
+      data: err.message
+    })
     el.innerText = 'FAIL'
     activityIndicator.style.display = 'none'
   })
 }
 
-function log(type, ...args) {
-  console.log(type, args.join(' '))
+function log(msg) {
+  const {level, plug, verb, data} = msg
+  console.log(level, plug, verb, data || '')
   const el = document.querySelector('#log .container')
   if (!el) {
     console.error('#log element not found.')
     return false
   }
   el.appendChild(
-    h(`div.message.${type}`, 
-      [type, ...args.map(x => h('span', x))]
+    h(`div.message.${type}.${plug}`, 
+      [type, plug, verb, ...data].map(x => h('span', x))
     )
   )
   const p = el.parentElement

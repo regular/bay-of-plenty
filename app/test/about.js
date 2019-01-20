@@ -7,8 +7,8 @@ const atob = require('atob')
 window = {}
 window.localStorage = {}
 window.bayofplenty = {
-  log: function(type, ...args) {
-    console.error(type, ...args)
+  log: function(msg) {
+    console.error(msg)
     return false // don't call again
   }
 }
@@ -41,8 +41,8 @@ const win = {
   }
 }
 p.addWindow(win, {foo: 'bar'})
-p.log('info', 'hello', 'world')
-p.log('foo', 'bar')
+p.log({level: 'info', src:'hello', verb:'world'})
+p.log({level: 'foo', verb: 'bar'})
 p.close( err =>{
   console.log('closed')
 })
