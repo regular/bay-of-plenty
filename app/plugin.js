@@ -8,24 +8,58 @@ const BufferList = require('bl')
 const hyperstream = require('hyperstream')
 const h = require('hyperscript')
 const crypto = require('crypto')
+const FlumeviewLevel = require('flumeview-level')
+
 //jshint -W079
 const btoa = require('btoa')
+
+const LOG_LEVELS = 'error warning notice info'.split(' ')
+const LOG_LEVEL = 4
+
+function makeIndex() {
+  return Index(1, function map(value) {
+    const content = value && value.content
+    if (content.type !== 'webapp') return []
+    const {codeBlob, scriptHash} = content
+    if (!codeBlob) return []
+    return [[codeBlob, scriptHash || 'none']]
+  })
+}
 
 exports.name = 'bayofplenty'
 exports.version = require('./package.json').version
 exports.manifest = {
   close: 'async'
 }
-const LOG_LEVELS = 'error warning notice info'.split(' ')
-const LOG_LEVEL = 4
 
 exports.init = function (ssb, config) {
   debug('INFO: plugin init')
   let windows = []
   const queue = []
-
   const logger = logging(ssb)
   logger.subscribe(ssb.id, LOG_LEVEL, log)
+
+  const sv = ssb._flumeUse('WebappIndex', makeIndex())
+  
+  function getScriptHashForBlob(blobHash) {
+    const o = Object.assign({
+      gt: [blobHash, null],
+      lt: [blobHash, undefined]
+    }, opts || {})
+    pull(
+      sv.read(o),
+      pull.collect( (err, results)=>{
+        if (err) return cb(err)
+        if (results.length == 0) return cb(
+          new Error('script hash for webapp blob not found ' + blobHash)
+        )
+        if (results.length > 1) return cb(
+          new Error('multiple script hashes for webapp blob found ' + blobHash)
+        )
+        cb(null, results[0])
+      })
+    )
+  }
 
   ssb.ws.use(function (req, res, next) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
@@ -36,6 +70,21 @@ exports.init = function (ssb, config) {
       res.setHeader('Content-Type', 'text/html')
       module.exports.sendAboutPage(res)
       return
+    }
+    if (u.pathname == '/blobs/get/') {
+      debug('request for a blob')
+      const blob = decodeURIComponent(u.pathname.slice(11))
+      sv.getScriptHashForBlob(blob, (err, scriptHash) => {
+        if (err) {
+          console.error(err.message)
+          return next()
+        }
+        res.setHeader(
+          'Content-Security-Policy', 
+          `script-src 'sha256-${scriptHash}';`
+        )
+        return next()
+      })
     }
     next()
   })
@@ -96,11 +145,10 @@ exports.init = function (ssb, config) {
     emptyQueue()
   }
 
-  return {
-    close,
-    addWindow,
-    log
-  }
+  sv.close = close
+  sv.addWindow = addWindow
+  sv.log = log
+  return sv
 }
 
 // evaluated in browser context
