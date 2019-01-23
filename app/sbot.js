@@ -82,7 +82,7 @@ module.exports = function(networks, cb) {
 
   const ssb = createSbot(Object.assign({}, config, {
     keys,
-    master: [browserKeys.public]
+    master: [browserKeys.id]
   }))
   setTimeout( () => {
     ssb.whoami( (err, feed) => {
