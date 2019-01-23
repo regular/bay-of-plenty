@@ -1,7 +1,7 @@
 {
   "name": "tre-builder",
   "version": "0.0.0",
-  "description": "",
+  "description": "A multi-network, multi-application client for secure scuttlebutt",
   "main": "index.js",
   "scripts": {
     "start": "electron app/index.js",
@@ -78,5 +78,14 @@
     "electron": "~2.0.13",
     "electron-builder": "^19.46.9",
     "node-pre-gyp": "^0.12.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/regular/bay-of-plenty.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/regular/bay-of-plenty/issues"
+  },
+  "homepage": "https://github.com/regular/bay-of-plenty#readme"
 }

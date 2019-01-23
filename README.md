@@ -1,10 +1,9 @@
-# patchwork-builder
+# Bay of Plenty
 
 ```shell
-$ npm clone https://github.com/ssbc/patchwork-builder
-$ cd patchwork-builder
+$ git clone +https://github.com/regular/bay-of-plenty.git"
+$ cd bay-of-plenty
 $ npm install
-$ git clone https://github.com/ssbc/patchwork app
 $ npm run update
 $ npm run release
 ```

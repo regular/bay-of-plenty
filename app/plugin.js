@@ -9,6 +9,7 @@ const hyperstream = require('hyperstream')
 const h = require('hyperscript')
 const crypto = require('crypto')
 const FlumeviewLevel = require('flumeview-level')
+const pull = require('pull-stream')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -17,7 +18,8 @@ const LOG_LEVELS = 'error warning notice info'.split(' ')
 const LOG_LEVEL = 4
 
 function makeIndex() {
-  return Index(1, function map(value) {
+  return FlumeviewLevel(1, function map(kv) {
+    const {value} = kv
     const content = value && value.content
     if (content.type !== 'webapp') return []
     const {codeBlob, scriptHash} = content
@@ -41,11 +43,11 @@ exports.init = function (ssb, config) {
 
   const sv = ssb._flumeUse('WebappIndex', makeIndex())
   
-  function getScriptHashForBlob(blobHash) {
-    const o = Object.assign({
+  function getScriptHashForBlob(blobHash, cb) {
+    const o = {
       gt: [blobHash, null],
       lt: [blobHash, undefined]
-    }, opts || {})
+    }
     pull(
       sv.read(o),
       pull.collect( (err, results)=>{
@@ -56,7 +58,7 @@ exports.init = function (ssb, config) {
         if (results.length > 1) return cb(
           new Error('multiple script hashes for webapp blob found ' + blobHash)
         )
-        cb(null, results[0])
+        cb(null, results[0].key[1])
       })
     )
   }
@@ -64,29 +66,33 @@ exports.init = function (ssb, config) {
   ssb.ws.use(function (req, res, next) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
+    debug('request for path', u.pathname)
     if (u.pathname == '/about') {
       debug('request for about page')
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
-      module.exports.sendAboutPage(res)
-      return
+      return sendAboutPage(res)
     }
-    if (u.pathname == '/blobs/get/') {
-      debug('request for a blob')
-      const blob = decodeURIComponent(u.pathname.slice(11))
-      sv.getScriptHashForBlob(blob, (err, scriptHash) => {
-        if (err) {
-          console.error(err.message)
-          return next()
-        }
-        res.setHeader(
-          'Content-Security-Policy', 
-          `script-src 'sha256-${scriptHash}';`
-        )
+    if (!u.pathname.startsWith('/blobs/get/')) return next()
+
+    const blob = decodeURIComponent(u.pathname.slice(11))
+    if (req.method == 'HEAD') {
+      debug('request for blob HEAD %s', blob)
+      return next()
+    }
+    debug('request for blob %s', blob)
+    getScriptHashForBlob(blob, (err, scriptHash) => {
+      if (err) {
+        debug('Failed to get script hash for blob', err.message)
         return next()
-      })
-    }
-    next()
+      }
+      debug('requested blob is webapp with script hash %s', scriptHash)
+      res.setHeader(
+        'Content-Security-Policy', 
+        `script-src 'sha256-${scriptHash}';`
+      )
+      return next()
+    })
   })
 
   function close(cb) {
@@ -158,7 +164,9 @@ function client_log(msg) {
   return bop.log(msg)
 }
 
-module.exports.sendAboutPage = function sendAboutPage(res) {
+module.exports.sendAboutPage = sendAboutPage
+
+function sendAboutPage(res) {
   const body = BufferList()
   body.append(h('div.bayofplenty', {
     style: 'opacity: 0'

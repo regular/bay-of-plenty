@@ -23,8 +23,11 @@ const plugins = [
   'ssb-ebt'
 ]
 createSbot = createSbot()
+function useBuiltInPlugin(p) {
+  return createSbot.use(require(join(scuttlebot_modpath, p)))
+}
 plugins.forEach( p => {
-  createSbot = createSbot.use(require(join(scuttlebot_modpath, p)))
+  createSbot = useBuiltInPlugin(p)
 })
 
 createSbot = createSbot
@@ -36,6 +39,8 @@ createSbot = createSbot
   .use(require('tre-client'))
   .use(require('tre-boot'))
   .use(require('tre-parts'))
+
+//useBuiltInPlugin('ssb-ws')
 
 module.exports = function(networks, cb) {
   networks = networks || {}
