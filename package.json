@@ -1,6 +1,6 @@
 {
-  "name": "tre-builder",
-  "version": "0.0.0",
+  "name": "bay-of-plenty",
+  "version": "1.0.0",
   "description": "A multi-network, multi-application client for secure scuttlebutt",
   "main": "index.js",
   "scripts": {
