@@ -35,7 +35,7 @@ module.exports = function inject(electron, fs, log, sbot) {
     win.on('closed', () => {
       win = null
     })
-    win.openDevTools()
+    //win.openDevTools()
 
     server({}, (err, ssb, config, myid, browserKeys) => {
       if (err) {
