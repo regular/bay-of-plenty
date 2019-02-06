@@ -41,6 +41,7 @@ module.exports = function(app) {
       debug('Found existing CSP', details.responseHeaders['Content-Security-Policy'])
       return cb({})
     }
+    /*
     debug("setting CSP script-src 'none';")
     cb({
       responseHeaders: {
@@ -48,6 +49,8 @@ module.exports = function(app) {
         'Content-Security-Policy': ["script-src 'none';"]
       }
     })
+    */
+    cb({})
   })
 
   // 11) Verify WebView Options Before Creation

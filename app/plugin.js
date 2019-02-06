@@ -88,10 +88,12 @@ exports.init = function (ssb, config) {
         return next()
       }
       debug('requested blob is webapp with script hash %s', scriptHash)
+      /*
       res.setHeader(
         'Content-Security-Policy', 
         `script-src 'sha256-${scriptHash}';`
       )
+      */
       return next()
     })
   })
