@@ -74,37 +74,6 @@ exports.init = function (ssb, config) {
       return sendAboutPage(res)
     }
 
-    // this overrides tre-clients handler
-    if (u.pathname == '/.trerc') {
-      debug('request for config %O', req.headers)
-      const cookie = req.headers.cookie
-      const cookies = cookie && cookie.split(';') || []
-      const jar = {}
-      cookies.forEach(c => {
-        c.replace(/([^=]*)=(.*)/, (_, key, value) => jar[key] = value)
-      })
-      const {bootKey} = jar
-      if (!bootKey) {
-        debug('no bootKey cookie. %O', cookie)
-        res.statusCode = 400
-        return res.end('bootKey cookie required')
-      }
-      debug('bootKey cookie is %s', bootKey)
-      ssb.revisions.getLatestRevision(bootKey, (err, kv) => {
-        if (err) {
-          res.statusCode = 503
-          return res.end(err.message)
-        }
-        const bootConfig = kv.value.content.config || {}
-        Object.assign(bootConfig, {
-          caps: config.caps // TODO
-        })
-        res.statusCode = 200
-        res.end(JSON.stringify(bootConfig))
-      })
-      return
-    }
-
     if (!u.pathname.startsWith('/blobs/get/')) return next()
 
     const blob = decodeURIComponent(u.pathname.slice(11))
