@@ -37,8 +37,5 @@
     "atob": "^2.1.2",
     "hyperquest": "^2.1.3"
   },
-  "directories": {
-    "test": "test"
-  },
   "keywords": []
 }
