@@ -28,7 +28,7 @@
     "ssb-autoname": "^1.2.1",
     "ssb-revisions": "^1.1.0",
     "tre-activity-indicator": "^1.0.0",
-    "tre-boot": "^1.3.2",
+    "tre-boot": "^1.7.0",
     "tre-client": "^2.1.1",
     "tre-invite-code": "^1.1.0",
     "tre-parts": "^1.0.1"
