@@ -36,7 +36,7 @@ createSbot = createSbot
   .use(require('ssb-autoname'))
   .use(require('ssb-autoinvite'))
   .use(require('ssb-revisions'))
-  .use(require('tre-client'))
+  //.use(require('tre-client'))
   .use(require('tre-boot'))
   .use(require('tre-parts'))
 
