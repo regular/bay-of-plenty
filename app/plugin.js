@@ -99,6 +99,7 @@ exports.init = function (ssb, config) {
   })
 
   function close(cb) {
+    debug('close')
     logger.unsubscribe(LOG_LEVEL, log)
     windows = []
     cb(null)
@@ -123,13 +124,19 @@ exports.init = function (ssb, config) {
     function exec(code, rm) {
       return function(win) {
         //debug('executing', code)
-        win.webContents.executeJavaScript(code, (err, v) =>{
-          if (err) return console.log(err.message)
-          if (v == false) {
-            debug('returned false remuoving from list')
-            rm.push(win)
-          }
-        })
+        try {
+          win.webContents.executeJavaScript(code, (err, v) =>{
+            if (err) return console.log(err.message)
+            if (v == false) {
+              debug('returned false remuoving from list')
+              rm.push(win)
+            }
+          })
+        } catch(e) {
+          debug('executeJavaScript throws %s', e.message)
+          debug('remuoving window from list')
+          rm.push(win)
+        }
       }
     }
     let rm = []
@@ -145,6 +152,9 @@ exports.init = function (ssb, config) {
       windows.forEach(exec(code, rm))
       // jshint -W083
       windows = windows.filter(x=>!rm.includes(x))
+      if (!windows.length) {
+        debug('no windows left')
+      }
       rm = []
     }
   }
@@ -222,13 +232,15 @@ function sendAboutPage(res) {
 
 function logging(server) {
   const handlers = {}
-
+  
   function unsubscribe(level, onLog) {
+    //debug('server %O', server)
+
     LOG_LEVELS.forEach(l => {
       if (level >= LOG_LEVELS.indexOf(l)) {
         const type = `log:${l}`
         if (handlers[type]) {
-          server.off(type, handlers[type])
+          server.removeListener(type, handlers[type])
           delete handlers[type]
         }
       }
