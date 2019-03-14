@@ -33,6 +33,7 @@ module.exports = function inject(electron, fs, log, sbot) {
       }
     })
     win.on('closed', () => {
+      log('window closed')
       win = null
     })
     //win.openDevTools()
@@ -43,7 +44,11 @@ module.exports = function inject(electron, fs, log, sbot) {
         return
       }
       log('sbot started')
-
+      win.on('close', e=>{
+        log('window closed -- closing sbot')
+        ssb.close()
+      })
+      
       // set browserKeys
       log('load about page')
       win.loadURL(`http://127.0.0.1:${config.ws.port}/about`)
