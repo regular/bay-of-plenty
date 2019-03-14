@@ -67,7 +67,13 @@ module.exports = function(networks, cb) {
   const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
   const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
 
-  if (!config.port) config.port = Math.floor(50000 + 15000 * Math.random())
+  if (!config.port) {
+    if (!config.autoinvite) {
+      config.port = Math.floor(50000 + 15000 * Math.random())
+    } else {
+      config.port = Number(config.autoinvite.split(':')[1])
+    }
+  }
   if (!config.ws) config.ws = {}
   if (!config.ws.port) config.ws.port = config.port + 1
   if (config.network) {
@@ -80,7 +86,14 @@ module.exports = function(networks, cb) {
   }
   fs.writeFileSync(join(config.path, 'config'), JSON.stringify(config, null, 2), 'utf8')
 
-  const ssb = createSbot(Object.assign({}, config, {
+  log('Creating sbot with config' + JSON.stringify(config, null, 2))
+  const ssb = createSbot(Object.assign({
+    blobs: {
+      legacy: false,
+      sympathy: 10,
+      max: 314572800
+    }
+  }, config, {
     keys,
     master: [browserKeys.id]
   }))
