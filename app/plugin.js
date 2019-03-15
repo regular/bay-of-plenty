@@ -17,6 +17,8 @@ const btoa = require('btoa')
 const LOG_LEVELS = 'error warning notice info'.split(' ')
 const LOG_LEVEL = 4
 
+const SECURE = false
+
 function makeIndex() {
   return FlumeviewLevel(1, function map(kv) {
     const {value} = kv
@@ -88,12 +90,20 @@ exports.init = function (ssb, config) {
         return next()
       }
       debug('requested blob is webapp with script hash %s', scriptHash)
-      /*
-      res.setHeader(
-        'Content-Security-Policy', 
-        `script-src 'sha256-${scriptHash}';`
-      )
-      */
+
+      if (SECURE) {
+        /* TODO
+         * For some reason, Chromium and tre-apps-deplay
+         * have different opinions of how the hash
+         * should look like, IF THE FILE IS LARGE.
+         * Until this is resolved, we sadly have to disable CSP
+         */
+
+        res.setHeader(
+          'Content-Security-Policy', 
+          `script-src 'sha256-${scriptHash}';`
+        )
+      }
       return next()
     })
   })

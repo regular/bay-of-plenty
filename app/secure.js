@@ -3,7 +3,10 @@
 const {shell} = require('electron')
 const debug = require('debug')('bop:security')
 
+const SECURE = false
+
 function isURLAllowed(url) {
+  if (url.startsWith('chrome-devtools://')) return true
   if (url.startsWith('https://127.0.0.1/')) return true
   // TODO: remove non-https
   if (url.startsWith('http://127.0.0.1')) return true
@@ -41,16 +44,19 @@ module.exports = function(app) {
       debug('Found existing CSP', details.responseHeaders['Content-Security-Policy'])
       return cb({})
     }
-    /*
-    debug("setting CSP script-src 'none';")
-    cb({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': ["script-src 'none';"]
-      }
-    })
-    */
-    cb({})
+
+    if (SECURE) {
+      // TODO: see plugin.js
+      debug("setting CSP script-src 'none';")
+      cb({
+        responseHeaders: {
+          ...details.responseHeaders,
+          'Content-Security-Policy': ["script-src 'none';"]
+        }
+      })
+    } else {
+      cb({})
+    }
   })
 
   // 11) Verify WebView Options Before Creation
