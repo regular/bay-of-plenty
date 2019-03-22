@@ -30,8 +30,9 @@ module.exports = function(app) {
     */
     //if (!url.startsWith('https://my-website.com')) {
     // Denies the permissions request
+    if (permission == 'media') return cb(true)
     debug('Deny %s for %s', permission, url)
-    return callback(false)
+    return cb(false)
     //}
   })
 
