@@ -50,8 +50,16 @@
       ]
     },
     "linux": {
-      "target": "tar.gz",
-      "category": "Network"
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }, 
+        {
+          "target": "tar.gz",
+          "arch": ["x64"]
+        }
+      ]
     },
     "win": {
       "icon": "build/icon.ico",
