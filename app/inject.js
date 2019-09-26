@@ -52,10 +52,9 @@ module.exports = function inject(electron, fs, log, sbot) {
       })
       
       // set browserKeys
-      log('load about page')
-      win.loadURL(`http://127.0.0.1:${config.ws.port}/about`)
       log('Waiting for navigation to /about.')
       win.webContents.once('did-navigate', e => {
+        clearInterval(timer)
         log('Waiting for dom-ready on obbout page ..')
 
         win.webContents.once('dom-ready', e => {
@@ -63,6 +62,14 @@ module.exports = function inject(electron, fs, log, sbot) {
           ssb.bayofplenty.addWindow(win, browserKeys)
         })
       })
+      /* We need to repeat this because ssb-server
+       * has no callback that tells us when it actually started listening
+       * (!#@) */
+      const aboutURL = `http://127.0.0.1:${config.ws.port}/about`
+      const timer = setInterval( ()=>{
+        log(`load about page: ${aboutURL}`)
+        win.loadURL(aboutURL)
+      }, 1000)
     })
       
   }

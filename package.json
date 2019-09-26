@@ -53,11 +53,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
-        }, 
+          "arch": [
+            "x64"
+          ]
+        },
         {
           "target": "tar.gz",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -86,6 +90,7 @@
   "devDependencies": {
     "electron": "^5.0.0",
     "electron-builder": "^20.39.0",
+    "electron-rebuild": "^1.8.6",
     "node-abi": "^2.8.0",
     "node-pre-gyp": "^0.12.0"
   },

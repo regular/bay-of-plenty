@@ -68,7 +68,7 @@ exports.init = function (ssb, config) {
   ssb.ws.use(function (req, res, next) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
-    debug('request for path', u.pathname)
+    debug('HTTP request for path', u.pathname)
     if (u.pathname == '/about') {
       debug('request for about page')
       res.statusCode = 200
