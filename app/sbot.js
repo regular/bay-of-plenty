@@ -1,18 +1,9 @@
 const fs = require('fs')
 const {join} = require('path')
-const ssbKeys = require('ssb-server/node_modules/ssb-keys')
+const ssbKeys = require('ssb-keys')
 
 const log = require('./log')(fs, 'bop:sbot')
 const loadOrCreateConfigFile = require('./network-config-file')
-
-const createSbot = require('./create-sbot')()
-  .use(require('ssb-ws'))
-  .use(require('./plugin'))
-  .use(require('ssb-autofollow'))
-  .use(require('ssb-autoname'))
-  .use(require('ssb-autoinvite'))
-  .use(require('ssb-revisions'))
-  .use(require('tre-boot'))
 
 module.exports = function(networks, cb) {
   networks = networks || {}
@@ -31,13 +22,20 @@ module.exports = function(networks, cb) {
   config = loadOrCreateConfigFile(config)
   
   log('Creating sbot with config' + JSON.stringify(config, null, 2))
+
+  const createSbot = require('tre-bot')()
+    .use(require('./plugin'))
+    .use(require('ssb-autofollow'))
+    .use(require('ssb-autoname'))
+    .use(require('ssb-autoinvite'))
+    .use(require('tre-boot'))
+
   const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
-console.dir(keys)  
-  createSbot(config, keys, (err, ssb, feed) => {
-    log(`public key ${feed.id}`)
+  createSbot(config, keys, (err, ssb) => {
+    log(`public key ${keys.id}`)
     log(`network key ${config.caps.shs}`)
     const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
-    cb(null, ssb, config, feed.id, browserKeys)
+    cb(null, ssb, config, keys.id, browserKeys)
   })
 
 }

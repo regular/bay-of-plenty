@@ -1,9 +1,9 @@
 const fs = require('fs')
 const {join} = require('path')
-const ssbKeys = require('ssb-server/node_modules/ssb-keys')
-const ssbConfigDefaults = require('ssb-server/node_modules/ssb-config/defaults')
+const ssbKeys = require('ssb-keys')
+const ssbConfigDefaults = require('ssb-config/defaults')
 const mkdirp = require('mkdirp')
-const defaultCap = require('ssb-server/node_modules/ssb-caps/caps.json')
+const defaultCap = require('ssb-caps/caps.json')
 
 module.exports = function loadOrCreateConfigFile(parsedInvite) {
   let config = parsedInvite

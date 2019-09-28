@@ -1,6 +1,6 @@
 {
   "name": "bay-of-plenty",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Experimental client for the Scuttleverse",
   "main": "index.js",
   "scripts": {
@@ -26,18 +26,20 @@
     "ssb-autofollow": "^1.1.0",
     "ssb-autoinvite": "^1.1.0",
     "ssb-autoname": "^1.2.1",
-    "ssb-revisions": "^1.5.0",
-    "ssb-server": "^15.1.1",
-    "ssb-ws": "github:regular/ssb-ws#master",
+    "ssb-caps": "^1.1.0",
+    "ssb-config": "^3.3.2",
+    "ssb-keys": "^7.2.0",
     "tre-activity-indicator": "^1.0.0",
     "tre-boot": "^1.7.0",
+    "tre-bot": "^1.0.0",
     "tre-client": "^2.1.1",
     "tre-invite-code": "^1.1.0"
   },
   "devDependencies": {
     "atob": "^2.1.2",
     "hyperquest": "^2.1.3",
-    "node-abi": "^2.8.0"
+    "node-abi": "^2.8.0",
+    "node-pre-gyp": "^0.13.0"
   },
   "keywords": []
 }
