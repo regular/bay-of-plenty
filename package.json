@@ -5,37 +5,25 @@
   "main": "index.js",
   "scripts": {
     "start": "electron app/index.js",
-    "pack": "build --dir",
-    "pack:all": "build --dir -mlw",
-    "pack:mac": "build --dir -m",
-    "pack:linux": "build --dir -l",
-    "pack:windows": "build --dir -w",
-    "update": "cd app && git reset --hard && git pull && npm install",
-    "release": "build",
-    "release:all": "build -mlw",
-    "release:mac": "build -m",
-    "release:linux": "build -l",
-    "release:windows": "build -w",
-    "publish": "build -mlw --publish=always",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pack": "ABI=$(electron -a) electron-builder build --dir",
+    "release": "ABI=$(electron -a) electron-builder build"
   },
   "build": {
     "appId": "codes.regular.bay-of-plenty",
     "asarUnpack": [
-      "node_modules/sodium-native/prebuilds"
-    ],
-    "npmSkipBuildFromSource": true,
-    "npmArgs": [
-      "--abi=73",
-      "--no-save"
+      "node_modules/**/*.{node,dylib,dll}"
     ],
     "files": [
       "**/*",
       "!node_modules/**/deps${/*}",
       "!node_modules/**/_node_modules${/*}",
-      "!node_modules/sodium-native/prebuilds${/*}",
-      "node_modules/sodium-native/prebuilds/${os}-${arch}/electron-73.node",
-      "node_modules/sodium-native/prebuilds/${os}-${arch}/libsodium.*",
+      "!node_modules/leveldown/prebuilds",
+      "node_modules/leveldown/prebuilds/${platform}-${arch}",
+      "!node_modules/sodium-native/prebuilds",
+      "!node_modules/sodium-native/libsodium",
+      "!node_modules/sodium-native/src",
+      "node_modules/sodium-native/prebuilds/${platform}-${arch}/electron.abi${env.ABI}.node",
+      "node_modules/sodium-native/prebuilds/${platform}-${arch}/libsodium.*",
       "public/**"
     ],
     "mac": {
@@ -43,10 +31,6 @@
       "target": "dmg",
       "publish": [
         "github"
-      ],
-      "files": [
-        "node_modules/sodium-native/prebuilds/darwin-${arch}/electron-73.node",
-        "node_modules/sodium-native/prebuilds/darwin-${arch}/libsodium.*"
       ]
     },
     "linux": {
@@ -67,11 +51,7 @@
     },
     "win": {
       "icon": "build/icon.ico",
-      "publisherName": "regular",
-      "files": [
-        "node_modules/sodium-native/prebuilds/win32-${arch}/electron-73.node",
-        "node_modules/sodium-native/prebuilds/win32-${arch}/libsodium.*"
-      ]
+      "publisherName": "regular"
     },
     "dmg": {
       "icon": "build/dmg-icon.icns",
@@ -86,10 +66,10 @@
     }
   },
   "author": "regular",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "electron": "^6.0.10",
-    "electron-builder": "^20.39.0",
+    "electron-builder": "^21.2.0",
     "electron-rebuild": "^1.8.6",
     "node-abi": "^2.8.0",
     "node-pre-gyp": "^0.12.0"
@@ -98,7 +78,9 @@
     "type": "git",
     "url": "git+https://github.com/regular/bay-of-plenty.git"
   },
-  "keywords": [],
+  "keywords": [
+    "tre"
+  ],
   "bugs": {
     "url": "https://github.com/regular/bay-of-plenty/issues"
   },
