@@ -1,5 +1,5 @@
 const debug = require('debug')
-debug.enable('*')
+//debug.enable('*')
 
 module.exports = function(fs, scope) {
   const log = debug(scope)
