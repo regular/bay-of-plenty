@@ -4,16 +4,19 @@ const ssbKeys = require('ssb-keys')
 
 const log = require('./log')(fs, 'bop:sbot')
 const loadOrCreateConfigFile = require('./network-config-file')
+const addBlobs = require('./add-blobs')
 
 module.exports = function(networks, cb) {
   networks = networks || {}
   const netkeys = Object.keys(networks)
   log(`available networks ${netkeys}`)
   let config = netkeys.length && networks[netkeys[0]]
+  let cannedConfig = false
   if (!config) {
     try {
       log('Trying to read bundled .trerc')
-      config = JSON.parse(fs.readFileSync('.trerc', 'utf8'))
+      config = JSON.parse(fs.readFileSync(join(__dirname, '.trerc'), 'utf8'))
+      cannedConfig = true
     } catch(err) {
       log(err.message)
       return cb(err)
@@ -35,7 +38,13 @@ module.exports = function(networks, cb) {
     log(`public key ${keys.id}`)
     log(`network key ${config.caps.shs}`)
     const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
-    cb(null, ssb, config, keys.id, browserKeys)
+    if (!cannedConfig) {
+      return cb(null, ssb, config, keys.id, browserKeys)
+    }
+    addBlobs(ssb, join(__dirname, 'blobs'), err =>{
+      if (err) return cb(err)
+      cb(null, ssb, config, keys.id, browserKeys)
+    })
   })
 
 }
