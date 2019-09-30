@@ -1,0 +1,9 @@
+1.
+on Linux, when doing `npm run pack` with electron 6 installed as dependency,
+ssb.revisions.get never returns, so we hang on the boot screen.
+This does not happen on macOS
+Hm.. works when build as AppImage.
+
+2.
+On macOS, sbot cannot bind to the IPv6 address returned by multiserver-scopes(?)
+

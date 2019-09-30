@@ -4,6 +4,7 @@ const ssbKeys = require('ssb-keys')
 const ssbConfigDefaults = require('ssb-config/defaults')
 const mkdirp = require('mkdirp')
 const defaultCap = require('ssb-caps/caps.json')
+const ip = require('non-private-ip')
 
 module.exports = function loadOrCreateConfigFile(parsedInvite) {
   let config = parsedInvite
@@ -42,7 +43,7 @@ module.exports = function loadOrCreateConfigFile(parsedInvite) {
 
   config.connections = {}
   config.connections.incoming = {
-    net: [{ port: config.port, scope: "private", transform: "shs" }],
+    net: [{ port: config.port, host: ip.private.v4, scope: "private", transform: "shs" }],
     ws: [{ port: config.ws.port, scope: "device", transform: "shs" }]
   },
   config.connections.outgoing = {
