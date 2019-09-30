@@ -58,5 +58,6 @@
     "legacy": false,
     "sympathy": 10,
     "max": 314572800
-  }
+  },
+  "autoconnect": "net:138.201.131.83:63942~shs:Z9nZknO0mKsIjMnmiJLNRX+kLpT4JkgEytgYd9Ga0AA=" 
 }
