@@ -35,9 +35,13 @@ module.exports = function(networks, cb) {
 
   const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
   createSbot(config, keys, (err, ssb) => {
+    if (err) return cb(err)
     log(`public key ${keys.id}`)
     log(`network key ${config.caps.shs}`)
     const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
+    if (config.autoconnect) {
+      ssb.gossip.connect(config.autoconnect)
+    }
     if (!cannedConfig) {
       return cb(null, ssb, config, keys.id, browserKeys)
     }
