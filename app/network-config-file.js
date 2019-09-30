@@ -6,8 +6,7 @@ const mkdirp = require('mkdirp')
 const defaultCap = require('ssb-caps/caps.json')
 const ip = require('non-private-ip')
 
-module.exports = function loadOrCreateConfigFile(parsedInvite) {
-  let config = parsedInvite
+module.exports = function loadOrCreateConfigFile(config) {
   const unsafe_caps = config.caps && config.caps.shs || config.network && config.network.slice(1).replace(/\.[^.]+$/, '')
   const safe_caps = unsafe_caps.replace(/\//g, '-').replace(/\?/g, '_')
   config.path = join(process.env.HOME, '.bay-of-plenty', 'networks', safe_caps)

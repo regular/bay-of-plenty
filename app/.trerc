@@ -1,0 +1,62 @@
+{
+  "party": true,
+  "timeout": 0,
+  "pub": true,
+  "local": true,
+  "friends": {
+    "dunbar": 150,
+    "hops": 3
+  },
+  "gossip": {
+    "connections": 3
+  },
+  "connections": {
+    "outgoing": {
+      "net": [
+        {
+          "transform": "shs"
+        }
+      ]
+    },
+    "incoming": {
+      "net": [
+        {
+          "port": 63942,
+          "scope": "private",
+          "transform": "shs"
+        }
+      ],
+      "ws": [
+        {
+          "port": 63943,
+          "scope": "device",
+          "transform": "shs"
+        }
+      ]
+    }
+  },
+  "timers": {
+    "connection": 0,
+    "reconnect": 5000,
+    "ping": 300000,
+    "handshake": 5000
+  },
+  "caps": {
+    "shs": "FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c="
+  },
+  "logging": {
+    "level": "notice"
+  },
+  "autofollow": "@i0xWLOUzr5rTvcwSxSY+saTVZNZENgk7FGLccjzcZ1E=.ed25519",
+  "boot": "%JoHqY1UeNoslLjcUwllFtdii0ZUYBmy3wKCegNgr750=.sha256",
+  "network": "*FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c=.ed25519",
+  "port": 63942,
+  "ws": {
+    "port": 63943
+  },
+  "blobs": {
+    "legacy": false,
+    "sympathy": 10,
+    "max": 314572800
+  }
+}
