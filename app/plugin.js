@@ -33,7 +33,8 @@ function makeIndex() {
 exports.name = 'bayofplenty'
 exports.version = require('./package.json').version
 exports.manifest = {
-  close: 'async'
+  close: 'async',
+  openApp: 'async'
 }
 
 exports.init = function (ssb, config) {
@@ -108,6 +109,7 @@ exports.init = function (ssb, config) {
     })
   })
 
+  // TODO: hook
   function close(cb) {
     debug('close')
     logger.unsubscribe(LOG_LEVEL, log)
@@ -123,7 +125,6 @@ exports.init = function (ssb, config) {
       window.localStorage["tre-keypair"] = atob("${b64}");
       console.log("done setting keys");
     `
-    //debug('executing', code)
     win.webContents.executeJavaScript(code)
     emptyQueue()
   }
@@ -177,6 +178,17 @@ exports.init = function (ssb, config) {
   sv.close = close
   sv.addWindow = addWindow
   sv.log = log
+
+  let openAppCallback = null
+  sv.setOpenAppCallback = function(cb) {
+    openAppCallback = cb
+  }
+  
+  sv.openApp = function(invite, cb) {
+    if (!openAppCallback) return cb(new Error('No openAppCallback set'))
+    openAppCallback(invite, cb)
+  }
+
   return sv
 }
 

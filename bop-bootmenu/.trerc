@@ -1,0 +1,41 @@
+{
+  "network": "*FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c=.ed25519",
+  "caps": {
+    "shs": "FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c="
+  },
+  "port": 63952,
+  "ws": {
+    "port": 63953
+  },
+  "blobs": {
+    "legacy": false,
+    "sympathy": 10,
+    "max": 3221225472
+  },
+  "master": [
+    "@m3Qrw0/aVcFfN/nyKqLKdfG3F4qnFQFMRQQB7gYtGzo=.ed25519"
+  ],
+  "budo": {
+    "host": "localhost",
+    "port": 63954
+  },
+  "tre": {
+    "branches": {
+      "root": "%ZZVNONfoSwI/pKGSC2ycZCxjMYPmt3fxGhgz1RFGL1o=.sha256",
+      "about": "%fYeqUFoV+DOr1W+k4DuT+xjRMS2u1xhV8RCnLyucpXI=.sha256",
+      "machines": "%RhsTptp3VwdOn0r0xqk2N4pvE4Q3ODxZWKYSSqamZrQ=.sha256",
+      "prototypes": "%ev67kTP5rU8wXnofmYB0ia512cI76FT5vN0xatlbXyM=.sha256",
+      "assets": "%KS9F1mavePkXTwkzKVR2FaeSdOXeBSO2eGOBNZV5IFA=.sha256",
+      "images": "%n/LH5jv/L727WcUcRmON1ZqcagA9uijiVKYJjBmjaDo=.sha256",
+      "stylesheets": "%nzy4Sww3eydEcSB1iGEipvcUcp8YaK+Vp8pmKCX9v/s=.sha256",
+      "fonts": "%Q7gcgZFwjDxapCavJbWbALeglQn9Pa24DdP58LK5tYw=.sha256",
+      "code": "%mUXNOe8JTK5r5W4vICIDN7U8fdTRhlNJ6XIH7JqOhoQ=.sha256",
+      "webapps": "%obclOJAC1hnYZ0oCI6XnJWJjrXw3VPvjK7oGIaRlMyM=.sha256",
+      "trash": "%cSkmYDjgix3+vvj5dWtqbUy7PlrPZcGR6t5Y5jZZeZE=.sha256"
+    },
+    "prototypes": {}
+  },
+  "plugins": {
+    "ssb-revisions": true
+  }
+}

@@ -1,0 +1,3 @@
+- [x] create new network with simple hello world webapp
+- [x] in bop, add a specialized bop-sbot
+  - [x] hardcoded caps and auto-follow

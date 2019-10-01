@@ -1,0 +1,27 @@
+{
+  "name": "bop-bootmenu",
+  "version": "1.0.0",
+  "description": "bay-of-plenty netwaork/application menu",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/regular/bop-bootmenu.git"
+  },
+  "keywords": [],
+  "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/regular/bop-bootmenu/issues"
+  },
+  "homepage": "https://github.com/regular/bop-bootmenu#readme",
+  "dependencies": {
+    "debug": "^4.1.1",
+    "module-styles": "^1.0.0",
+    "mutant": "^3.23.0",
+    "ssb-revisions": "^1.4.1",
+    "tre-client": "^2.2.0"
+  }
+}
