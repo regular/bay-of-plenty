@@ -2,7 +2,7 @@ const {client} = require('tre-client')
 const styles = require('module-styles')('bop-bootmenu')
 const h = require('mutant/html-element')
 const debug = require('debug')('bop-bootmenu')
-
+const {parse} = require('tre-invite-code')
 
 client( (err, ssb, config) =>{
   console.dir(config)
@@ -17,7 +17,7 @@ styles(`
 `)
 
 function makeInviteForm(ssb) {
-  let textarea
+  let textarea, button
 
   return h('div', [
     h('h1', 'Please enter invite code'),
@@ -33,20 +33,31 @@ function makeInviteForm(ssb) {
         required: true,
         spellcheck: "false",
         wrap: "hard",
-        placeholder: "Your invite code goes here"
+        placeholder: "Your invite code goes here",
+        'ev-input': ev => {
+          const ok = Boolean(parse(textarea.value.replace(/\s/g,'')))
+          button.disabled = !ok
+        }
       }),
-      h('input', {
+      button = h('input', {
         type: "submit",
         'ev-click': ev=>{
           setTimeout( ()=>{
-            ev.target.disabled = true
+            button.disabled = true
           }, 1)
           const code = textarea.value
           console.log('invite code', code)
           ev.preventDefault()
-          ssb.bayofplenty.openApp(code, err=>{
-            console.error(`openApp failed: ${err.message}`)
-            ev.target.disabled = false
+          ssb.bayofplenty.openApp(code, (err, result)=>{
+            if (err) {
+              console.error(`openApp failed: ${err.message}`)
+              button.disabled = false
+              return
+            }
+            const {webapp, url} = result
+            console.log(`WEBAPP: ${webapp.value.content.name}`)
+            console.log('Loading app ...')
+            document.location.href= url
           })
         }
       })

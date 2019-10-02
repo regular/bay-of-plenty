@@ -40,56 +40,68 @@ module.exports = function inject(electron, fs, log, sbot) {
     if (process.env.BOP_DEV_TOOLS) {
       win.openDevTools()
     }
-    boot(sbot, win, log, err=>{
+    boot(sbot, win, log, (err, result)=>{
       if (err) {
         log('Failed to boot: ' + err.message)
         process.exit(1)
       }
-      log('done booting')
+      const {webapp, url} = result
+      const name = webapp.value.content.name
+      
+      async function tryLoad() {
+        try {
+          log('loading webapp blob ...')
+          await win.loadURL(url)
+        } catch(err) {
+          log(`error loading ${url} -- retrying`)
+          tryLoad()
+        }
+      }
+      tryLoad()
+      log(`done booting webapp "${name}"`)
     })
   }
 }
 
 function boot(sbot, win, log, cb) {
-  openApp(null, cb)
+  return openApp(null, cb)
 
   function openApp(invite, cb) {
     netconf = invite ? netconfFromInvite(invite) : null
     if (invite && !netconf) return cb(new Error('invite parse error'))
     server(sbot, win, log, netconf || {}, (err, ssb, config, myid, browserKeys) => {
       if (err) {
-        log('sbot failed',err.message)
+        log(`sbot failed: ${err.message}`)
         return cb(err)
       }
       log('sbot started')
+      
+      // TODO: onlye when sbot uses canned config
+      ssb.bayofplenty.setOpenAppCallback(openApp)
 
       win.on('close', e=>{
         log('window closed -- closing sbot')
         ssb.close()
       })
       
-      let timer
+      
       log('Waiting for navigation to /about.')
       win.webContents.once('did-navigate', e => {
-        clearInterval(timer)
         log('Waiting for dom-ready on obbout page ..')
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
-          // TODO: onlye when sbot uses canned config
-            ssb.bayofplenty.setOpenAppCallback(openApp)
           ssb.bayofplenty.addWindow(win, browserKeys)
-          cb(null)
         })
       })
-      /* We need to repeat this because ssb-server
-       * has no callback that tells us when it actually started listening
-       * (!#@) */
-      const aboutURL = `http://127.0.0.1:${config.ws.port}/about`
-      timer = setInterval( ()=>{
-        log(`load about page: ${aboutURL}`)
-        win.loadURL(aboutURL)
-      }, 700)
+
+      const bootkey = config.boot
+      ssb.revisions.get(bootkey, {meta: true}, (err, webapp) =>{
+        if (err) return cb(err)
+        const url = `http://127.0.0.1:${config.ws.port}/about`
+        cb(null, {webapp, url})
+      })
+      
     })
   }
 }

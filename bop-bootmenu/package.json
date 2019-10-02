@@ -22,6 +22,7 @@
     "module-styles": "^1.0.0",
     "mutant": "^3.23.0",
     "ssb-revisions": "^1.4.1",
-    "tre-client": "^2.2.0"
+    "tre-client": "^2.2.0",
+    "tre-invite-code": "^1.1.0"
   }
 }

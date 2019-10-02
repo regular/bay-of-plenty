@@ -186,7 +186,11 @@ exports.init = function (ssb, config) {
   
   sv.openApp = function(invite, cb) {
     if (!openAppCallback) return cb(new Error('No openAppCallback set'))
-    openAppCallback(invite, cb)
+    openAppCallback(invite, (err, kvm)=>{
+      if (err) return cb(err)
+      debug('openApp %O', kvm)
+      cb(null, kvm)
+    })
   }
 
   return sv
