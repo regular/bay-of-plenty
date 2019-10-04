@@ -95,11 +95,10 @@ function boot(sbot, win, log, cb) {
         })
       })
 
-      const bootkey = config.boot
-      ssb.revisions.get(bootkey, {meta: true}, (err, webapp) =>{
+      ssb.treBoot.getWebApp(config.boot, (err, result) =>{
         if (err) return cb(err)
         const url = `http://127.0.0.1:${config.ws.port}/about`
-        cb(null, {webapp, url})
+        cb(null, {webapp: result.kv, url})
       })
       
     })
