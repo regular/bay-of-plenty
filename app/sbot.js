@@ -6,11 +6,7 @@ const log = require('./log')(fs, 'bop:sbot')
 const loadOrCreateConfigFile = require('./network-config-file')
 const addBlobs = require('./add-blobs')
 
-module.exports = function(networks, cb) {
-  networks = networks || {}
-  const netkeys = Object.keys(networks)
-  log(`available networks ${netkeys}`)
-  let config = netkeys.length && networks[netkeys[0]]
+module.exports = function(config, cb) {
   let cannedConfig = false
   if (!config) {
     try {

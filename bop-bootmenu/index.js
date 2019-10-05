@@ -16,7 +16,7 @@ client( (err, ssb, config) =>{
   })
 
   document.body.appendChild(
-    h('div', [
+    h('div.bop-bootmenu', [
       h('ul', MutantMap(entries, e=>{
         const {webapp, invite} = e
         return h('li', {
@@ -27,7 +27,10 @@ client( (err, ssb, config) =>{
               document.location.href = url
             })
           }
-        }, webapp.value.content.name)
+        }, [ 
+          h('div.name', webapp.value.content.name),
+          h('div.description', webapp.value.content.description)
+        ])
       })),
       makeInviteForm()
     ])
@@ -36,7 +39,7 @@ client( (err, ssb, config) =>{
   function makeInviteForm() {
     let textarea, button
 
-    return h('div', [
+    return h('div.invite-entry', [
       h('h1', 'Please enter invite code'),
       h('form', {
         action: "/add-network"
@@ -96,7 +99,39 @@ function loadEntries(entries) {
 
 styles(`
   body {
-    background-color: #444;
+    background-color: #333;
+    color: #bbb;
+    font-family: sans;
+  }
+  .bop-bootmenu ul, .invite-entry {
+    padding: 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    margin: 5em 20%;
+    border: 1px solid #222;
+  }
+  .invite-entry textarea {
+    background: #555;
+    border: 1px solid #222;
+    color: #bbb;
+    font-size: 16px;
+    padding: .3em 0em;
+    padding-left: 1em;
+  }
+  .bop-bootmenu li {
+    background: #555;
+    border-top: 1px solid #666;
+    color: #bbb;
+    font-size: 16px;
+    padding: .3em 0em;
+    padding-left: 1em;
+  }
+  .bop-bootmenu li:hover {
+    background-color: darkgreen;
+  }
+  .bop-bootmenu li .name {
+    font-size: 18px;
+    text-shadow: 1px 1px 1px  rgba(0,0,0,.4);
     color: #ddd;
   }
 `)

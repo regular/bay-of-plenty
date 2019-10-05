@@ -31,9 +31,13 @@
       "fonts": "%Q7gcgZFwjDxapCavJbWbALeglQn9Pa24DdP58LK5tYw=.sha256",
       "code": "%mUXNOe8JTK5r5W4vICIDN7U8fdTRhlNJ6XIH7JqOhoQ=.sha256",
       "webapps": "%obclOJAC1hnYZ0oCI6XnJWJjrXw3VPvjK7oGIaRlMyM=.sha256",
-      "trash": "%cSkmYDjgix3+vvj5dWtqbUy7PlrPZcGR6t5Y5jZZeZE=.sha256"
+      "trash": "%cSkmYDjgix3+vvj5dWtqbUy7PlrPZcGR6t5Y5jZZeZE=.sha256",
+      "icons": "%1dB0lPp5iyUFyf9PXciCs5PCsRPFI4UmEcarobglmMM=.sha256"
     },
-    "prototypes": {}
+    "prototypes": {
+      "image": "%bwKbdoBKaDpvyImAPgObFoBy2tuS+EaE4Z7vtqZyje0=.sha256",
+      "stylesheet": "%2P5fqtC7BByBDT5FhwQEs3EbuBkuu0UJ5uI2G7Q7JMw=.sha256"
+    }
   },
   "plugins": {
     "ssb-revisions": true

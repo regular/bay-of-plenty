@@ -2,6 +2,9 @@ const h = require('hyperscript')
 const setStyles = require('module-styles')('bayofplenty')
 const ActivityIndicator = require('tre-activity-indicator')
 
+const bootKey = decodeURIComponent(document.location.pathname.split('/')[2])
+const bootURL = `/boot/${encodeURIComponent(bootKey)}`
+
 setStyles(`
   ul.versions {
     display: grid;
@@ -10,6 +13,9 @@ setStyles(`
     grid-auto-flow: row;
   }
   body {
+    height: 100%;
+    overflow: hidden;
+    background-color: #333;
     font-family: sans-serif;
   }
   div#log {
@@ -70,14 +76,14 @@ container.appendChild(
 function checkBlob(container, activityIndicator) {
   const el = h('.boot', 'checking blob ...')
   container.appendChild(el)
-  fetch('/boot', {
+  fetch(bootURL, {
     method: 'HEAD'
   }).then(response => {
     if (!response.ok) {
       log({
         level: 'error', 
         plug: 'boot',
-        verb: 'Server response for /boot',
+        verb: `Server response for ${bootURL}`,
         data: [response.statusText]
       })
       el.innerText = response.statusText
@@ -93,13 +99,13 @@ function checkBlob(container, activityIndicator) {
     })
     el.innerText = `boot blob is available: ${etag}`
     setTimeout( ()=>{
-      location.href = '/boot'
+      location.href = bootURL
     })
   }).catch(err => {
     log({
       level: 'error', 
       plug: 'boot',
-      verb: 'Error requesting HEAD /boot',
+      verb: `Error requesting HEAD ${bootURL}`,
       data: [err.message]
     })
     el.innerText = 'FAIL'

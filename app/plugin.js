@@ -70,8 +70,9 @@ exports.init = function (ssb, config) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
     debug('HTTP request for path', u.pathname)
-    if (u.pathname == '/about') {
-      debug('request for about page')
+    if (u.pathname.startsWith('/about/')) {
+      const bootKey = decodeURIComponent(u.pathname.split('/')[2])
+      debug(`request for about page, bootKey: ${bootKey}`)
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
       return sendAboutPage(res)

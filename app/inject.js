@@ -26,8 +26,10 @@ module.exports = function inject(electron, fs, log, sbot) {
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app)))
 
     win = new BrowserWindow({
-      width: 800,
-      height: 600,
+      backgroundColor: '#333', 
+      width: 1200,
+      height: Math.round(1200*9/16),
+      darkTheme: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true
@@ -67,14 +69,13 @@ function boot(sbot, win, log, cb) {
   return openApp(null, cb)
 
   function openApp(invite, cb) {
-    netconf = invite ? netconfFromInvite(invite) : null
-    if (invite && !netconf) return cb(new Error('invite parse error'))
-    server(sbot, win, log, netconf || {}, (err, ssb, config, myid, browserKeys) => {
+    const conf = invite ? confFromInvite(invite) : null
+    if (invite && !conf) return cb(new Error('invite parse error'))
+    server(sbot, win, log, conf, (err, ssb, config, myid, browserKeys) => {
       if (err) {
         log(`sbot failed: ${err.message}`)
         return cb(err)
       }
-      log('sbot started')
       
       // TODO: onlye when sbot uses canned config
       ssb.bayofplenty.setOpenAppCallback(openApp)
@@ -95,9 +96,10 @@ function boot(sbot, win, log, cb) {
         })
       })
 
-      ssb.treBoot.getWebApp(config.boot, (err, result) =>{
+      const bootKey = (conf && conf.boot) || config.boot
+      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
         if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/about`
+        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
         cb(null, {webapp: result.kv, url})
       })
       
@@ -105,15 +107,39 @@ function boot(sbot, win, log, cb) {
   }
 }
 
-function server(sbot, win, log, networks, cb) {
-  sbot(networks, (err, ssb, config, myid, browserKeys) => {
+const sbots = {}
+function server(sbot, win, log, conf, cb) {
+  if (conf) {
+    if (!conf.network) return cb(new Error('No network specified'))
+    const entry = sbots[conf.network]
+    if (entry) {
+      entry.refCount++
+      const {ssb, config, myid, browserKeys} = entry
+      log('re-using sbot')
+      return cb(null, ssb, config, myid, browserKeys)
+    }
+  }
+  sbot(conf, (err, ssb, config, myid, browserKeys) => {
     if (!err) {
       log(`sbot started, ssb id ${myid}`)
+      sbots[config.network] = {
+        refCount: 1,
+        ssb: Object.assign({}, ssb, {
+          close: function() {
+            if (--this.refCount == 0) {
+              log('refCount==0, closing sbot')
+              ssb.close.apply(ssb, Array.from(arguments))
+              delete sbots[config.network]
+            }
+          }
+        }),
+        config, myid, browserKeys
+      }
       return cb(null, ssb, config, myid, browserKeys)
     }
     log('Error starting sbot', err.message)
     if (!/ENOENT/.test(err.message)) {
-      log('(no networks and did not find a config file')
+      log('(no config specified and did not find canned .trerc file')
       return cb(err)
     }
     log('asking for invite code ...')
@@ -122,14 +148,14 @@ function server(sbot, win, log, networks, cb) {
         log('Failed to ask for invite code:', err.message)
         return cb(err)
       }
-      const netconf = netconfFromInvite(invite)
-      if (!netconf) {
+      const conf = confFromInvite(invite)
+      if (!conf) {
         log('invite code parse error')
         return cb(new Error('inivte code syntax error'))
       }
-      log('success, netconf is:', JSON.stringify(netconf, null, 2))
+      log('success, conf is:', JSON.stringify(conf, null, 2))
       log('retrying to start sbot')
-      return server(sbot, win, log, netconf, cb)
+      return server(sbot, win, log, conf, cb)
     })
   })
 }
@@ -153,9 +179,8 @@ function askForInvite(win, log, cb) {
   })
 }
 
-function netconfFromInvite(invite) {
+function confFromInvite(invite) {
   invite = invite.replace(/\s*/g,'')
-  const netconf = invites.parse(invite)
-  if (!netconf) return null
-  return {[netconf.network]:netconf}
+  const conf = invites.parse(invite)
+  return conf ? conf : null
 }
