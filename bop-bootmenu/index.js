@@ -3,11 +3,19 @@ const styles = require('module-styles')('bop-bootmenu')
 const h = require('mutant/html-element')
 const MutantArray = require('mutant/array')
 const MutantMap = require('mutant/map')
+const computed = require('mutant/computed')
+const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const {parse} = require('tre-invite-code')
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
+
+  const versions = Value()
+  getVersions(ssb, config, (err, v) =>{
+    versions.set(v)
+  })
+
   const entries = MutantArray()
   loadEntries(entries)
 
@@ -15,26 +23,53 @@ client( (err, ssb, config) =>{
     localStorage.entries = JSON.stringify(entries)
   })
 
+  const networks = computed(entries, entries => {
+    return Object.keys(entries.reduce((acc, {invite})=>{
+      const parsed = parse(invite)
+      console.log(parsed)
+      if (parsed) acc[parsed.network] = true
+      return acc
+    }, {})).sort()
+  })
+
   document.body.appendChild(
     h('div.bop-bootmenu', [
-      h('ul', MutantMap(entries, e=>{
-        const {webapp, invite} = e
-        return h('li', {
-          'ev-click': ev=>{
-            ssb.bayofplenty.openApp(invite, (err, result)=>{
-              if (err) return
-              const {url} = result
-              document.location.href = url
-            })
-          }
-        }, [ 
-          h('div.name', webapp.value.content.name),
-          h('div.description', webapp.value.content.description)
-        ])
-      })),
-      makeInviteForm()
+      computed(networks, networks=>{
+        return h('ul.networks', networks.map(netkey => {
+          return h('li', [
+            h('details', {open: true}, [
+              h('summary.netkey', netkey),
+              renderAppsOfNetwork(netkey)
+            ])
+          ]) 
+        }))
+      }),
+
+      makeInviteForm(),
+      h('div.versions', versions)
     ])
   )
+
+  function renderAppsOfNetwork(netkey) {
+    return h('ul.apps', MutantMap(entries, e=>{
+      const {webapp, invite} = e
+      const parsed = parse(invite)
+      if (!parsed) return []
+      if (parsed.network !== netkey) return []
+      return h('li', {
+        'ev-click': ev=>{
+          ssb.bayofplenty.openApp(invite, (err, result)=>{
+            if (err) return
+            const {url} = result
+            document.location.href = url
+          })
+        }
+      }, [ 
+        h('div.name', webapp.value.content.name),
+        h('div.description', webapp.value.content.description)
+      ])
+    }))
+  }
 
   function makeInviteForm() {
     let textarea, button
@@ -97,13 +132,39 @@ function loadEntries(entries) {
   } catch(e) {}
 }
 
+function getVersions(ssb, config, cb) {
+  const sep = ' • '
+  let result = []
+  if (config && config.bootMsgRevision) {
+    result.push(`BOP Bootmenu ${shorter(config.bootMsgRevision || 'n/a')}`)
+  }
+  if (!ssb.bayofplenty) return cb(null, result.join(sep))
+  ssb.bayofplenty.versions((err, versions)=>{
+    if (err) return cb(err)
+    const {node, modules, electron, chrome} = versions
+    result = result.concat([
+      `Node: ${node} (ABI ${modules})`,
+      `Electron ${electron}`,
+      `Chrome ${chrome}`
+    ])
+    result.unshift(
+      `Bat of Plenty ${versions['bay-of-plenty']}`
+    )
+    cb(null, result.join(sep))
+  })
+}
+
+function shorter(s) {
+  return s.substr(0, 6)
+}
+
 styles(`
   body {
     background-color: #333;
     color: #bbb;
     font-family: sans;
   }
-  .bop-bootmenu ul, .invite-entry {
+  .bop-bootmenu ul.apps, .invite-entry {
     padding: 0;
     box-sizing: border-box;
     overflow-y: auto;
@@ -118,7 +179,7 @@ styles(`
     padding: .3em 0em;
     padding-left: 1em;
   }
-  .bop-bootmenu li {
+  .bop-bootmenu ul.apps > li {
     background: #555;
     border-top: 1px solid #666;
     color: #bbb;
@@ -126,10 +187,10 @@ styles(`
     padding: .3em 0em;
     padding-left: 1em;
   }
-  .bop-bootmenu li:hover {
+  .bop-bootmenu ul.apps > li:hover {
     background-color: darkgreen;
   }
-  .bop-bootmenu li .name {
+  .bop-bootmenu ul.apps > li .name {
     font-size: 18px;
     text-shadow: 1px 1px 1px  rgba(0,0,0,.4);
     color: #ddd;

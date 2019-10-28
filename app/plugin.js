@@ -10,6 +10,7 @@ const h = require('hyperscript')
 const crypto = require('crypto')
 const FlumeviewLevel = require('flumeview-level')
 const pull = require('pull-stream')
+const pkg = require('./package.json')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -34,7 +35,8 @@ exports.name = 'bayofplenty'
 exports.version = require('./package.json').version
 exports.manifest = {
   close: 'async',
-  openApp: 'async'
+  openApp: 'async',
+  versions: 'sync'
 }
 
 exports.init = function (ssb, config) {
@@ -192,6 +194,14 @@ exports.init = function (ssb, config) {
       debug('openApp %O', kvm)
       cb(null, kvm)
     })
+  }
+
+  sv.versions = function() {
+    return Object.assign(
+      {},
+      process.versions,
+      {'bay-of-plenty': pkg.version}
+    )
   }
 
   return sv
