@@ -32,23 +32,45 @@ client( (err, ssb, config) =>{
     }, {})).sort()
   })
 
+  let addAppEl
+
   document.body.appendChild(
     h('div.bop-bootmenu', [
       computed(networks, networks=>{
-        return h('ul.networks', networks.map(netkey => {
-          return h('li', [
-            h('details', {open: true}, [
-              h('summary.netkey', netkey),
-              renderAppsOfNetwork(netkey)
-            ])
-          ]) 
-        }))
+        return [
+          h('h1', networks.length == 0 ?
+            'Please enter invite code' :
+            'Select application to start'
+          ),
+          h('ul.networks', networks.map(netkey => {
+            return h('li', [
+              h('details', {open: true}, [
+                h('summary', [
+                  h('span', 'Network: '),
+                  h('span.netkey', netkey)
+                ]),
+                renderAppsOfNetwork(netkey)
+              ])
+            ]) 
+          }))
+        ]
       }),
-
-      makeInviteForm(),
+      h('.add-app', [
+        h('details', {
+          open: computed(networks, netkeys => {
+            return !netkeys || netkeys.length == 0
+          })
+        }, [
+          h('summary', [
+            h('span', 'Add application')
+          ]),
+          makeInviteForm()
+        ])
+      ]),
       h('div.versions', versions)
     ])
   )
+
 
   function renderAppsOfNetwork(netkey) {
     return h('ul.apps', MutantMap(entries, e=>{
@@ -75,7 +97,6 @@ client( (err, ssb, config) =>{
     let textarea, button
 
     return h('div.invite-entry', [
-      h('h1', 'Please enter invite code'),
       h('form', {
         action: "/add-network"
       }, [
@@ -94,29 +115,30 @@ client( (err, ssb, config) =>{
             button.disabled = !ok
           }
         }),
-        button = h('input', {
-          type: "submit",
-          'ev-click': ev=>{
-            setTimeout( ()=>{
-              button.disabled = true
-            }, 1)
-            const code = textarea.value
-            console.log('invite code', code)
-            ev.preventDefault()
-            ssb.bayofplenty.openApp(code, (err, result)=>{
-              if (err) {
-                console.error(`openApp failed: ${err.message}`)
-                button.disabled = false
-                return
-              }
-              const {webapp, url} = result
-              console.log(`WEBAPP: ${webapp.value.content.name}`)
-              entries.push({webapp, invite: code})
-              console.log('Loading app ...')
-              document.location.href= url
-            })
-          }
-        })
+        h('.bbuton-container', [
+          button = h('button', {
+            'ev-click': ev=>{
+              setTimeout( ()=>{
+                button.disabled = true
+              }, 1)
+              const code = textarea.value
+              console.log('invite code', code)
+              ev.preventDefault()
+              ssb.bayofplenty.openApp(code, (err, result)=>{
+                if (err) {
+                  console.error(`openApp failed: ${err.message}`)
+                  button.disabled = false
+                  return
+                }
+                const {webapp, url} = result
+                console.log(`WEBAPP: ${webapp.value.content.name}`)
+                entries.push({webapp, invite: code})
+                console.log('Loading app ...')
+                document.location.href= url
+              })
+            }
+          }, 'Apply')
+        ])
       ])
     ])
   }
@@ -134,11 +156,22 @@ function loadEntries(entries) {
 
 function getVersions(ssb, config, cb) {
   const sep = ' • '
+  const copyright = 'Copyright 2019 Jan Bölsche'
   let result = []
+
+  function postProc(result) {
+    if (result.length && result[0].startsWith('Bay')) {
+      result = [result[0]].concat([copyright]).concat(result.slice(1))
+    } else {
+      result.unshift(copyright)
+    }
+    return result.join(sep)
+  }
+
   if (config && config.bootMsgRevision) {
     result.push(`BOP Bootmenu ${shorter(config.bootMsgRevision || 'n/a')}`)
   }
-  if (!ssb.bayofplenty) return cb(null, result.join(sep))
+  if (!ssb.bayofplenty) return cb(null, postProc(result))
   ssb.bayofplenty.versions((err, versions)=>{
     if (err) return cb(err)
     const {node, modules, electron, chrome} = versions
@@ -148,27 +181,51 @@ function getVersions(ssb, config, cb) {
       `Chrome ${chrome}`
     ])
     result.unshift(
-      `Bat of Plenty ${versions['bay-of-plenty']}`
+      `Bay of Plenty ${versions['bay-of-plenty']}`
     )
-    cb(null, result.join(sep))
+    cb(null, postProc(result))
   })
 }
 
 function shorter(s) {
   return s.substr(0, 6)
 }
+document.addEventListener('mousedown', function (event) {
+  if (event.detail > 1) {
+      event.preventDefault();
+  }
+}, false)
 
 styles(`
+  *:focus {
+    outline-color: rgba(0,255,0,0.2);
+  }
   body {
     background-color: #333;
     color: #bbb;
     font-family: sans;
   }
+  .bop-bootmenu ul {
+    padding: 0;
+    list-style: none;
+  }
+  .bop-bootmenu li {
+    white-space: nowrap;
+  }
+  .bop-bootmenu ul.networks, .add-app {
+    margin: auto;
+    width: 40em;
+  }
+  .bop-bootmenu .netkey {
+    font-family: monospace;
+  }
   .bop-bootmenu ul.apps, .invite-entry {
     padding: 0;
     box-sizing: border-box;
     overflow-y: auto;
-    margin: 5em 20%;
+    margin: 1em 1em;
+  }
+  .bop-bootmenu ul.apps {
     border: 1px solid #222;
   }
   .invite-entry textarea {
@@ -187,6 +244,9 @@ styles(`
     padding: .3em 0em;
     padding-left: 1em;
   }
+  .bop-bootmenu ul.apps > li > div {
+    cursor: pointer;
+  }
   .bop-bootmenu ul.apps > li:hover {
     background-color: darkgreen;
   }
@@ -194,6 +254,9 @@ styles(`
     font-size: 18px;
     text-shadow: 1px 1px 1px  rgba(0,0,0,.4);
     color: #ddd;
+  }
+  button {
+    font-size: 16pt;
   }
 `)
 
