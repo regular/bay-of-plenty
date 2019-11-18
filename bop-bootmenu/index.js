@@ -221,12 +221,12 @@ function shorter(s) {
 
 styles(`
   *:focus {
-    outline-color: rgba(0,255,0,0.2);
+    outline-color: rgb(50,70,70);
   }
   body {
     background-color: #333;
     color: #bbb;
-    font-family: sans;
+    font-family: sans-serif;
   }
   html, body {
     padding: 0;
@@ -255,6 +255,10 @@ styles(`
     padding: 0;
     margin: 0;
     height: 100%;
+    justify-self: center;
+  }
+  .bop-bootmenu h1 {
+    margin: 1em 0em;
   }
   .bop-bootmenu ul {
     padding: 0;
@@ -264,7 +268,6 @@ styles(`
     white-space: nowrap;
   }
   .bop-bootmenu ul.networks, .add-app {
-    margin: auto;
     width: 40em;
   }
   .bop-bootmenu .netkey {
