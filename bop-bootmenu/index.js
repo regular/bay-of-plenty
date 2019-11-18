@@ -32,45 +32,61 @@ client( (err, ssb, config) =>{
     }, {})).sort()
   })
 
-  let addAppEl
+  // prevent selection on dblclick
+  document.addEventListener('mousedown', function (event) {
+    if (event.detail > 1) {
+        event.preventDefault()
+    }
+  }, false)
 
   document.body.appendChild(
-    h('div.bop-bootmenu', [
-      computed(networks, networks=>{
-        return [
-          h('h1', networks.length == 0 ?
-            'Please enter invite code' :
-            'Select application to start'
-          ),
-          h('ul.networks', networks.map(netkey => {
-            return h('li', [
-              h('details', {open: true}, [
-                h('summary', [
-                  h('span', 'Network: '),
-                  h('span.netkey', netkey)
-                ]),
-                renderAppsOfNetwork(netkey)
-              ])
-            ]) 
-          }))
-        ]
-      }),
-      h('.add-app', [
-        h('details', {
-          open: computed(networks, netkeys => {
-            return !netkeys || netkeys.length == 0
-          })
-        }, [
-          h('summary', [
-            h('span', 'Add application')
-          ]),
-          makeInviteForm()
+    h('.bop-bootmenu', [
+      h('.main', [
+        h('.scroll-view', [
+          renderMenu(),
+          renderAddApp()
         ])
       ]),
-      h('div.versions', versions)
+      h('.versions', versions)
     ])
   )
 
+  function renderMenu() {
+    return computed(networks, networks=>{
+      return [
+        h('h1', networks.length == 0 ?
+          'Please enter invite code' :
+          'Select application to start'
+        ),
+        h('ul.networks', networks.map(netkey => {
+          return h('li', [
+            h('details', {open: true}, [
+              h('summary', [
+                h('span', 'Network: '),
+                h('span.netkey', netkey)
+              ]),
+              renderAppsOfNetwork(netkey)
+            ])
+          ]) 
+        }))
+      ]
+    })
+  }
+
+  function renderAddApp() {
+    return h('.add-app', [
+      h('details', {
+        open: computed(networks, netkeys => {
+          return !netkeys || netkeys.length == 0
+        })
+      }, [
+        h('summary', [
+          h('span', 'Add application')
+        ]),
+        makeInviteForm()
+      ])
+    ])
+  }
 
   function renderAppsOfNetwork(netkey) {
     return h('ul.apps', MutantMap(entries, e=>{
@@ -190,11 +206,6 @@ function getVersions(ssb, config, cb) {
 function shorter(s) {
   return s.substr(0, 6)
 }
-document.addEventListener('mousedown', function (event) {
-  if (event.detail > 1) {
-      event.preventDefault();
-  }
-}, false)
 
 styles(`
   *:focus {
@@ -204,6 +215,34 @@ styles(`
     background-color: #333;
     color: #bbb;
     font-family: sans;
+  }
+  html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+  }
+  .bop-bootmenu {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-rows: 1fr 2em;
+    place-items: stretch;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+  }
+  .bop-bootmenu .versions {
+    background: #222;
+    color: #666;
+    margin: 0;
+    padding: .4em;
+  }
+  .bop-bootmenu .main {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    height: 100%;
   }
   .bop-bootmenu ul {
     padding: 0;
