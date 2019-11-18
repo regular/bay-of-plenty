@@ -18,6 +18,7 @@ client( (err, ssb, config) =>{
 
   const entries = MutantArray()
   loadEntries(entries)
+  const appLoading = Value()
 
   entries(entries => {
     localStorage.entries = JSON.stringify(entries)
@@ -95,9 +96,17 @@ client( (err, ssb, config) =>{
       if (!parsed) return []
       if (parsed.network !== netkey) return []
       return h('li', {
+        classList: computed(appLoading, loading =>{
+          return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
+        }),
         'ev-click': ev=>{
+          if (appLoading()) return
+          appLoading.set(invite)
           ssb.bayofplenty.openApp(invite, (err, result)=>{
-            if (err) return
+            if (err) {
+              appLoading.set(null)
+              return
+            }
             const {url} = result
             document.location.href = url
           })
@@ -139,9 +148,12 @@ client( (err, ssb, config) =>{
               }, 1)
               const code = textarea.value
               console.log('invite code', code)
+              if (appLoading()) return
+              appLoading.set(code)
               ev.preventDefault()
               ssb.bayofplenty.openApp(code, (err, result)=>{
                 if (err) {
+                  appLoading.set(null)
                   console.error(`openApp failed: ${err.message}`)
                   button.disabled = false
                   return
@@ -288,6 +300,13 @@ styles(`
   }
   .bop-bootmenu ul.apps > li:hover {
     background-color: darkgreen;
+  }
+  .bop-bootmenu ul.apps > li.loading,
+  .bop-bootmenu ul.apps > li.loading:hover {
+    background-color: darkblue;
+  }
+  .bop-bootmenu ul.apps > li.hide {
+    opacity: 0.2;
   }
   .bop-bootmenu ul.apps > li .name {
     font-size: 18px;
