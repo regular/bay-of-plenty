@@ -17,6 +17,22 @@ module.exports = function menuTemplate(app) {
         { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
         { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
       ]
+    },
+    { label: "View",
+      submenu: [
+        { label: "New Tab", accelerator: "CmdOrCtrl+T"},
+        { label: "Close Tab", accelerator: "CmdOrCtrl+W" },
+        { type: "separator" },
+        { label: "Zoom In", accelerator: "CmdOrCtrl+Plus", role: "zoomIn" },
+        { label: "Zoom Out", accelerator: "CmdOrCtrl+-", role: "zoomOut" },
+        { label: "Reset Zoom", accelerator: "CmdOrCtrl+=", role: "resetZoom" },
+        { type: "separator" },
+        { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", role: "toggleDevTools" },
+        { label: "Toggle Fullscreen", accelerator: "CmdOrCtrl+F", role: "toggleFullscreen" },
+        { type: "separator" },
+        { label: "Reload", accelerator: "CmdOrCtrl+r", role: "reload" }
+      ]
     }
   ]
 }
+
