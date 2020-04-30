@@ -1,9 +1,9 @@
-module.exports = function menuTemplate(app) {
+module.exports = function menuTemplate(app, tabs) {
   return [
     { label: "Application",
       submenu: [
         { label: "Quit", accelerator: "Command+Q",
-          click: () => { app.quit() }
+          click: app.quit
         }
       ]
     },
@@ -20,17 +20,26 @@ module.exports = function menuTemplate(app) {
     },
     { label: "View",
       submenu: [
-        { label: "New Tab", accelerator: "CmdOrCtrl+T"},
-        { label: "Close Tab", accelerator: "CmdOrCtrl+W" },
-        { type: "separator" },
         { label: "Zoom In", accelerator: "CmdOrCtrl+Plus", role: "zoomIn" },
         { label: "Zoom Out", accelerator: "CmdOrCtrl+-", role: "zoomOut" },
-        { label: "Reset Zoom", accelerator: "CmdOrCtrl+=", role: "resetZoom" },
-        { type: "separator" },
+        { label: "Reset Zoom", accelerator: "CmdOrCtrl+=", role: "resetZoom" }
+      ]
+    },
+    { label: "Tools",
+      submenu: [
         { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", role: "toggleDevTools" },
         { label: "Toggle Fullscreen", accelerator: "CmdOrCtrl+F", role: "toggleFullscreen" },
         { type: "separator" },
         { label: "Reload", accelerator: "CmdOrCtrl+r", role: "reload" }
+      ]
+    },
+    { label: "Tabs",
+      id: 'tabs',
+      submenu: [
+        { label: "New Tab", accelerator: "CmdOrCtrl+T", click: tabs.newTab },
+        { label: "Close Tab", accelerator: "CmdOrCtrl+W", click: tabs.closeTab },
+        { label: "Next Tab", accelerator: "Alt+CmdOrCtrl+Right", click: tabs.nextTab },
+        { label: "Previous Tab", accelerator: "Alt+CmdOrCtrl+Left", click: tabs.previousTab }
       ]
     }
   ]

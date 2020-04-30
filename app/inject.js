@@ -1,13 +1,22 @@
+const fs = require('fs')
+const {join} = require('path')
+
 const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
 const secure = require('./secure')
+const Tabs = require('./tabs')
+
+const webPreferences = {
+  nodeIntegration: false,
+  contextIsolation: true
+}
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
 module.exports = function inject(electron, fs, log, sbot) {
-  const {app, ipcMain, BrowserWindow, Menu} = electron
+  const {app, ipcMain, BrowserWindow, BrowserView, Menu, MenuItem} = electron
 
   const old_console_log = console.log
   console.log = (...args) => {
@@ -23,18 +32,27 @@ module.exports = function inject(electron, fs, log, sbot) {
 
   function start() {
     secure(app)  
-    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app)))
+
 
     win = new BrowserWindow({
       backgroundColor: '#333', 
       width: 1200,
       height: Math.round(1200*9/16),
       darkTheme: true,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true
-      }
+      webPreferences
     })
+
+    /*
+    function initTabView(tab) {
+      console.log('detected new tab')
+      tab.once('close', ()=>{
+        console.log('detected tab close')
+      })
+    }
+    */
+
+    const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
+    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
     win.on('closed', () => {
       log('window closed')
       win = null
@@ -42,26 +60,72 @@ module.exports = function inject(electron, fs, log, sbot) {
     if (process.env.BOP_DEV_TOOLS) {
       win.openDevTools()
     }
-    boot(sbot, win, log, (err, result)=>{
-      if (err) {
-        log('Failed to boot: ' + err.message)
-        process.exit(1)
+    initTabView(win)
+
+    function initTabView(view) {
+      const appMenu = Menu.getApplicationMenu()
+      const tabMenu = appMenu.getMenuItemById('tabs').submenu
+      let label = `Tab ${view.id}`
+      let accelerator = `CmdOrCtrl+${view.id}`
+      if (!tabMenu.getMenuItemById('separator')) {
+        tabMenu.append(new MenuItem({
+          id: 'separator',
+          type: 'separator'
+        }))
+        label = 'Main Tab'
+        accelerator = `CmdOrCtrl+0`
       }
-      const {webapp, url} = result
-      const name = webapp.value.content.name
-      
-      async function tryLoad() {
-        try {
-          log('loading webapp blob ...')
-          await win.loadURL(url)
-        } catch(err) {
-          log(`error loading ${url} -- retrying`)
-          tryLoad()
+      tabMenu.append(new MenuItem({
+        label,
+        accelerator,
+        type: 'radio',
+        id: label,
+        click: ()=>{
+          if (label == 'Main Tab') {
+            return tabs.activateTab('_main')
+          }
+          tabs.activateTab(`${view.id}`)
         }
-      }
-      tryLoad()
-      log(`done booting webapp "${name}"`)
-    })
+      }))
+      Menu.setApplicationMenu(appMenu)
+      Menu.getApplicationMenu().getMenuItemById(label).checked = true
+
+      win.setTitle(label)
+      view.on('deactivate-tab', ()=>{
+        win.setTitle('Main Tab') // we receive no activate-tab for the main tab
+        Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
+      })
+      view.on('activate-tab', ()=>{
+        win.setTitle(label)
+        Menu.getApplicationMenu().getMenuItemById(label).checked = true
+      })
+      view.on('close', ()=>{
+        // There is no menu.remove() ...
+        Menu.getApplicationMenu().getMenuItemById(label).visible = false
+      })
+
+      boot(sbot, view, log, (err, result)=>{
+        if (err) {
+          log('Failed to boot: ' + err.message)
+          process.exit(1)
+        }
+        const {webapp, url} = result
+        const name = webapp.value.content.name
+        
+        async function tryLoad() {
+          try {
+            log('loading webapp blob ...')
+            await view.webContents.loadURL(url)
+          } catch(err) {
+            log(`error loading ${url}: ${err.message} -- retrying`)
+            tryLoad()
+          }
+        }
+        tryLoad()
+        log(`done booting webapp "${name}"`)
+      })
+    }
+
   }
 }
 
@@ -77,14 +141,13 @@ function boot(sbot, win, log, cb) {
         return cb(err)
       }
       
-      // TODO: onlye when sbot uses canned config
+      // TODO: only when sbot uses canned config
       ssb.bayofplenty.setOpenAppCallback(openApp)
 
-      win.on('close', e=>{
-        log('window closed -- closing sbot')
+      win.once('close', e=>{
+        log('window/tab closed -- closing sbot')
         ssb.close()
       })
-      
       
       log('Waiting for navigation to /about.')
       win.webContents.once('did-navigate', e => {
@@ -109,7 +172,10 @@ function boot(sbot, win, log, cb) {
 
 const sbots = {}
 function server(sbot, win, log, conf, cb) {
-  if (conf) {
+  if (!conf) {
+    conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc'), 'utf8'))
+  }
+  //if (conf) {
     if (!conf.network) return cb(new Error('No network specified'))
     const entry = sbots[conf.network]
     if (entry) {
@@ -118,7 +184,7 @@ function server(sbot, win, log, conf, cb) {
       log('re-using sbot')
       return cb(null, ssb, config, myid, browserKeys)
     }
-  }
+  //}
   sbot(conf, (err, ssb, config, myid, browserKeys) => {
     if (!err) {
       log(`sbot started, ssb id ${myid}`)
@@ -164,7 +230,7 @@ function askForInvite(win, log, cb) {
   let done = false
   
   const port = 18484
-  win.loadFile(__dirname + '/public/invite.html')
+  win.webContents.loadFile(__dirname + '/public/invite.html')
   win.webContents.once('will-navigate', (e, url) =>{
     e.preventDefault()
     log('Prevented attempt to navigate to', url)
