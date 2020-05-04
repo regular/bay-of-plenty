@@ -7,7 +7,7 @@ const loadOrCreateConfigFile = require('./network-config-file')
 const addBlobs = require('./add-blobs')
 
 module.exports = function(config, cb) {
-  let cannedConfig = false
+  /*let cannedConfig = false
   if (!config) {
     try {
       log('Trying to read bundled .trerc')
@@ -18,6 +18,7 @@ module.exports = function(config, cb) {
       return cb(err)
     }
   }
+  */
   config = loadOrCreateConfigFile(config)
   
   log('Creating sbot with config' + JSON.stringify(config, null, 2))
@@ -37,9 +38,11 @@ module.exports = function(config, cb) {
     if (config.autoconnect) {
       ssb.gossip.connect(config.autoconnect)
     }
+    /*
     if (!cannedConfig) {
       return cb(null, ssb, config, keys.id, browserKeys)
     }
+    */
     addBlobs(ssb, join(__dirname, 'blobs'), err =>{
       if (err) return cb(err)
       cb(null, ssb, config, keys.id, browserKeys)

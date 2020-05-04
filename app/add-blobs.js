@@ -6,10 +6,11 @@ const toPull = require('stream-to-pull-stream')
 const debug = require('debug')('bop:add-blob')
 
 module.exports = function addBlobs(ssb, dir, cb) {
+  debug('globbing blobs')
   pull(
     glob(join(dir, '*')),
     pull.asyncMap((fn, cb)=>{
-      debug('adding %s ...', fn)
+      debug('adding blob %s ...', fn)
       pull(
         toPull.source(fs.createReadStream(fn)),
         ssb.blobs.add( null, (err, hash)=>{
