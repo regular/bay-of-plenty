@@ -43,7 +43,7 @@ client( (err, ssb, config) =>{
   document.body.appendChild(
     h('.bop-bootmenu', [
       h('.main', [
-        h('h1', 'Bay of Plenty'),
+        //h('h1', 'Bay of Plenty'),
         h('.scroll-view', [
           renderMenu(),
           renderAddApp()
