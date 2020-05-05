@@ -1,6 +1,7 @@
 const fs = require('fs')
 const {parse} = require('url')
 const {join} = require('path')
+const mkdirp = require('mkdirp')
 const debug = require('./log')(fs, 'bop:plugin')
 const Browserify = require('browserify')
 const indexhtmlify = require('indexhtmlify')
@@ -9,8 +10,11 @@ const hyperstream = require('hyperstream')
 const h = require('hyperscript')
 const crypto = require('crypto')
 const FlumeviewLevel = require('flumeview-level')
+const {generate} = require('ssb-keys')
 const pull = require('pull-stream')
 const pkg = require('./package.json')
+const listPublicKeys = require('./lib/list-public-keys')
+const getDatapath = require('./lib/get-data-path')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -36,7 +40,9 @@ exports.version = require('./package.json').version
 exports.manifest = {
   close: 'async',
   openApp: 'async',
-  versions: 'sync'
+  versions: 'sync',
+  listPublicKeys: 'source',
+  addIdentity: 'async'
 }
 
 exports.init = function (ssb, config) {
@@ -187,9 +193,9 @@ exports.init = function (ssb, config) {
     openAppCallback = cb
   }
   
-  sv.openApp = function(invite, cb) {
+  sv.openApp = function(invite, id, cb) {
     if (!openAppCallback) return cb(new Error('No openAppCallback set'))
-    openAppCallback(invite, (err, kvm)=>{
+    openAppCallback(invite, id, (err, kvm)=>{
       if (err) return cb(err)
       debug('openApp %O', kvm)
       cb(null, kvm)
@@ -204,6 +210,20 @@ exports.init = function (ssb, config) {
     )
   }
 
+  sv.listPublicKeys = function(network) {
+    return pull(
+      listPublicKeys(network),
+      pull.map( ({id})=>id)
+    )
+  }
+
+  sv.addIdentity = function(network, cb) {
+    const pair = generate()
+    const datapath = getDatapath(network, pair.id)
+    mkdirp.sync(datapath)
+    fs.writeFileSync(join(datapath, 'secret'), JSON.stringify(pair), 'utf8')
+    cb(null, pair.id)
+  }
   return sv
 }
 

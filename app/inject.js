@@ -130,11 +130,15 @@ module.exports = function inject(electron, fs, log, sbot) {
 }
 
 function boot(sbot, win, log, cb) {
-  return openApp(null, cb)
+  return openApp(null, null, cb)
 
-  function openApp(invite, cb) {
+  function openApp(invite, id, cb) {
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) return cb(new Error('invite parse error'))
+
+    // TODO: use id
+    console.warn(`XXX should use id:${id}`)
+
     server(sbot, win, log, conf, (err, ssb, config, myid, browserKeys) => {
       if (err) {
         log(`sbot failed: ${err.message}`)

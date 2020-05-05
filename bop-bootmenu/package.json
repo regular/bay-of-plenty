@@ -4,7 +4,7 @@
   "description": "bay-of-plenty netwaork/application menu",
   "main": "index.js",
   "scripts": {
-    "deploy": "tre-bot blobs.get \"$(~/dev/tre/tre-init/bin/apps-deploy.js index.js --force|jsonpath-dl value.content.codeBlob)\" > ../app/blobs/bop-menu",
+    "deploy": "tre-bot blobs.get \"$(~/dev/tre/tre-init/bin/apps-deploy.js index.js --first --force|jsonpath-dl value.content.codeBlob)\" > ../app/blobs/bop-menu",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,6 +22,7 @@
     "debug": "^4.1.1",
     "module-styles": "^1.0.0",
     "mutant": "^3.23.0",
+    "pull-stream": "^3.6.14",
     "ssb-revisions": "^1.4.1",
     "tre-client": "^2.2.0",
     "tre-fonts": "^1.6.1",

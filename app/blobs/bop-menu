@@ -26,6 +26,7 @@ const MutantMap = require('mutant/map')
 const computed = require('mutant/computed')
 const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
+const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
 
 client( (err, ssb, config) =>{
@@ -87,6 +88,7 @@ client( (err, ssb, config) =>{
                 h('span', 'Network: '),
                 h('span.netkey', netkey)
               ]),
+              renderIdsOfNetwork(netkey),
               renderAppsOfNetwork(netkey)
             ])
           ]) 
@@ -110,6 +112,62 @@ client( (err, ssb, config) =>{
     ])
   }
 
+  function renderIdsOfNetwork(netkey) {
+    const pubKeys = MutantArray()
+    const selected = Value(localStorage[`id-${netkey}`])
+    selected(v => localStorage[`id-${netkey}`] = v)
+
+    if (ssb.bayofplenty && ssb.bayofplenty.listPublicKeys) {
+      pull(
+        ssb.bayofplenty.listPublicKeys(netkey),
+        pull.collect( (err, results) => {
+          if (err) return console.error(err.message)
+          pubKeys.set(results)
+          if (!selected()) selected.set(results[0])
+        })
+      )
+    } else {
+      pubKeys.set(['default ID', 'additional ID'])
+    }
+    
+    return h('.ids', [
+      h('ul.ids', MutantMap(pubKeys, id=>{
+        return h('li', [
+          h('input', {
+            type: 'radio',
+            name: netkey,
+            value: id,
+            id,
+            checked: computed(selected, selected => selected == id),
+            'ev-click': e => selected.set(id)
+          }),
+          h('label', {
+            'for': id
+          }, id)
+        ])
+      })),
+      renderAddIdButton()
+    ])
+
+    function renderAddIdButton() {
+      if (ssb.bayofplenty && ssb.bayofplenty.addIdentity) {
+        return h('li', 
+          h('button',{
+            'ev-click': ()=>{
+              ssb.bayofplenty.addIdentity(netkey, (err, newId) =>{
+                if (err) return console.error(err)
+                pubKeys.push(newId)
+                selected.set(newId)
+              })
+            }
+          }, 'Add Identity')
+        )
+      }
+      return []
+    }
+  }
+
+
   function renderAppsOfNetwork(netkey) {
     return h('ul.apps', MutantMap(entries, e=>{
       const {webapp, invite} = e
@@ -123,7 +181,8 @@ client( (err, ssb, config) =>{
         'ev-click': ev=>{
           if (appLoading()) return
           appLoading.set(invite)
-          ssb.bayofplenty.openApp(invite, (err, result)=>{
+          const id = localStorage[`id-${netkey}`]
+          ssb.bayofplenty.openApp(invite, id, (err, result)=>{
             if (err) {
               appLoading.set(null)
               return
@@ -172,18 +231,23 @@ client( (err, ssb, config) =>{
               if (appLoading()) return
               appLoading.set(code)
               ev.preventDefault()
-              ssb.bayofplenty.openApp(code, (err, result)=>{
-                if (err) {
-                  appLoading.set(null)
-                  console.error(`openApp failed: ${err.message}`)
-                  button.disabled = false
-                  return
-                }
-                const {webapp, url} = result
-                console.log(`WEBAPP: ${webapp.value.content.name}`)
-                entries.push({webapp, invite: code})
-                console.log('Loading app ...')
-                document.location.href= url
+              const parsed = parse(code)
+              if (!parsed) throw new Error('invite parse error')
+              ssb.bayofplenty.addIdentity(parsed.network, (err, id) => {
+                if (err) return console.error(err.message)
+                ssb.bayofplenty.openApp(code, id, (err, result)=>{
+                  if (err) {
+                    appLoading.set(null)
+                    console.error(`openApp failed: ${err.message}`)
+                    button.disabled = false
+                    return
+                  }
+                  const {webapp, url} = result
+                  console.log(`WEBAPP: ${webapp.value.content.name}`)
+                  entries.push({webapp, invite: code})
+                  console.log('Loading app ...')
+                  document.location.href= url
+                })
               })
             }
           }, 'Apply')
@@ -343,7 +407,7 @@ styles(`
 `)
 
 
-},{"debug":6,"module-styles":20,"mutant/array":32,"mutant/computed":33,"mutant/html-element":35,"mutant/map":44,"mutant/value":48,"tre-client":183,"tre-invite-code":185}],2:[function(require,module,exports){
+},{"debug":6,"module-styles":20,"mutant/array":32,"mutant/computed":33,"mutant/html-element":35,"mutant/map":44,"mutant/value":48,"pull-stream":104,"tre-client":183,"tre-invite-code":185}],2:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>

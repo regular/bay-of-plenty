@@ -48,7 +48,7 @@
     "level": "notice"
   },
   "autofollow": "@i0xWLOUzr5rTvcwSxSY+saTVZNZENgk7FGLccjzcZ1E=.ed25519",
-  "boot": "%JoHqY1UeNoslLjcUwllFtdii0ZUYBmy3wKCegNgr750=.sha256",
+  "boot": "%6k8B9dWAdFkO/3v6Nn+MtgQXr+4AG5zBRh8HzdoUDLc=.sha256",
   "network": "*FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c=.ed25519",
   "port": 63942,
   "ws": {
