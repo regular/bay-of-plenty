@@ -130,11 +130,27 @@ exports.init = function (ssb, config) {
     windows.push(win)
     const b64 = btoa(JSON.stringify(browserKeys)).toString('base64')
     const code = `
-      console.log("setting keys");
-      window.localStorage["tre-keypair"] = atob("${b64}");
-      console.log("done setting keys");
+      new Promise( (resolve, reject)=>{
+        try{
+          console.log("setting keys");
+          window.localStorage["tre-keypair"] = atob("${b64}");
+          console.log("done setting keys");
+          resolve(null);
+        } catch(e) {
+          reject(e);
+        }
+      })
     `
+    debug('exec JS 1')
     win.webContents.executeJavaScript(code)
+      .then( result => {
+        debug('done exec JS 1', result)
+      })
+      .catch( err => {
+        debug('err exec JS 1')
+        console.error(`Failed to execute JS: ${err.message}`)
+      })
+
     emptyQueue()
   }
 
@@ -143,20 +159,22 @@ exports.init = function (ssb, config) {
     if (!windows.length) return
     function exec(code, rm) {
       return function(win) {
-        //debug('executing', code)
-        try {
-          win.webContents.executeJavaScript(code, (err, v) =>{
-            if (err) return console.log(err.message)
-            if (v == false) {
-              debug('returned false remuoving from list')
-              rm.push(win)
-            }
-          })
-        } catch(e) {
-          debug('executeJavaScript throws %s', e.message)
+        debug('exec JS 2')
+        win.webContents.executeJavaScript(code)
+        .catch( err  => {
+          debug('err exec JS 2')
+          debug('executeJavaScript throws %s', err.message)
           debug('remuoving window from list')
           rm.push(win)
-        }
+          return console.log(err.message)
+        })
+        .then( v => {
+          debug('done exec JS 2', v)
+          if (v == false) {
+            debug('returned false remuoving from list')
+            rm.push(win)
+          }
+        })
       }
     }
     let rm = []
@@ -164,10 +182,10 @@ exports.init = function (ssb, config) {
       const msg = queue.shift()
       const b64 = btoa(JSON.stringify(msg))
       const code = `
-        (function(){
+        new Promise( (resolve, reject) => {
           const msg = JSON.parse(atob('${b64}'));
-          (${client_log.toString()})(msg);
-        })();
+          resolve((${client_log.toString()})(msg));
+        });
       `
       windows.forEach(exec(code, rm))
       // jshint -W083
