@@ -3,5 +3,7 @@ const encode = require('./fs-safe-encode')
 const {join} = require('path')
 
 module.exports = function getDatapath(network, id) {
-  return join(getNetworksDir(), `${encode(network)}-${encode(id)}`)
+  const prefix = join(getNetworksDir(), `${encode(network)}`)
+  if (!id) return prefix
+  return `${prefix}-${encode(id)}`
 }

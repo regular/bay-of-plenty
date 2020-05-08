@@ -11,13 +11,16 @@ const encode =require('./lib/fs-safe-encode')
 module.exports = function loadOrCreateConfigFile(config) {
   const unsafe_caps = config.caps && config.caps.shs || config.network && config.network.slice(1).replace(/\.[^.]+$/, '')
   const safe_caps = encode(unsafe_caps)
-  config.path = join(getNetworksDir(), safe_caps)
+
+  // this is done in inject.js now
+  // config.path = join(getNetworksDir(), safe_caps)
 
   mkdirp.sync(config.path)
 
   const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
   config.master = [browserKeys.id]
 
+  // TODO: use port allocator
   if (!config.port) {
     if (!config.autoinvite) {
       config.port = Math.floor(50000 + 15000 * Math.random())
@@ -46,7 +49,7 @@ module.exports = function loadOrCreateConfigFile(config) {
   config.connections.incoming = {
     net: [{ port: config.port, host: ip.private.v4, scope: "private", transform: "shs" }],
     ws: [{ port: config.ws.port, scope: "device", transform: "shs" }]
-  },
+  }
   config.connections.outgoing = {
     net: [{ transform: "shs" }]
   }

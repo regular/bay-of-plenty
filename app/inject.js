@@ -1,12 +1,16 @@
 const fs = require('fs')
 const {join} = require('path')
 
+const pull = require('pull-stream')
+
 const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
 const {parse} = require('url')
 const qs = require('query-string')
 const secure = require('./secure')
 const Tabs = require('./tabs')
+const listPublicKeys = require('./lib/list-public-keys')
+const getDatapath = require('./lib/get-data-path')
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -140,16 +144,18 @@ function boot(sbot, win, log, cb) {
     if (invite && !conf) return cb(new Error('invite parse error'))
 
     // TODO: use id
-    console.warn(`XXX should use id:${id}`)
+    console.warn(`XXX Using id:${id}`)
 
-    server(sbot, win, log, conf, (err, ssb, config, myid, browserKeys) => {
+    server(sbot, win, log, conf, id, (err, ssb, config, myid, browserKeys) => {
       if (err) {
         log(`sbot failed: ${err.message}`)
         return cb(err)
       }
       
-      // TODO: only when sbot uses canned config
-      ssb.bayofplenty.setOpenAppCallback(openApp)
+      // only when sbot uses canned config
+      if (!invite && !id) {
+        ssb.bayofplenty.setOpenAppCallback(openApp)
+      }
 
       win.once('close', e=>{
         log('window/tab closed -- closing sbot')
@@ -178,59 +184,77 @@ function boot(sbot, win, log, cb) {
 }
 
 const sbots = {}
-function server(sbot, win, log, conf, cb) {
+function server(sbot, win, log, conf, id, cb) {
   if (!conf) {
     conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc'), 'utf8'))
   }
-  //if (conf) {
-    if (!conf.network) return cb(new Error('No network specified'))
-    const entry = sbots[conf.network]
+  if (!conf.network) return cb(new Error('No network specified'))
+  let datapath = getDatapath(conf.network, null)
+  if (!id) {
+    return getOrCreateSbot(datapath, cb)
+  }
+  console.log('Looking for existing datapath for network', conf.network)
+  pull(
+    listPublicKeys(conf.network),
+    pull.find( r => {return r.id == id}, (err, result)=>{
+      console.log('XXX done', err)
+      if (err) return cb(new Error(`unknown identity: ${id}, ${err.message}`))
+      datapath = result.datapath
+      console.log('done:', datapath)
+      getOrCreateSbot(datapath, cb)
+    })
+  )
+
+  function getOrCreateSbot(datapath, cb) {
+    console.log('XXX Creating sbit with datapath', datapath)
+    const entry = sbots[datapath]
     if (entry) {
       entry.refCount++
       const {ssb, config, myid, browserKeys} = entry
       log('re-using sbot')
       return cb(null, ssb, config, myid, browserKeys)
     }
-  //}
-  sbot(conf, (err, ssb, config, myid, browserKeys) => {
-    if (!err) {
-      log(`sbot started, ssb id ${myid}`)
-      sbots[config.network] = {
-        refCount: 1,
-        ssb: Object.assign({}, ssb, {
-          close: function() {
-            if (--this.refCount == 0) {
-              log('refCount==0, closing sbot')
-              ssb.close.apply(ssb, Array.from(arguments))
-              delete sbots[config.network]
+    conf.path = datapath
+    sbot(conf, (err, ssb, config, myid, browserKeys) => {
+      if (!err) {
+        log(`sbot started, ssb id ${myid}, datapath: ${datapath}`)
+        sbots[datapath] = {
+          refCount: 1,
+          ssb: Object.assign({}, ssb, {
+            close: function() {
+              if (--this.refCount == 0) {
+                log('refCount==0, closing sbot')
+                ssb.close.apply(ssb, Array.from(arguments))
+                delete sbots[config.network]
+              }
             }
-          }
-        }),
-        config, myid, browserKeys
+          }),
+          config, myid, browserKeys
+        }
+        return cb(null, ssb, config, myid, browserKeys)
       }
-      return cb(null, ssb, config, myid, browserKeys)
-    }
-    log('Error starting sbot', err.message)
-    if (!/ENOENT/.test(err.message)) {
-      log('(no config specified and did not find canned .trerc file')
-      return cb(err)
-    }
-    log('asking for invite code ...')
-    askForInvite(win, log, (err, invite) => {
-      if (err) {
-        log('Failed to ask for invite code:', err.message)
+      log('Error starting sbot', err.message)
+      if (!/ENOENT/.test(err.message)) {
+        log('(no config specified and did not find canned .trerc file')
         return cb(err)
       }
-      const conf = confFromInvite(invite)
-      if (!conf) {
-        log('invite code parse error')
-        return cb(new Error('inivte code syntax error'))
-      }
-      log('success, conf is:', JSON.stringify(conf, null, 2))
-      log('retrying to start sbot')
-      return server(sbot, win, log, conf, cb)
+      log('asking for invite code ...')
+      askForInvite(win, log, (err, invite) => {
+        if (err) {
+          log('Failed to ask for invite code:', err.message)
+          return cb(err)
+        }
+        const conf = confFromInvite(invite)
+        if (!conf) {
+          log('invite code parse error')
+          return cb(new Error('inivte code syntax error'))
+        }
+        log('success, conf is:', JSON.stringify(conf, null, 2))
+        log('retrying to start sbot')
+        return server(sbot, win, log, conf, cb)
+      })
     })
-  })
+  }
 }
 
 function askForInvite(win, log, cb) {
