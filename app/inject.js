@@ -9,6 +9,7 @@ const secure = require('./secure')
 const Tabs = require('./tabs')
 
 const webPreferences = {
+  enableRemoteModule: false,
   nodeIntegration: false,
   contextIsolation: true
 }
@@ -17,6 +18,8 @@ process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
 module.exports = function inject(electron, fs, log, sbot) {
   const {app, ipcMain, BrowserWindow, BrowserView, Menu, MenuItem} = electron
+
+  app.allowRendererProcessReuse = true
 
   const old_console_log = console.log
   console.log = (...args) => {
