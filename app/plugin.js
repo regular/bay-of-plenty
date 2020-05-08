@@ -15,6 +15,7 @@ const pull = require('pull-stream')
 const pkg = require('./package.json')
 const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
+const {deallocPort} = require('./port-allocator')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -123,6 +124,9 @@ exports.init = function (ssb, config) {
     debug('close')
     logger.unsubscribe(LOG_LEVEL, log)
     windows = []
+    deallocPort(config.host, config.port)
+    deallocPort('127.0.0.1', config.ws.port)
+    deallocPort('localhost', config.ws.port)
     cb(null)
   }  
 
