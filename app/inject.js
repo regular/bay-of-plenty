@@ -206,7 +206,7 @@ function server(sbot, win, log, conf, id, cb) {
   )
 
   function getOrCreateSbot(datapath, cb) {
-    console.log('XXX Creating sbit with datapath', datapath)
+    console.log('XXX Creating sbot with datapath', datapath)
     const entry = sbots[datapath]
     if (entry) {
       entry.refCount++

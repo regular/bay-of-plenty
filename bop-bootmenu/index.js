@@ -112,6 +112,17 @@ client( (err, ssb, config) =>{
     
     return h('.ids', [
       h('ul.ids', MutantMap(pubKeys, id=>{
+        const avatar = Value()
+        if (ssb.bayofplenty && ssb.bayofplenty.avatarUpdates) {
+          pull(
+            ssb.bayofplenty.avatarUpdates(netkey, id),
+            pull.drain(newAvatar =>{
+              avatar.set(newAvatar)
+            }, err => {
+              console.error(`avatarUpdates failed: ${err.message}`)
+            })
+          )
+        }
         return h('li', [
           h('input', {
             type: 'radio',
@@ -123,7 +134,9 @@ client( (err, ssb, config) =>{
           }),
           h('label', {
             'for': id
-          }, id)
+          }, computed(avatar, avatar =>{
+            return (avatar && avatar.name) ? avatar.name : id
+          }))
         ])
       })),
       renderAddIdButton()

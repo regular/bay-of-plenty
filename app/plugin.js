@@ -16,6 +16,7 @@ const pkg = require('./package.json')
 const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
 const {deallocPort} = require('./port-allocator')
+const avatarUpdate = require('./avatar-update')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -43,7 +44,8 @@ exports.manifest = {
   openApp: 'async',
   versions: 'sync',
   listPublicKeys: 'source',
-  addIdentity: 'async'
+  addIdentity: 'async',
+  avatarUpdates: 'source'
 }
 
 exports.init = function (ssb, config) {
@@ -246,6 +248,11 @@ exports.init = function (ssb, config) {
     fs.writeFileSync(join(datapath, 'secret'), JSON.stringify(pair), 'utf8')
     cb(null, pair.id)
   }
+
+  sv.avatarUpdates = function(network, id) {
+    return avatarUpdate.getUpdates(network, id)
+  }
+
   return sv
 }
 

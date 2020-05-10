@@ -7,3 +7,7 @@ Hm.. works when build as AppImage.
 2.
 On macOS, sbot cannot bind to the IPv6 address returned by multiserver-scopes(?)
 
+3.
+when adding an existing application, dont create another entry.
+Update the existing one instead.
+
