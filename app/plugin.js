@@ -12,6 +12,8 @@ const crypto = require('crypto')
 const FlumeviewLevel = require('flumeview-level')
 const {generate} = require('ssb-keys')
 const pull = require('pull-stream')
+const Pushable = require('pull-pushable')
+const Notify = require('pull-notify')
 const pkg = require('./package.json')
 const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
@@ -45,7 +47,9 @@ exports.manifest = {
   versions: 'sync',
   listPublicKeys: 'source',
   addIdentity: 'async',
-  avatarUpdates: 'source'
+  avatarUpdates: 'source',
+  logStream: 'source',
+  consoleMessageStream: 'source'
 }
 
 exports.init = function (ssb, config) {
@@ -53,7 +57,9 @@ exports.init = function (ssb, config) {
   let windows = []
   const queue = []
   const logger = logging(ssb)
+
   logger.subscribe(ssb.id, LOG_LEVEL, log)
+  const consoleMessageNotifiers = {}
 
   const sv = ssb._flumeUse('WebappIndex', makeIndex())
   
@@ -132,8 +138,22 @@ exports.init = function (ssb, config) {
     cb(null)
   }  
 
-  function addWindow(win, browserKeys) {
+  function addConsoleStream(source, id) {
+    debug(`Adding console message source for ${id}`)
+    const notify = consoleMessageNotifiers[id] = consoleMessageNotifiers[id] || Notify()
+    pull(
+      source,
+      pull.drain(notify, err=>{
+        notify.end(err)
+        delete consoleMessageNotifiers[id]
+      })
+    )
+  }
+
+  function addWindow(win, browserKeys, consoleOutputStream) {
     windows.push(win)
+    addConsoleStream(consoleOutputStream, browserKeys.id)
+
     const b64 = btoa(JSON.stringify(browserKeys)).toString('base64')
     const code = `
       new Promise( (resolve, reject)=>{
@@ -253,6 +273,32 @@ exports.init = function (ssb, config) {
     return avatarUpdate.getUpdates(network, id)
   }
 
+  sv.logStream = function(level) {
+    const p = Pushable(true, onDone)
+    logger.subscribe(ssb.id, level, onLog)
+
+    function onDone() {
+      logger.unsubscribe(level, onLog)
+    }
+
+    function onLog(msg) {
+      p.push(msg)
+    }
+
+    return p.source
+  }
+
+  sv.consoleMessageStream = function() {
+    const {id} = this
+    debug(`getting consoleMessageStream for ${id}`)
+    const notify = consoleMessageNotifiers[id]
+    if (!notify) {
+      debug(`id ${id} not found.`)
+      return pull.error(`Unknown id: ${id}`)
+    }
+    return notify.listen()
+  }
+  
   return sv
 }
 

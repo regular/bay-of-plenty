@@ -2,6 +2,7 @@ const fs = require('fs')
 const {join} = require('path')
 
 const pull = require('pull-stream')
+const Pushable = require('pull-pushable')
 
 const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
@@ -143,9 +144,6 @@ function boot(sbot, win, log, cb) {
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) return cb(new Error('invite parse error'))
 
-    // TODO: use id
-    console.warn(`XXX Using id:${id}`)
-
     server(sbot, win, log, conf, id, (err, ssb, config, myid, browserKeys) => {
       if (err) {
         log(`sbot failed: ${err.message}`)
@@ -168,7 +166,8 @@ function boot(sbot, win, log, cb) {
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
-          ssb.bayofplenty.addWindow(win, browserKeys)
+          ssb.bayofplenty.addWindow(win, browserKeys, consoleMessageSource(win.webContents))
+
         })
       })
 
@@ -281,3 +280,16 @@ function confFromInvite(invite) {
   const conf = invites.parse(invite)
   return conf ? conf : null
 }
+
+function consoleMessageSource(webContents) {
+  const p = Pushable(true)
+
+  webContents.on('console-message', (e, level, message, line, sourceUrl) =>{
+    p.push({
+      level: '_ info warn error'.split(' ')[level],
+      message, line
+    })
+  })
+  return p.source
+}
+
