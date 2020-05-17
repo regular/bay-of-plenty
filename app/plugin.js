@@ -42,7 +42,6 @@ function makeIndex() {
 exports.name = 'bayofplenty'
 exports.version = require('./package.json').version
 exports.manifest = {
-  close: 'async',
   openApp: 'async',
   versions: 'sync',
   listPublicKeys: 'source',
@@ -127,16 +126,15 @@ exports.init = function (ssb, config) {
     })
   })
 
-  // TODO: hook
-  function close(cb) {
+  ssb.close.hook( function(fn, args) {
     debug('close')
     logger.unsubscribe(LOG_LEVEL, log)
     windows = []
     deallocPort(config.host, config.port)
     deallocPort('127.0.0.1', config.ws.port)
     deallocPort('localhost', config.ws.port)
-    cb(null)
-  }  
+    fn.apply(this, args)
+  })
 
   function addConsoleStream(source, id) {
     debug(`Adding console message source for ${id}`)
@@ -228,7 +226,6 @@ exports.init = function (ssb, config) {
     emptyQueue()
   }
 
-  sv.close = close
   sv.addWindow = addWindow
   sv.log = log
 
