@@ -32,7 +32,13 @@ module.exports = function(config, cb) {
       log(`network key ${config.caps.shs}`)
       const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
       if (config.autoconnect) {
-        ssb.gossip.connect(config.autoconnect)
+        let ac = config.autoconnect
+        if (typeof ac == 'string') ac = [ac]
+        ac.forEach(address => {
+          log(`auto-connecting to ${address}`)
+          ssb.conn.remember(address)
+          ssb.conn.connect(address)
+        })
       }
       pull(
         ssb.about.socialValueStream({dest: keys.id, key: 'name'}),
