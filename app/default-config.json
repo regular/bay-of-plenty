@@ -1,0 +1,31 @@
+{
+  "timeout": 0,
+  "pub": true,
+  "local": true,
+  "friends": {
+    "dunbar": 150,
+    "hops": 3
+  },
+  "timers": {
+    "connection": 0,
+    "reconnect": 5000,
+    "ping": 300000,
+    "handshake": 5000
+  },
+  "logging": {
+    "level": "notice"
+  },
+  "blobs": {
+    "legacy": false,
+    "sympathy": 10,
+    "max": 314572800
+  },
+  "lan": {
+    "legacy": false
+  },
+  "conn": {
+    "autostart": true,
+    "hops": 2,
+    "populatePubs": true
+  }
+}

@@ -7,9 +7,6 @@
     "dunbar": 150,
     "hops": 3
   },
-  "gossip": {
-    "connections": 3
-  },
   "connections": {
     "outgoing": {
       "net": [
@@ -59,5 +56,8 @@
     "sympathy": 10,
     "max": 314572800
   },
-  "autoconnect": "net:138.201.131.83:63942~shs:Z9nZknO0mKsIjMnmiJLNRX+kLpT4JkgEytgYd9Ga0AA=" 
+  "autoconnect": "net:138.201.131.83:63942~shs:Z9nZknO0mKsIjMnmiJLNRX+kLpT4JkgEytgYd9Ga0AA=" ,
+  "lan": {
+    "legacy": false
+  }
 }

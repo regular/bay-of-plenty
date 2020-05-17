@@ -184,9 +184,9 @@ function boot(sbot, win, log, cb) {
 
 const sbots = {}
 function server(sbot, win, log, conf, id, cb) {
-  if (!conf) {
-    conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc'), 'utf8'))
-  }
+  if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
+  conf = Object.assign({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
+  
   if (!conf.network) return cb(new Error('No network specified'))
   let datapath = getDatapath(conf.network, null)
   if (!id) {
