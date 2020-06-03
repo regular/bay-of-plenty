@@ -14,6 +14,7 @@ module.exports = function(config, cb) {
     log('Creating sbot with config' + JSON.stringify(config, null, 2))
     const createSbot = require('tre-bot')()
       .use(require('./plugin'))
+      .use(require('ssb-sandboxed-views'))
       .use(require('ssb-autofollow'))
       .use(require('ssb-autoname'))
       .use(require('ssb-autoinvite'))
