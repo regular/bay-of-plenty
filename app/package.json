@@ -1,6 +1,6 @@
 {
   "name": "bay-of-plenty",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Experimental client for the Scuttleverse",
   "main": "index.js",
   "scripts": {
@@ -33,7 +33,7 @@
     "ssb-caps": "^1.1.0",
     "ssb-config": "^3.3.2",
     "ssb-keys": "^7.2.0",
-    "ssb-sandboxed-views": "^1.0.0",
+    "ssb-sandboxed-views": "^2.0.0",
     "ssb-social-index": "^1.0.0",
     "stream-to-pull-stream": "^1.7.3",
     "tre-activity-indicator": "^1.0.0",
