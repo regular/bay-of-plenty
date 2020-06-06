@@ -1,5 +1,6 @@
 const fs = require('fs')
 const {join} = require('path')
+const merge = require('lodash.merge')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
@@ -185,7 +186,7 @@ function boot(sbot, win, log, cb) {
 const sbots = {}
 function server(sbot, win, log, conf, id, cb) {
   if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
-  conf = Object.assign({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
+  conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
   
   if (!conf.network) return cb(new Error('No network specified'))
   let datapath = getDatapath(conf.network, null)
