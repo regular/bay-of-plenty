@@ -14,6 +14,10 @@ module.exports = function(config, cb) {
     debug('Creating sbot with config' + JSON.stringify(config, null, 2))
     const createSbot = require('tre-bot')()
       .use(require('./plugin'))
+      .use({
+        manifest: {getAddress: "sync"},
+        init: ssb => ({getAddress: scope => ssb.multiserver.address(scope)})
+      })
       .use(require('ssb-sandboxed-views'))
       .use(require('ssb-autofollow'))
       .use(require('ssb-autoname'))
@@ -29,6 +33,7 @@ module.exports = function(config, cb) {
     const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
     createSbot(config, keys, (err, ssb) => {
       if (err) return cb(err)
+      debug('sbot manifest' + JSON.stringify(ssb.getManifest(), null, 2))
       debug(`public key ${keys.id}`)
       debug(`network key ${config.caps.shs}`)
       debug(`datapath: ${config.path}`)
