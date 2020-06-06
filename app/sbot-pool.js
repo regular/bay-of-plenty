@@ -5,6 +5,7 @@ const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
 const SharedPool = require('./lib/shared-pool')
 const pull = require('pull-stream')
+const merge = require('lodash.merge')
 
 module.exports = function Pool(Sbot) {
 
@@ -20,7 +21,7 @@ module.exports = function Pool(Sbot) {
   function makePromise({conf, id}) {
     return new Promise( (resolve, reject) => {
       if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
-      conf = Object.assign({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
+      conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
       
       if (!conf.network) return reject(new Error('No network specified'))
       

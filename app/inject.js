@@ -166,7 +166,6 @@ function OpenApp(pool, page, view, reflection) {
   }
 }
 
-
 async function loadURL(page, url) {
   console.error(`loading ${url} ...`)
   const response = await page.goto(url, {
