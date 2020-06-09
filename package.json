@@ -69,8 +69,8 @@
   "author": "regular",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^8.2.3",
-    "electron-builder": "^22.5.1",
+    "electron": "^9.0.3",
+    "electron-builder": "^22.7.0",
     "electron-rebuild": "^1.10.1",
     "node-abi": "^2.8.0",
     "node-pre-gyp": "^0.12.0"
