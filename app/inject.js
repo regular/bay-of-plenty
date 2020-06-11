@@ -1,6 +1,8 @@
 const fs = require('fs')
 const {join} = require('path')
 
+const puppeteer = require('./puppeteer')
+
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
 
@@ -166,6 +168,9 @@ function boot(sbot, win, log, cb) {
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
+
+          puppeteer(win.webContents)
+
           ssb.bayofplenty.addWindow(win, browserKeys, consoleMessageSource(win.webContents))
 
         })
