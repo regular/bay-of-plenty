@@ -31,7 +31,7 @@ module.exports = function(webContents) {
     return session.sendCommand.apply(session, args)
   }
   session.on('message', (_, name, event)=>{
-    debug(`emit ${name}`)
+    //debug(`emit ${name}`)
     client.emit(name, event)
   })
   const target = {
@@ -48,6 +48,10 @@ module.exports = function(webContents) {
     page.on(Events.Page.Console, message =>{
       //console.log('console message', message)
       pupplog.push(message)
+    })
+    page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
+    .catch(err =>{
+      debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
     })
   }).catch(err => {
     console.error('Unable to create page', err.message)
