@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "electron app/index.js",
-    "pack": "ABI=$(electron -a) electron-builder build --dir",
+    "upgrade": "npm i {electron,electron-builder,electron-rebuild,node-abi,node-gyp,node-pre-gyp}@latest",
+    "make": "ABI=$(electron -a) electron-builder build --publish never",
     "release": "ABI=$(electron -a) electron-builder build"
   },
   "build": {
@@ -29,26 +30,11 @@
     ],
     "mac": {
       "icon": "build/icon.icns",
-      "target": "dmg",
-      "publish": [
-        "github"
-      ]
+      "target": "dmg"
     },
     "linux": {
-      "target": [
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "tar.gz",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
+      "target": "AppImage",
+      "category": "Network"
     },
     "win": {
       "icon": "build/icon.ico",
@@ -68,12 +54,13 @@
   },
   "author": "regular",
   "license": "MIT",
-  "devDependencies": {
-    "electron": "^8.2.3",
-    "electron-builder": "^22.5.1",
-    "electron-rebuild": "^1.10.1",
-    "node-abi": "^2.8.0",
-    "node-pre-gyp": "^0.12.0"
+  "dependencies": {
+    "electron": "^9.0.4",
+    "electron-builder": "^22.7.0",
+    "electron-rebuild": "^1.11.0",
+    "node-abi": "^2.18.0",
+    "node-gyp": "^7.0.0",
+    "node-pre-gyp": "^0.15.0"
   },
   "repository": {
     "type": "git",
@@ -85,8 +72,5 @@
   "bugs": {
     "url": "https://github.com/regular/bay-of-plenty/issues"
   },
-  "homepage": "https://github.com/regular/bay-of-plenty#readme",
-  "dependencies": {
-    "node-gyp": "^5.0.4"
-  }
+  "homepage": "https://github.com/regular/bay-of-plenty#readme"
 }
