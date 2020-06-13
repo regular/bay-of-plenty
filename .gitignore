@@ -4,3 +4,4 @@ dist/
 *-invite
 *.invite
 app/package-lock.json
+package-lock.json
