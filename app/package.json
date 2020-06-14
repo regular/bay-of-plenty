@@ -13,6 +13,7 @@
     "brfs": "^2.0.1",
     "browserify": "^16.2.3",
     "btoa": "^1.2.1",
+    "console-with-style": "^1.0.0",
     "debug": "^4.1.1",
     "flumeview-level": "github:regular/flumeview-level",
     "hyperscript": "^2.0.2",
