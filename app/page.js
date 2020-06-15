@@ -1,15 +1,15 @@
 const {EventEmitter} = require('events')
 const {Page} = require('puppeteer-core/lib/Page')
-const {Events} = require('puppeteer-core/lib/Events')
-const debug = require('debug')('bop:puppeteer')
-const Pupplog = require('puppeteer-log')
-const LogFun = require('./log-fun')
+const debug = require('debug')('bop:page')
 
+const cache = new WeakMap()
+
+// returns a promise
 module.exports = function(webContents) {
   const session = webContents.debugger
   if (session.isAttached()) {
     debug('already attached')
-    return
+    return cache[webContents.id]
   }
   try {
     debug('attaching ...')
@@ -17,12 +17,8 @@ module.exports = function(webContents) {
     debug('done')
   } catch(err) {
     debug(`attach error: ${err.message}`)
-    return
+    return RejectedPromise(err)
   }
-
-  const pupplog = Pupplog(LogFun(), err=>{
-    console.error(`puppeteer-log ended: ${err && err.message}`)
-  })
 
   const client = new EventEmitter()
   client.send = function() {
@@ -42,27 +38,12 @@ module.exports = function(webContents) {
   const screenshotTaskQueue = null
 
   const page = Page.create(client, target, ignoreHTTPSErrors, defaultViewport, screenshotTaskQueue)
-
-  page.then( page =>{
-    debug('page initialized')
-    page.on(Events.Page.Console, message =>{
-      //console.log('console message', message)
-      pupplog.push(message)
-    })
-    page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
-    .catch(err =>{
-      debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
-    })
-  }).catch(err => {
-    console.error('Unable to create page', err.message)
-    console.error(err.stack)
-  })
-
-  /*
-  client.once('detach', (e, reason)=>{
-    debug('browser detached')
-  })
-  */
-  
+  cache[webContents.id] = page
+  return page
 }
 
+function RejectedPromise(err) {
+  return new Promise( (resolve, reject)=>{
+    reject(err)
+  })
+}

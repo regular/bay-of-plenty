@@ -1,7 +1,8 @@
 const fs = require('fs')
 const {join} = require('path')
 
-const puppeteer = require('./puppeteer')
+const Page = require('./page')
+const PageLog = require('./page-log')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
@@ -43,7 +44,6 @@ module.exports = function inject(electron, fs, log, sbot) {
   function start() {
     secure(app)  
 
-
     win = new BrowserWindow({
       backgroundColor: '#333', 
       width: 1200,
@@ -52,24 +52,12 @@ module.exports = function inject(electron, fs, log, sbot) {
       webPreferences
     })
 
-    /*
-    function initTabView(tab) {
-      console.log('detected new tab')
-      tab.once('close', ()=>{
-        console.log('detected tab close')
-      })
-    }
-    */
-
     const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
     win.on('closed', () => {
       log('window closed')
       win = null
     })
-    if (process.env.BOP_DEV_TOOLS) {
-      win.openDevTools()
-    }
     initTabView(win)
 
     function initTabView(view) {
@@ -113,6 +101,9 @@ module.exports = function inject(electron, fs, log, sbot) {
         // There is no menu.remove() ...
         Menu.getApplicationMenu().getMenuItemById(label).visible = false
       })
+
+      const page = Page(win.webContents)
+      PageLog(page, tabidFromview(win))
 
       boot(sbot, view, log, (err, result)=>{
         if (err) {
@@ -168,8 +159,6 @@ function boot(sbot, win, log, cb) {
 
         win.webContents.once('dom-ready', e => {
           log('dom ready on about page')
-
-          puppeteer(win.webContents)
 
           ssb.bayofplenty.addWindow(win, browserKeys, consoleMessageSource(win.webContents))
 
@@ -296,5 +285,12 @@ function consoleMessageSource(webContents) {
     })
   })
   return p.source
+}
+
+function tabidFromview(view) {
+  let tabid = view.id
+  if (view.constructor.name == 'BrowserWindow') {
+    tabid = 0
+  }
 }
 

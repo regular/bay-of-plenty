@@ -1,12 +1,15 @@
 const debug = require('debug')('browser-console')
 const Format = require('console-with-style')
 const supportsColor = require('supports-color')
-const level = (supportsColor.stdout && supportsColor.stdout.level) || 0
+const level = (supportsColor.stderr && supportsColor.stderr.level) || 0
 const format = Format(level)
 
-module.exports = function() {
+const numberSymbols = '⓿❶❷❸❹❺❻❼❽❾❿'
+
+module.exports = function(tabid) {
   let currUrl
   return function ({consoleMessage, values}) {
+    const sym = tabid < numberSymbols.length ? numberSymbols[tabid] : `tabid`
     let loc = ''
     const type = consoleMessage.type()
     const {lineNumber, url} = consoleMessage.location()
@@ -22,7 +25,9 @@ module.exports = function() {
     }
     const text = typeof values[0] == 'string' ? format.apply(null, values)
       : values.map(stringify).join(' ')
-    debug(`${loc} ${type} ${text}`)
+    if (debug.enabled) {
+      console.error(`${sym} ${loc} ${type} ${text}`)
+    }
   }
 }
 
