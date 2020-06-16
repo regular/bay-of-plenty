@@ -13,9 +13,9 @@ module.exports = function Pool(Sbot) {
   function getKey({conf, id}) {
     return `${conf && conf.network} ${id}`
   }
-  function release({sbot}) {
+  function release({ssb}) {
     debug('closing sbot')
-    sbot.close()
+    ssb.close()
   }
   function makePromise({conf, id}) {
     return new Promise( (resolve, reject) => {
