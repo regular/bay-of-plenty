@@ -1,4 +1,4 @@
-const debug = require('debug')('browser-console')
+const debug = require('debug')('bop:browser-console')
 const Format = require('console-with-style')
 const supportsColor = require('supports-color')
 const level = (supportsColor.stderr && supportsColor.stderr.level) || 0
@@ -9,7 +9,7 @@ const numberSymbols = '⓿❶❷❸❹❺❻❼❽❾❿'
 module.exports = function(tabid) {
   let currUrl
   return function ({consoleMessage, values}) {
-    const sym = tabid < numberSymbols.length ? numberSymbols[tabid] : `tabid`
+    const sym = tabid < numberSymbols.length ? numberSymbols[tabid] : `${tabid}`
     let loc = ''
     const type = consoleMessage.type()
     const {lineNumber, url} = consoleMessage.location()

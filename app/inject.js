@@ -1,20 +1,17 @@
-const fs = require('fs')
-const {join} = require('path')
-
-const Page = require('./page')
-const PageLog = require('./page-log')
+const debug = require('debug')('bop:main')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
 
-const menuTemplate = require('./menu')
 const invites = require('tre-invite-code')
-const {parse} = require('url')
-const qs = require('query-string')
+
+const Page = require('./page')
+const PageLog = require('./page-log')
+const Pool = require('./sbot-pool')
+
+const menuTemplate = require('./menu')
 const secure = require('./secure')
 const Tabs = require('./tabs')
-const listPublicKeys = require('./lib/list-public-keys')
-const getDatapath = require('./lib/get-data-path')
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -24,24 +21,24 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
-module.exports = function inject(electron, fs, log, sbot) {
-  const {app, ipcMain, BrowserWindow, BrowserView, Menu, MenuItem} = electron
+module.exports = function inject(electron, Sbot) {
+  const {app, BrowserWindow, BrowserView, Menu} = electron
+  const pool = Pool(Sbot)
 
   app.allowRendererProcessReuse = true
 
-  const old_console_log = console.log
-  console.log = (...args) => {
-    old_console_log.apply(console, args)
-    fs.appendFileSync(process.env.HOME + '/bay-of-plenty.log', args.map(x => `${x}`).join(' ') + '\n')
-  }
-
-  log(`node version ${process.version}`)
-  log(`process.env.DEBUG ${process.env.DEBUG}`)
+  debug(`node version ${process.version}`)
+  debug(`process.env.DEBUG ${process.env.DEBUG}`)
 
   let win
   app.on('ready', start)
+  /*
+  app.on('will-quit', e=>{
+    e.preventDefault()
+  })
+  */
 
-  function start() {
+  async function start() {
     secure(app)  
 
     win = new BrowserWindow({
@@ -51,119 +48,141 @@ module.exports = function inject(electron, fs, log, sbot) {
       darkTheme: true,
       webPreferences
     })
+    win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
 
     const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
     win.on('closed', () => {
-      log('window closed')
+      debug('window closed')
       win = null
     })
-    initTabView(win)
 
-    function initTabView(view) {
-      const appMenu = Menu.getApplicationMenu()
-      const tabMenu = appMenu.getMenuItemById('tabs').submenu
-      let label = `Tab ${view.id}`
-      let accelerator = `CmdOrCtrl+${view.id}`
-      if (!tabMenu.getMenuItemById('separator')) {
-        tabMenu.append(new MenuItem({
-          id: 'separator',
-          type: 'separator'
-        }))
-        label = 'Main Tab'
-        accelerator = `CmdOrCtrl+0`
-      }
-      tabMenu.append(new MenuItem({
-        label,
-        accelerator,
-        type: 'radio',
-        id: label,
-        click: ()=>{
-          if (label == 'Main Tab') {
-            return tabs.activateTab('_main')
-          }
-          tabs.activateTab(`${view.id}`)
-        }
-      }))
-      Menu.setApplicationMenu(appMenu)
-      Menu.getApplicationMenu().getMenuItemById(label).checked = true
-
-      win.setTitle(label)
-      view.on('deactivate-tab', ()=>{
-        win.setTitle('Main Tab') // we receive no activate-tab for the main tab
-        Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
-      })
-      view.on('activate-tab', ()=>{
-        win.setTitle(label)
-        Menu.getApplicationMenu().getMenuItemById(label).checked = true
-      })
-      view.on('close', ()=>{
-        // There is no menu.remove() ...
-        Menu.getApplicationMenu().getMenuItemById(label).visible = false
-      })
-
-      const page = Page(win.webContents)
-      PageLog(page, tabidFromview(win))
-
-      boot(sbot, view, log, (err, result)=>{
-        if (err) {
-          log('Failed to boot: ' + err.message)
-          process.exit(1)
-        }
-        const {webapp, url} = result
-        const name = webapp.value.content.name
-        
-        async function tryLoad() {
-          try {
-            log('loading webapp blob ...')
-            await view.webContents.loadURL(url)
-          } catch(err) {
-            log(`error loading ${url}: ${err.message} -- retrying`)
-            tryLoad()
-          }
-        }
-        tryLoad()
-        log(`done booting webapp "${name}"`)
-      })
+    try {
+      await initTabView(win)
+    } catch(err) {
+      console.error(err.message)
+      process.exit(1)
     }
 
+    async function initTabView(view) {
+      updateMenu(electron, win, view, tabs)
+
+      const page = await Page(view.webContents)
+      debug('Page initialized')
+      PageLog(page, tabidFromview(view))
+      
+      page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
+      .catch(err =>{
+        debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
+      })
+
+      const result = await boot(pool, page, view)
+      const {webapp, url} = result
+      const name = webapp.value.content.name
+      await loadURL(page, url)
+
+      debug(`done booting webapp "${name}"`)
+    }
   }
 }
 
-function boot(sbot, win, log, cb) {
-  return openApp(null, null, cb)
+async function loadURL(page, url) {
+  debug('loading webapp blob ...')
+  const response = await page.goto(url, {
+    timeout: 90000
+  })
+  if (!response.ok()) {
+    throw new Error(`Server response: ${response.status()} ${response.statusText()}`)
+  }
+}
+
+function updateMenu(electron, win, view, tabs) {
+  const {Menu, MenuItem} = electron
+  const appMenu = Menu.getApplicationMenu()
+  const tabMenu = appMenu.getMenuItemById('tabs').submenu
+  let label = `Tab ${view.id}`
+  let accelerator = `CmdOrCtrl+${view.id}`
+  if (!tabMenu.getMenuItemById('separator')) {
+    tabMenu.append(new MenuItem({
+      id: 'separator',
+      type: 'separator'
+    }))
+    label = 'Main Tab'
+    accelerator = `CmdOrCtrl+0`
+  }
+  tabMenu.append(new MenuItem({
+    label,
+    accelerator,
+    type: 'radio',
+    id: label,
+    click: ()=>{
+      if (label == 'Main Tab') {
+        return tabs.activateTab('_main')
+      }
+      tabs.activateTab(`${view.id}`)
+    }
+  }))
+  Menu.setApplicationMenu(appMenu)
+  Menu.getApplicationMenu().getMenuItemById(label).checked = true
+
+  win.setTitle(label)
+  view.on('deactivate-tab', ()=>{
+    win.setTitle('Main Tab') // we receive no activate-tab for the main tab
+    Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
+  })
+  view.on('activate-tab', ()=>{
+    win.setTitle(label)
+    Menu.getApplicationMenu().getMenuItemById(label).checked = true
+  })
+  view.on('close', ()=>{
+    // There is no menu.remove() ...
+    Menu.getApplicationMenu().getMenuItemById(label).visible = false
+  })
+}
+
+async function boot(pool, page, view) {
+  return new Promise((resolve, reject)=>{
+    openApp(null, null, (err, result) =>{
+      if (err) return reject(err)
+      resolve(result)
+    })
+  })
 
   function openApp(invite, id, cb) {
+    debug('openAPp called')
     const conf = invite ? confFromInvite(invite) : null
-    if (invite && !conf) return cb(new Error('invite parse error'))
+    if (invite && !conf) {
+      const err = new Error('invite parse error')
+      debug(err.message)
+      return cb(err)
+    }
 
-    server(sbot, win, log, conf, id, (err, ssb, config, myid, browserKeys) => {
-      if (err) {
-        log(`sbot failed: ${err.message}`)
-        return cb(err)
-      }
-      
+    const {unref, promise} = pool({conf, id})
+    promise.catch(err =>{
+      debug(`sbot-pool failed: ${err.message}`)
+      return cb(err)
+    }).then( ({ssb, config, myid, browserKeys}) => {
+       
       // only when sbot uses canned config
       if (!invite && !id) {
         ssb.bayofplenty.setOpenAppCallback(openApp)
       }
 
-      win.once('close', e=>{
-        log('window/tab closed -- closing sbot')
-        ssb.close()
+      view.once('close', e=>{
+        debug('view closed -- unref sbot')
+        unref()
       })
       
-      log('Waiting for navigation to /about.')
-      win.webContents.once('did-navigate', e => {
-        log('Waiting for dom-ready on obbout page ..')
-
-        win.webContents.once('dom-ready', e => {
-          log('dom ready on about page')
-
-          ssb.bayofplenty.addWindow(win, browserKeys, consoleMessageSource(win.webContents))
-
+      debug('Waiting for navigation to /about.')
+      //page.once('framenavigated', e=>{
+        debug('Waiting for DOMContentLoaded on obout page ..')
+        
+        page.once('DOMContentLoaded', e => {
+          debug('dom ready on about page')
+          // sets browser keys
+          ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
         })
-      })
+      //})
 
       const bootKey = (conf && conf.boot) || config.boot
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
@@ -171,102 +190,8 @@ function boot(sbot, win, log, cb) {
         const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
         cb(null, {webapp: result.kv, url})
       })
-      
     })
   }
-}
-
-const sbots = {}
-function server(sbot, win, log, conf, id, cb) {
-  if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
-  conf = Object.assign({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
-  
-  if (!conf.network) return cb(new Error('No network specified'))
-  let datapath = getDatapath(conf.network, null)
-  if (!id) {
-    return getOrCreateSbot(datapath, cb)
-  }
-  console.log('Looking for existing datapath for network', conf.network)
-  pull(
-    listPublicKeys(conf.network),
-    pull.find( r => {return r.id == id}, (err, result)=>{
-      console.log('XXX done', err)
-      if (err) return cb(new Error(`unknown identity: ${id}, ${err.message}`))
-      datapath = result.datapath
-      console.log('done:', datapath)
-      getOrCreateSbot(datapath, cb)
-    })
-  )
-
-  function getOrCreateSbot(datapath, cb) {
-    console.log('XXX Creating sbot with datapath', datapath)
-    const entry = sbots[datapath]
-    if (entry) {
-      entry.refCount++
-      const {ssb, config, myid, browserKeys} = entry
-      log('re-using sbot')
-      return cb(null, ssb, config, myid, browserKeys)
-    }
-    conf.path = datapath
-    sbot(conf, (err, ssb, config, myid, browserKeys) => {
-      if (!err) {
-        log(`sbot started, ssb id ${myid}, datapath: ${datapath}`)
-        sbots[datapath] = {
-          refCount: 1,
-          ssb: Object.assign({}, ssb, {
-            close: function() {
-              if (--this.refCount == 0) {
-                log('refCount==0, closing sbot')
-                ssb.close.apply(ssb, Array.from(arguments))
-                delete sbots[config.network]
-              }
-            }
-          }),
-          config, myid, browserKeys
-        }
-        return cb(null, ssb, config, myid, browserKeys)
-      }
-      log('Error starting sbot', err.message)
-      if (!/ENOENT/.test(err.message)) {
-        log('(no config specified and did not find canned .trerc file')
-        return cb(err)
-      }
-      log('asking for invite code ...')
-      askForInvite(win, log, (err, invite) => {
-        if (err) {
-          log('Failed to ask for invite code:', err.message)
-          return cb(err)
-        }
-        const conf = confFromInvite(invite)
-        if (!conf) {
-          log('invite code parse error')
-          return cb(new Error('inivte code syntax error'))
-        }
-        log('success, conf is:', JSON.stringify(conf, null, 2))
-        log('retrying to start sbot')
-        return server(sbot, win, log, conf, cb)
-      })
-    })
-  }
-}
-
-function askForInvite(win, log, cb) {
-  let done = false
-  
-  const port = 18484
-  win.webContents.loadFile(__dirname + '/public/invite.html')
-  win.webContents.once('will-navigate', (e, url) =>{
-    e.preventDefault()
-    log('Prevented attempt to navigate to', url)
-    const query = parse(url).query
-    log('query is', query)
-    if (!query) return cb(new Error('No query in add-network URL'))
-    const fields = qs.parse(query)
-    const code = fields.code
-    log('code is', code)
-    if (!code) return cb(new Error('No code in query in add-network URL'))
-    cb(null, code)
-  })
 }
 
 function confFromInvite(invite) {
@@ -292,5 +217,12 @@ function tabidFromview(view) {
   if (view.constructor.name == 'BrowserWindow') {
     tabid = 0
   }
+  return tabid
+}
+
+function wait(s) {
+  return new Promise( resolve => {
+    setTimeout(resolve, s * 1000)
+  })
 }
 

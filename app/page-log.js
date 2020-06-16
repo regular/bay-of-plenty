@@ -9,14 +9,12 @@ module.exports = function(page, tabid) {
     console.error(`puppeteer-log ended: ${err && err.message}`)
   })
 
-  page.then( page =>{
-    page.on(Events.Page.Console, message =>{
-      pupplog.push(message)
-    })
-    page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
-    .catch(err =>{
-      debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
-    })
+  page.on(Events.Page.Console, message =>{
+    pupplog.push(message)
+  })
+  page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
+  .catch(err =>{
+    debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
   })
 }
 

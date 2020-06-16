@@ -27,11 +27,11 @@ module.exports = function(webContents) {
     return session.sendCommand.apply(session, args)
   }
   session.on('message', (_, name, event)=>{
-    //debug(`emit ${name}`)
+    debug(`emit ${name}`)
     client.emit(name, event)
   })
   const target = {
-    _isClosedPromise: new Promise(resolve=>{})
+    _isClosedPromise: new Promise(resolve=>{resolve(false)})
   }
   const ignoreHTTPSErrors = false
   const defaultViewport = null

@@ -3,7 +3,7 @@ const {join} = require('path')
 const ssbKeys = require('ssb-keys')
 const pull = require('pull-stream')
 
-const log = require('./log')(fs, 'bop:sbot')
+const debug = require('debug')('bop:sbot')
 const loadOrCreateConfigFile = require('./network-config-file')
 const addBlobs = require('./add-blobs')
 const {avatarUpdate} = require('./avatar-update')
@@ -11,7 +11,7 @@ const {avatarUpdate} = require('./avatar-update')
 module.exports = function(config, cb) {
   loadOrCreateConfigFile(config, (err, config) => {
     if (err) return cb(err)
-    log('Creating sbot with config' + JSON.stringify(config, null, 2))
+    debug('Creating sbot with config' + JSON.stringify(config, null, 2))
     const createSbot = require('tre-bot')()
       .use(require('./plugin'))
       .use(require('ssb-sandboxed-views'))
@@ -29,14 +29,15 @@ module.exports = function(config, cb) {
     const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
     createSbot(config, keys, (err, ssb) => {
       if (err) return cb(err)
-      log(`public key ${keys.id}`)
-      log(`network key ${config.caps.shs}`)
+      debug(`public key ${keys.id}`)
+      debug(`network key ${config.caps.shs}`)
+      debug(`datapath: ${config.path}`)
       const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
       if (config.autoconnect) {
         let ac = config.autoconnect
         if (typeof ac == 'string') ac = [ac]
         ac.forEach(address => {
-          log(`auto-connecting to ${address}`)
+          debug(`auto-connecting to ${address}`)
           ssb.conn.remember(address)
           ssb.conn.connect(address)
         })
