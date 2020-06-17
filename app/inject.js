@@ -174,12 +174,18 @@ async function boot(pool, page, view) {
       })
       
       debug('Waiting for navigation to /about.')
-      //page.once('framenavigated', e=>{
+      page.once('framenavigated', async e=>{
         debug('Waiting for DOMContentLoaded on obout page ..')
         
-        page.once('DOMContentLoaded', e => {
+        //page.once('DOMContentLoaded', async e => {
           debug('dom ready on about page')
-          // sets browser keys
+          debug('setting browser keypair')
+          await page.evaluate(keys=>{
+            console.log("setting keys")
+            window.localStorage["tre-keypair"] = JSON.stringify(keys)
+            console.log('%c done setting keys', 'color: yellow;');
+          }, browserKeys)
+
           ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
         })
       //})

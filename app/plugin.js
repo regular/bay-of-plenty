@@ -152,29 +152,6 @@ exports.init = function (ssb, config) {
     windows.push(win)
     addConsoleStream(consoleOutputStream, browserKeys.id)
 
-    const b64 = btoa(JSON.stringify(browserKeys)).toString('base64')
-    const code = `
-      new Promise( (resolve, reject)=>{
-        try{
-          console.log("setting keys");
-          window.localStorage["tre-keypair"] = atob("${b64}");
-          console.log("done setting keys");
-          resolve(null);
-        } catch(e) {
-          reject(e);
-        }
-      })
-    `
-    debug('exec JS 1')
-    win.webContents.executeJavaScript(code)
-      .then( result => {
-        debug('done exec JS 1', result)
-      })
-      .catch( err => {
-        debug('err exec JS 1')
-        console.error(`Failed to execute JS: ${err.message}`)
-      })
-
     emptyQueue()
   }
 
@@ -302,7 +279,7 @@ exports.init = function (ssb, config) {
 // evaluated in browser context
 function client_log(msg) {
   const bop = window.bayofplenty
-  if (!bop) return false // don't try again
+  if (!bop || !bop.log) return false // don't try again
   return bop.log(msg)
 }
 
