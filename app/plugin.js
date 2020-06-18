@@ -302,13 +302,14 @@ function sendAboutPage(res) {
 
   const browserify = Browserify()
   browserify.transform(require('brfs'))
-  browserify.add(join(__dirname, 'about.js'))
+  browserify.add(join(__dirname, 'launch.js'))
   browserify.bundle()
     .pipe(BufferList( (err, buffer) => {
       if (err) {
         res.statusCode = 503
-        res.end(err.message)
-        return
+        res.end(err.annotated)
+        console.error(err.annotated)
+        return process.exit(1)
       }
       const bl_hash = BufferList()
       bl_hash.append('\n')
