@@ -1,56 +1,13 @@
 const h = require('hyperscript')
 const setStyles = require('module-styles')('bayofplenty')
 const ActivityIndicator = require('tre-activity-indicator')
+const pull = require('pull-stream')
 
 const bootKey = decodeURIComponent(document.location.pathname.split('/')[2])
 const bootURL = `/boot/${encodeURIComponent(bootKey)}`
 
-setStyles(`
-  ul.versions {
-    display: grid;
-    grid-template-rows: repeat(5, 1fr);
-    grid-template-columns: 1fr 1fr 1fr;
-    grid-auto-flow: row;
-  }
-  body {
-    height: 100%;
-    overflow: hidden;
-    background-color: #333;
-    font-family: sans-serif;
-  }
-  div#log {
-    max-height: 15em;
-    overflow-y: scroll;
-    font-family: monospace;
-    font-size: 16pt;
-  }
-  div#log .message {
-    font-weight: bold;
-  }
-  div#log .message.info {
-    font-weight: normal;
-  }
-  div#log span {
-    margin-left: .6em;
-  }
-  body {
-    display: grid;
-    grid-template-rows: 1fr;
-    grid-template-columns: 1fr;
-    height: 100%;
-  }
-  .bayofplenty {
-    grid-row: 1;
-    grid-column: 1;
-    opacity: 0;
-  }
-  img.tre-activityIndicator {
-    grid-row: 1;
-    grid-column: 1;
-    place-self: center center;
-    opacity: .4;
-  }
-`)
+styles()
+
 
 const activityIndicator = ActivityIndicator({
   width: 150,
@@ -136,4 +93,53 @@ function log(msg) {
 // API called from Electron process
 window.bayofplenty = {
   log
+}
+
+function styles() {
+  setStyles(`
+    ul.versions {
+      display: grid;
+      grid-template-rows: repeat(5, 1fr);
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-auto-flow: row;
+    }
+    body {
+      height: 100%;
+      overflow: hidden;
+      background-color: #333;
+      font-family: sans-serif;
+    }
+    div#log {
+      max-height: 15em;
+      overflow-y: scroll;
+      font-family: monospace;
+      font-size: 16pt;
+    }
+    div#log .message {
+      font-weight: bold;
+    }
+    div#log .message.info {
+      font-weight: normal;
+    }
+    div#log span {
+      margin-left: .6em;
+    }
+    body {
+      display: grid;
+      grid-template-rows: 1fr;
+      grid-template-columns: 1fr;
+      height: 100%;
+    }
+    .bayofplenty {
+      grid-row: 1;
+      grid-column: 1;
+      opacity: 0;
+    }
+    img.tre-activityIndicator {
+      grid-row: 1;
+      grid-column: 1;
+      place-self: center center;
+      opacity: .4;
+    }
+  `)
 }
