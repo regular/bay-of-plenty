@@ -1,6 +1,6 @@
 {
   "name": "bay-of-plenty",
-  "version": "1.10.0-pre-puppeteer",
+  "version": "1.10.0",
   "description": "Experimental client for the Scuttleverse",
   "main": "index.js",
   "scripts": {
