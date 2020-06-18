@@ -2,15 +2,12 @@ const debug = require('debug')('bop:main')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
-//const pullPupp = require('./pull-puppeteer')
-
 
 const invites = require('tre-invite-code')
 
 const Page = require('./page')
 const PageLog = require('./page-log')
 const consoleReflection = require('./lib/page-console-reflection')
-const ExposeFunctionAgain = require('./expose-function')
 const Pool = require('./sbot-pool')
 
 const menuTemplate = require('./menu')
@@ -119,7 +116,6 @@ module.exports = function inject(electron, Sbot) {
 }
 
 function OpenApp(pool, page, view, reflection) {
-  //const exposeFunctionAgain = ExposeFunctionAgain(page)
 
   return function openApp(invite, id, cb) {
     debug('openAPp called')
@@ -155,22 +151,12 @@ function OpenApp(pool, page, view, reflection) {
         page.once('domcontentloaded', async ()  =>{
           console.log('domcontentloaded')
           ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
-          //console.log('exposing again')
-          //await exposeFunctionAgain('myfunc', async (a)=>a+1)
 
           debug('setting browser keypair')
           await page.evaluate(async (keys)=>{
-            /*
-            console.log('calling myfunc()')
-            const r = await myfunc(5)
-            console.log('bar result',r)
-            */
-
             console.log("setting keys")
             window.localStorage["tre-keypair"] = JSON.stringify(keys)
             console.log('%c done setting keys', 'color: yellow;');
-         
-            //window.dispatchEvent(new Event('bay-of-plenty'))
           }, browserKeys)
         })
 
@@ -241,6 +227,7 @@ function confFromInvite(invite) {
   return conf ? conf : null
 }
 
+// TODO: remove
 function consoleMessageSource(webContents) {
   const p = Pushable(true)
 

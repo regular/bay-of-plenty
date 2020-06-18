@@ -1,0 +1,34 @@
+- implement pull-puppeteer-source
+  - it could listen for an event that signals
+    availability of the exposed read function
+  Update: we dont want to use exposeFunction.
+  Apart from that, a puppeteer bug gets in the way:
+  - a reace condtion between CDP backend and page.js
+    collide in global namespace. if the backend wins, a low-level
+    native function overwrites page.js' bind function wrapper and things break.
+
+- use it to reflect sbot log to about page
+- [x] use it to reflect console messages to webapps using original obects (jshandle)
+  we did that b firing a custom event on window
+
+- implement pull-pupeteer-sink
+  - takes a read function that is evaled in the browser
+
+- have a muxrpc session across a duplex stream
+
+- add multi-server plugin, transport via CDP session
+
+- [x] rename about page to launch page
+- add tab bar to about page
+
+- split plugin into atomic aspects
+- launch: openApp
+  serve lauch page
+
+- prepare PR against puppeteer
+  - does the problem show in puppeteer;s own chromium?
+  - future frames dont get the exposed function
+  - reace conidtion between CDP backend and evalOnNewDoc
+
+- pepare pR against multi-server
+  sessions connected to members of `master` should not time out.
