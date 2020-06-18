@@ -11,7 +11,7 @@
   "dependencies": {
     "bl": "^2.1.2",
     "brfs": "^2.0.1",
-    "browserify": "^16.2.3",
+    "browserify": "^16.5.1",
     "btoa": "^1.2.1",
     "console-with-style": "^1.0.1",
     "debug": "^4.1.1",
@@ -27,7 +27,7 @@
     "non-private-ip": "^1.4.4",
     "pull-glob": "^1.0.7",
     "pull-notify": "^0.1.1",
-    "puppeteer-core": "^2.1.0",
+    "puppeteer-core": "^4.0.0",
     "puppeteer-log": "^1.0.0",
     "query-string": "^6.2.0",
     "range-parser": "^1.2.0",

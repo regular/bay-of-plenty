@@ -1,4 +1,3 @@
-const {Page} = require('./page')
 const {Events} = require('puppeteer-core/lib/Events')
 const debug = require('debug')('bop:page-log')
 const Pupplog = require('puppeteer-log')

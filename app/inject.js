@@ -2,11 +2,15 @@ const debug = require('debug')('bop:main')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
+//const pullPupp = require('./pull-puppeteer')
+
 
 const invites = require('tre-invite-code')
 
 const Page = require('./page')
 const PageLog = require('./page-log')
+const consoleReflection = require('./lib/page-console-reflection')
+const ExposeFunctionAgain = require('./expose-function')
 const Pool = require('./sbot-pool')
 
 const menuTemplate = require('./menu')
@@ -70,24 +74,115 @@ module.exports = function inject(electron, Sbot) {
       const page = await Page(view.webContents)
       debug('Page initialized')
       PageLog(page, tabidFromview(view))
-      
-      page.evaluateOnNewDocument(debug=>localStorage.debug=debug, process.env.DEBUG)
-      .catch(err =>{
-        debug('evaluateOnNewDocument "localStorage.debug=process.env.DEBUG" failed.')
+      const reflection = consoleReflection(page, err=>{
+        console.error(`page reflection ended: ${err.message}`)
       })
 
-      const result = await boot(pool, page, view)
-      const {webapp, url} = result
-      const name = webapp.value.content.name
-      await loadURL(page, url)
+      const openApp = OpenApp(pool, page, view, reflection)
+      
+      // when exposed here, the exposed function is broken
+      // after navigation. (it then is tha underlying native function)
+      // so, after navigation, we need to resotre the js part using
+      // exposeFunctionAgain
+      //await page.exposeFunction('myfunc', async (a)=>a+1)
+      
+      await page.evaluateOnNewDocument(debug=>{
+        console.log(`%c setting localStorage.debug to %c ${debug}`, 'color: yellow;', 'color: green;')
+        localStorage.debug=debug
+      }, process.env.DEBUG || '')
 
-      debug(`done booting webapp "${name}"`)
+      page.on('request', request=>{
+        if (request.isNavigationRequest()) {
+          debug(`navigation request to ${request.url()}`)
+          reflection.reset()
+        }
+      })
+      page.on('framenavigated', frame =>{
+        debug(`frame navigated ${frame._url}`)
+      })
+
+      page.on('domcontentloaded', async ()  =>{
+        reflection.enable()
+      })
+
+      openApp(null, null, (err, result) =>{
+        if (err) {
+          console.error(err.message)
+          app.quit()
+        }
+        const {webapp, url} = result
+        const name = webapp.value.content.name
+        loadURL(page, url)
+      })
     }
   }
 }
 
+function OpenApp(pool, page, view, reflection) {
+  //const exposeFunctionAgain = ExposeFunctionAgain(page)
+
+  return function openApp(invite, id, cb) {
+    debug('openAPp called')
+    const conf = invite ? confFromInvite(invite) : null
+    if (invite && !conf) {
+      const err = new Error('invite parse error')
+      debug(err.message)
+      return cb(err)
+    }
+
+    const {unref, promise} = pool({conf, id})
+    promise.catch(err =>{
+      debug(`sbot-pool failed: ${err.message}`)
+      return cb(err)
+    }).then( ({ssb, config, myid, browserKeys}) => {
+       debug(`browser public key: ${browserKeys.public}`)
+      // only when sbot uses canned config
+      if (!invite && !id) {
+        ssb.bayofplenty.setOpenAppCallback(openApp)
+      }
+
+      view.once('close', e=>{
+        debug('view closed -- unref sbot')
+        unref()
+      })
+
+      const bootKey = (conf && conf.boot) || config.boot
+      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
+        if (err) return cb(err)
+        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
+        reflection.reset()
+
+        page.once('domcontentloaded', async ()  =>{
+          console.log('domcontentloaded')
+          ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
+          //console.log('exposing again')
+          //await exposeFunctionAgain('myfunc', async (a)=>a+1)
+
+          debug('setting browser keypair')
+          await page.evaluate(async (keys)=>{
+            /*
+            console.log('calling myfunc()')
+            const r = await myfunc(5)
+            console.log('bar result',r)
+            */
+
+            console.log("setting keys")
+            window.localStorage["tre-keypair"] = JSON.stringify(keys)
+            console.log('%c done setting keys', 'color: yellow;');
+         
+            //window.dispatchEvent(new Event('bay-of-plenty'))
+          }, browserKeys)
+        })
+
+        cb(null, {webapp: result.kv, url})
+      })
+    })
+  }
+}
+
+
 async function loadURL(page, url) {
-  debug('loading webapp blob ...')
+  console.error(`loading ${url} ...`)
   const response = await page.goto(url, {
     timeout: 90000
   })
@@ -138,66 +233,6 @@ function updateMenu(electron, win, view, tabs) {
     // There is no menu.remove() ...
     Menu.getApplicationMenu().getMenuItemById(label).visible = false
   })
-}
-
-async function boot(pool, page, view) {
-  return new Promise((resolve, reject)=>{
-    openApp(null, null, (err, result) =>{
-      if (err) return reject(err)
-      resolve(result)
-    })
-  })
-
-  function openApp(invite, id, cb) {
-    debug('openAPp called')
-    const conf = invite ? confFromInvite(invite) : null
-    if (invite && !conf) {
-      const err = new Error('invite parse error')
-      debug(err.message)
-      return cb(err)
-    }
-
-    const {unref, promise} = pool({conf, id})
-    promise.catch(err =>{
-      debug(`sbot-pool failed: ${err.message}`)
-      return cb(err)
-    }).then( ({ssb, config, myid, browserKeys}) => {
-       
-      // only when sbot uses canned config
-      if (!invite && !id) {
-        ssb.bayofplenty.setOpenAppCallback(openApp)
-      }
-
-      view.once('close', e=>{
-        debug('view closed -- unref sbot')
-        unref()
-      })
-      
-      debug('Waiting for navigation to /about.')
-      page.once('framenavigated', async e=>{
-        debug('Waiting for DOMContentLoaded on obout page ..')
-        
-        //page.once('DOMContentLoaded', async e => {
-          debug('dom ready on about page')
-          debug('setting browser keypair')
-          await page.evaluate(keys=>{
-            console.log("setting keys")
-            window.localStorage["tre-keypair"] = JSON.stringify(keys)
-            console.log('%c done setting keys', 'color: yellow;');
-          }, browserKeys)
-
-          ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
-        })
-      //})
-
-      const bootKey = (conf && conf.boot) || config.boot
-      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
-        if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
-        cb(null, {webapp: result.kv, url})
-      })
-    })
-  }
 }
 
 function confFromInvite(invite) {
