@@ -33,11 +33,17 @@ module.exports = function inject(electron, Sbot) {
 
   let win
   app.on('ready', start)
-  /*
+
   app.on('will-quit', e=>{
+    // FIXME: on OSX, sandview worker threads
+    // aren't joined at this point,
+    // so a C assertion triggers and the process Sigfaults.
+    // This simple delay prevents the crash.
     e.preventDefault()
+    setTimeout( ()=>{
+      process.exit(0)
+    }, 700)
   })
-  */
 
   async function start() {
     secure(app)  
