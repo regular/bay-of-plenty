@@ -1,3 +1,8 @@
+## About deprecation warnings
+- Buffer c'tor: used by some older modules that we indirectly depend on.
+  We could patch these modules after `npm i` and send PRs upstream.
+- ssb-friends: ssb-friends seems to use its own lecacy method from within its init function!
+
 - implement pull-puppeteer-source
   - it could listen for an event that signals
     availability of the exposed read function
