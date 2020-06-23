@@ -23,11 +23,38 @@ module.exports = function(webContents) {
   const client = new EventEmitter()
   client.send = function() {
     const args = Array.from(arguments)
-    debug(`send ${args}`)
+    const name = args[0]
+    debug('send %s', name)
+    if (name == 'Target.setAutoAttach') {
+      debug('setAutoAttach %O', args.slice(1))
+    }
     return session.sendCommand.apply(session, args)
   }
+  /*
+  client._connection = {
+    session: ()=>client
+  }
+  */
   session.on('message', (_, name, event)=>{
-    debug(`emit ${name}`)
+    if (name == 'Target.attachedToTarget') {
+      debug('suppress %s %O', name, event)
+      return 
+    }
+    if (!name.startsWith('Network.webSocketFrame')) {
+      // Network.webSocketFrame are so frequent that they are not helpful
+      debug(`emit ${name}`)
+    }
+    if (name == 'Log.entryAdded') {
+      debug('Log entry: %O', event)
+    }
+    /*
+    if (name == 'Network.loadingFinished') {
+      debug('Loading finished: %O', event)
+    }*/
+    if (name == 'Network.responseReceived') {
+      const {status, statusText, url} = event.response
+      debug('Network Response: %s %s %s', status, statusText, url.substr(0,80))
+    }
     client.emit(name, event)
   })
   const target = {
