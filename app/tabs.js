@@ -1,14 +1,3 @@
-// Wed Apr 29 13:57:31 CEST 2020
-// -
-// Wed Apr 29 14:23:34 CEST 2020
-//
-// Wed Apr 29 17:26:34 CEST 2020
-// -
-// 20 min
-//
-// Thu Apr 30 10:11:29 CEST 2020
-// -
-//
 const {EventEmitter} = require('events')
 
 module.exports = function(win, BrowserView, webPreferences, init) {
@@ -98,12 +87,17 @@ module.exports = function(win, BrowserView, webPreferences, init) {
   function nextTab() {
     gotoTab(1)
   }
+
+  function currentView() {
+    return views[currId] || win
+  }
   
   return {
     newTab,
     closeTab,
     activateTab,
     previousTab,
-    nextTab
+    nextTab,
+    currentView
   }
 }

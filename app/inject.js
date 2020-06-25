@@ -55,6 +55,7 @@ module.exports = function inject(electron, Sbot) {
       darkTheme: true,
       webPreferences
     })
+    //win.openDevTools()
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
 
     const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
