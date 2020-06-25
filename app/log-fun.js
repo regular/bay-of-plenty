@@ -1,3 +1,4 @@
+const util = require('util')
 const debug = require('debug')('bop:browser-console')
 const Format = require('console-with-style')
 const supportsColor = require('supports-color')
@@ -52,5 +53,5 @@ module.exports = function(tabid) {
 function stringify(v) {
   if (typeof v == 'string') return v
   if (typeof v == 'number' || typeof v == 'boolean') return `${v}`
-  return JSON.stringify(v)
+  return util.inspect(v, {colors: colorSupportLevel > 0})
 }
