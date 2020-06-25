@@ -1,3 +1,4 @@
+// jshint esversion: 9
 // See https://electronjs.org/docs/tutorial/security#3-enable-context-isolation-for-remote-content
 // TODO: use https
 const {shell} = require('electron')
