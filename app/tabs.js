@@ -1,4 +1,5 @@
 const {EventEmitter} = require('events')
+const debug = require('debug')('bop:tabs')
 
 module.exports = function(win, BrowserView, webPreferences, init) {
   const views = Object.fromEntries(Array.from(win.getBrowserViews()).map(view=>[view.id, view]))
@@ -29,7 +30,6 @@ module.exports = function(win, BrowserView, webPreferences, init) {
   }
 
   function newTab() {
-    console.log('New Tab')
     const view = new BrowserView({webPreferences})
     view.emitter = new EventEmitter()
     makeSoleChild(view)
@@ -41,8 +41,27 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     view.setAutoResize({width: true, height: true})
     //view.setBackgroundColor('#ff0000')
     currId = `${view.id}`
+    debug(`New Tab, id: ${currId}`)
     views[currId] = view
     activateTab(currId)
+
+    function onWinClosed() {
+      debug(`tab ${view.id} parent window closed before tab -- destroying tab`)
+      delete views[`${view.id}`]
+      if (view.id == currId) {
+        view.emitter.emit('deactivate-tab')
+      }
+      view.emitter.emit('close')
+      view.emitter.removeAllListeners()
+      view.destroy()
+    }
+
+    win.on('closed', onWinClosed)
+    view.emitter.on('close', ()=>{
+      debug(`tab ${view.id} closesd, removing listener for window closed`)
+      win.off('closed', onWinClosed)
+    })
+
     view.webContents.once('dom-ready', e => {
       console.log('dom ready on new tab')
       view.webContents.executeJavaScript(`document.write('<h2>Index: ${currId}</h2>')`)
@@ -59,13 +78,21 @@ module.exports = function(win, BrowserView, webPreferences, init) {
 
   function closeTab() {
     const oldId = currId
+    debug(`close tab ${oldId}`)
     const view = views[oldId]
-    if (!view) return
+    if (!view) {
+      return console.error(`view ${oldId} not found`)
+    }
     nextTab()
     delete views[oldId]
     view.emitter.emit('deactivate-tab')
     view.emitter.emit('close')
     view.emitter.removeAllListeners()
+    /*
+    debug('destroy view.webContents')
+    view.webContents.destroy()
+    */
+    debug('destroy view')
     view.destroy()
   }
 
