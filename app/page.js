@@ -1,6 +1,12 @@
 const {EventEmitter} = require('events')
 const {Page} = require('puppeteer-core/lib/Page')
 const debug = require('debug')('bop:page')
+const d_cdp = require('debug')('bop:cdp')
+const d_cdp_scopes = {
+  Network: d_cdp.extend('network'),
+  Runtime: d_cdp.extend('runtime'),
+  Page: d_cdp.extend('page')
+}
 
 const cache = new WeakMap()
 
@@ -42,15 +48,18 @@ module.exports = function(webContents) {
     }
     if (!name.startsWith('Network.webSocketFrame')) {
       // Network.webSocketFrame are so frequent that they are not helpful
-      debug(`emit ${name}`)
+      const [cdp_scope, ...rest] = name.split('.')
+      const d = d_cdp_scopes[cdp_scope]
+      if (d) d(rest.join('.'))
+      else debug(`emit ${name}`)
     }
     if (name == 'Log.entryAdded') {
       debug('Log entry: %O', event)
     }
-    /*
-    if (name == 'Network.loadingFinished') {
-      debug('Loading finished: %O', event)
-    }*/
+    
+    if (name == 'Network.webSocketCreated') {
+      d_cdp_scopes.Network('webSocketCreated: %O', event)
+    }
     if (name == 'Network.responseReceived') {
       const {status, statusText, url} = event.response
       debug('Network Response: %s %s %s', status, statusText, url.substr(0,80))
