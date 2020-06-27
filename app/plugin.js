@@ -86,12 +86,12 @@ exports.init = function (ssb, config) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
     debug('HTTP request for path', u.pathname)
-    if (u.pathname.startsWith('/about/')) {
+    if (u.pathname.startsWith('/launch/')) {
       const bootKey = decodeURIComponent(u.pathname.split('/')[2])
-      debug(`request for about page, bootKey: ${bootKey}`)
+      debug(`request for launch page, bootKey: ${bootKey}`)
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
-      return sendAboutPage(res)
+      return sendLaunchPage(res)
     }
 
     if (!u.pathname.startsWith('/blobs/get/')) return next()
@@ -283,9 +283,9 @@ function client_log(msg) {
   return bop.log(msg)
 }
 
-module.exports.sendAboutPage = sendAboutPage
+module.exports.sendLaunchPage = sendLaunchPage
 
-function sendAboutPage(res) {
+function sendLaunchPage(res) {
   const body = BufferList()
   body.append(h('div.bayofplenty', {
     style: 'opacity: 0'
@@ -322,7 +322,7 @@ function sendAboutPage(res) {
         .update(bl_hash.slice())
         .digest('base64')
 
-      console.log('sha', sha)
+      debug('script hash on launch page: %s', sha)
       
       res.setHeader(
         'Content-Security-Policy', 

@@ -154,7 +154,7 @@ function OpenApp(pool, page, view, reflection) {
       const bootKey = (conf && conf.boot) || config.boot
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
         if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
+        const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
         reflection.reset()
 
         page.once('domcontentloaded', async ()  =>{
