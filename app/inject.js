@@ -35,14 +35,16 @@ module.exports = function inject(electron, Sbot) {
   app.on('ready', start)
 
   app.on('will-quit', e=>{
-    // FIXME: on OSX, sandview worker threads
-    // aren't joined at this point,
-    // so a C assertion triggers and the process Sigfaults.
-    // This simple delay prevents the crash.
     e.preventDefault()
-    setTimeout( ()=>{
-      process.exit(0)
-    }, 700)
+
+    pool.allDone().then(()=>{
+      debug('All sbots are closed')
+      // give it a second to finish log output
+      setTimeout( ()=>{
+        debug('Good Bye!')
+        process.exit(0)
+      }, 1000)
+    })
   })
 
   async function start() {
@@ -133,7 +135,7 @@ function OpenApp(pool, page, view, reflection) {
       return cb(err)
     }
 
-    const {unref, promise} = pool({conf, id})
+    const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
       return cb(err)
@@ -145,7 +147,7 @@ function OpenApp(pool, page, view, reflection) {
       }
 
       view.once('close', e=>{
-        debug('view closed -- unref sbot')
+        debug(`view ${tabidFromview(view)} closed -- unref sbot`)
         unref()
       })
 
@@ -214,8 +216,10 @@ function updateMenu(electron, win, view, tabs) {
 
   win.setTitle(label)
   view.on('deactivate-tab', ()=>{
-    win.setTitle('Main Tab') // we receive no activate-tab for the main tab
-    Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
+    if (!win.isDestroyed()) { // window might have been destroyed first!
+      win.setTitle('Main Tab') // we receive no activate-tab for the main tab
+      Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
+    }
   })
   view.on('activate-tab', ()=>{
     win.setTitle(label)

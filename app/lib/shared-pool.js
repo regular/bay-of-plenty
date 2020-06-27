@@ -3,19 +3,32 @@ const debug = require('debug')('bop:shared-pool')
 module.exports = function({getKey, makePromise, release}) {
   const entries = {}
 
+  function allDone() {
+    return Promise.all(Object.values(entries).map(e=>e.isReleased))
+  }
+
   // return {unref, promise}
-  return function get(args) {
+  function get(args) {
     const k = getKey(args)
     let entry = entries[k]
     if (entry) {
-      entry.ref_count ++
-      debug(`found pre-existing entry for key "${k}", inc'ed ref_count to ${entry.red_count}`)
+      entry.ref_count++
+      debug(`found pre-existing entry for key "${k}", inc'ed ref_count to ${entry.ref_count}`)
     } else {
       debug(`make entry for key "${k}"`)
       entry = {
         ref_count: 1,
         promise: makePromise(args)
       }
+      // a promise that is resolved when the promise returned by release is resolved
+      entry.isReleased = new Promise(resolve=>{
+        entry.released = ()=>{
+          debug(`done releasing ${k}`)
+          delete entries[k]
+          entry = null
+          resolve()
+        }
+      })
       entries[k] = entry
     }
 
@@ -23,9 +36,8 @@ module.exports = function({getKey, makePromise, release}) {
       debug(`unref called for key ${k}`)
       if (--entry.ref_count == 0) {
         debug('ref_count reached zero')
-        delete entries[k]
-        entry.promise.then(release)
-        entry = null
+        const {released} = entry
+        entry.promise.then(release).then(released)
       }
     }
 
@@ -34,5 +46,8 @@ module.exports = function({getKey, makePromise, release}) {
       unref
     }
   }
-
+  return {
+    get,
+    allDone
+  }
 }
