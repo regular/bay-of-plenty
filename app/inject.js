@@ -22,9 +22,11 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
-module.exports = function inject(electron, Sbot) {
+module.exports = function inject(electron, Sbot, argv) {
   const {app, BrowserWindow, BrowserView, Menu} = electron
   const pool = Pool(Sbot)
+
+  debug('commandline %O', argv)
 
   app.allowRendererProcessReuse = true
 
@@ -84,7 +86,7 @@ module.exports = function inject(electron, Sbot) {
         console.error(`page reflection ended: ${err.message}`)
       })
 
-      const openApp = OpenApp(pool, page, view, reflection)
+      const openApp = OpenApp(pool, page, view, reflection, argv)
       
       // when exposed here, the exposed function is broken
       // after navigation. (it then is tha underlying native function)
@@ -124,7 +126,7 @@ module.exports = function inject(electron, Sbot) {
   }
 }
 
-function OpenApp(pool, page, view, reflection) {
+function OpenApp(pool, page, view, reflection, argv) {
 
   return function openApp(invite, id, cb) {
     debug('openAPp called')
@@ -154,11 +156,12 @@ function OpenApp(pool, page, view, reflection) {
       const bootKey = (conf && conf.boot) || config.boot
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
         if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
+        const filepath = argv._[0] || 'launch.js'
+        const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(filepath)}/${encodeURIComponent(bootKey)}`
         reflection.reset()
 
         page.once('domcontentloaded', async ()  =>{
-          console.log('domcontentloaded')
+          debug('domcontentloaded')
           ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
 
           debug('setting browser keypair')

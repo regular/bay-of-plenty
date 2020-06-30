@@ -9,5 +9,6 @@ if (process.env.THROW_DEPRECATION) {
 
 const electron = require('electron')
 const sbot = require('./sbot')
+const argv = require('minimist')(process.argv.slice(2))
 
-require('./inject.js')(electron, sbot)
+require('./inject.js')(electron, sbot, argv)

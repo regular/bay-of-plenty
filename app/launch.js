@@ -1,145 +1,78 @@
-const h = require('hyperscript')
-const setStyles = require('module-styles')('bayofplenty')
-const ActivityIndicator = require('tre-activity-indicator')
+const h = require('mutant/html-element')
+const setStyles = require('module-styles')('bop-launch-page')
 const pull = require('pull-stream')
 
-const bootKey = decodeURIComponent(document.location.pathname.split('/')[2])
+const ConsoleMessages = require('tre-console-messages')
+
+const bootKey = decodeURIComponent(document.location.pathname.split('/')[3])
 const bootURL = `/boot/${encodeURIComponent(bootKey)}`
 
 styles()
 
+const renderConsole = ConsoleMessages()
+const con = renderConsole()
+con.setAttribute('open', true)
+document.body.appendChild(h('.bop-launch', [
+  h('.tab-bar', 'tab bar'),
+  h('iframe', {src: bootURL}),
+  con
+]))
 
-const activityIndicator = ActivityIndicator({
-  width: 150,
-  height: 150,
-  color: '#777'
-})
-document.body.appendChild(activityIndicator)
-
-const container = document.querySelector('.bayofplenty')
-checkBlob(container, activityIndicator)
-
-setTimeout( ()=>{
-  container.style.opacity = 1
-}, 5000)
-
-container.appendChild(
-  h('div#log', [
-    h('h3', 'Boot Log'),
-    h('.container')
-  ])
-)
-
-function checkBlob(container, activityIndicator) {
-  const el = h('.boot', 'checking blob ...')
-  container.appendChild(el)
+function checkBlob(cb) {
   fetch(bootURL, {
     method: 'HEAD'
   }).then(response => {
     if (!response.ok) {
-      log({
-        level: 'error', 
-        plug: 'boot',
-        verb: `Server response for ${bootURL}`,
-        data: [response.statusText]
-      })
-      el.innerText = response.statusText
-      activityIndicator.style.display = 'none'
+      console.error('server response for %s: %s', bootURL, response.statusText)
       return
     }
     const etag = response.headers.get('etag')
-    log({
-      level: 'notice', 
-      plug: 'boot',
-      verb: 'Blob available',
-      data: [etag]
-    })
-    el.innerText = `boot blob is available: ${etag}`
+    console.info('Blob available: %s', etag)
     setTimeout( ()=>{
-      location.href = bootURL
+      cb()
     })
   }).catch(err => {
-    log({
-      level: 'error', 
-      plug: 'boot',
-      verb: `Error requesting HEAD ${bootURL}`,
-      data: [err.message]
-    })
-    el.innerText = 'FAIL'
-    activityIndicator.style.display = 'none'
+    console.error('Error requesting HEAD %s: %s', bootURL, err.message)
   })
-}
-
-function log(msg) {
-  let {level, plug, id, verb, data} = msg
-  id = id && id.substr(0,15) || ''
-  if (!data) data = []
-  if (!Array.isArray(data)) data = [data]
-  console.log(level, plug, id, verb, data.join(' '))
-  const el = document.querySelector('#log .container')
-  if (!el) {
-    console.error('#log element not found.')
-    return false
-  }
-  el.appendChild(
-    h(`div.message.${level}.${plug}`, 
-      [level, plug, id, verb, data.join(' ')].map(x => h('span', x))
-    )
-  )
-  const p = el.parentElement
-  p.scrollTop = p.scrollHeight
-}
-
-// API called from Electron process
-window.bayofplenty = {
-  log
 }
 
 function styles() {
   setStyles(`
-    ul.versions {
-      display: grid;
-      grid-template-rows: repeat(5, 1fr);
-      grid-template-columns: 1fr 1fr 1fr;
-      grid-auto-flow: row;
+    html * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
     }
-    body {
+    html, body {
       height: 100%;
       overflow: hidden;
+    }
+    body {
       background-color: #333;
       font-family: sans-serif;
     }
-    div#log {
-      max-height: 15em;
-      overflow-y: scroll;
-      font-family: monospace;
-      font-size: 16pt;
-    }
-    div#log .message {
-      font-weight: bold;
-    }
-    div#log .message.info {
-      font-weight: normal;
-    }
-    div#log span {
-      margin-left: .6em;
-    }
-    body {
+    .bop-launch {
       display: grid;
-      grid-template-rows: 1fr;
+      grid-template-rows: auto 1fr 4em;
       grid-template-columns: 1fr;
       height: 100%;
+      overflow: hidden;
+      place-items: stretch;
+      place-content: stretch;
     }
-    .bayofplenty {
-      grid-row: 1;
-      grid-column: 1;
-      opacity: 0;
+    .tab-bar {
+      background-color: blue;
+      grid-column: 1/2;
+      grid-row: 1/2;
     }
-    img.tre-activityIndicator {
-      grid-row: 1;
-      grid-column: 1;
-      place-self: center center;
-      opacity: .4;
+    iframe {
+      border: none;
+      grid-column: 1/2;
+      grid-row: 2/3;
+    }
+    .tre-console-messages {
+      grid-column: 1/2;
+      grid-row: 3/4;
     }
   `)
 }

@@ -46,6 +46,7 @@
     "tre-boot": "^1.9.0",
     "tre-bot": "^2.0.0",
     "tre-client": "^2.1.1",
+    "tre-console-messages": "^1.1.0",
     "tre-invite-code": "^1.1.0"
   },
   "devDependencies": {
