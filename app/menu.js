@@ -27,7 +27,7 @@ module.exports = function menuTemplate(app, tabs) {
     },
     { label: "Tools",
       submenu: [
-        { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", role: "toggleDevTools" },
+        { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", click: ()=> tabs.currentView().webContents.openDevTools() },
         { label: "Toggle Fullscreen", accelerator: "CmdOrCtrl+F", role: "toggleFullscreen" },
         { type: "separator" },
         { label: "Reload", accelerator: "CmdOrCtrl+r", click: ()=>tabs.currentView().webContents.reload()}
