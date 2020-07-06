@@ -1,4 +1,5 @@
 const debug = require('debug')('bop:main')
+const {join} = require('path')
 
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
@@ -13,6 +14,7 @@ const Pool = require('./sbot-pool')
 const menuTemplate = require('./menu')
 const secure = require('./secure')
 const Tabs = require('./tabs')
+const loadScript = require('./script-loader')
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -57,8 +59,10 @@ module.exports = function inject(electron, Sbot) {
       darkTheme: true,
       webPreferences
     })
-    //win.openDevTools()
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
+
+    const mainPage = await Page(win.webContents)
+    await loadScript(mainPage, join(__dirname, 'tabbar.js'))
 
     const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
@@ -67,12 +71,7 @@ module.exports = function inject(electron, Sbot) {
       win = null
     })
 
-    try {
-      await initTabView(win)
-    } catch(err) {
-      console.error(err.message)
-      process.exit(1)
-    }
+    tabs.newTab()
 
     async function initTabView(view) {
       updateMenu(electron, win, view, tabs)

@@ -3,15 +3,14 @@ const debug = require('debug')('bop:tabs')
 
 module.exports = function(win, BrowserView, webPreferences, init) {
   const views = Object.fromEntries(Array.from(win.getBrowserViews()).map(view=>[view.id, view]))
-  views._main = null
   let currId = Object.keys(views).sort()[0]
 
   function makeSoleChild(view) {
-    console.log(`makeSoleChild view #${view == null ? 'main'  : view.id}`)
+    debug(`makeSoleChild view #${view.id}`)
     while(win.getBrowserViews().length) {
       win.removeBrowserView(win.getBrowserViews()[0])
     }
-    if (view !== null) win.addBrowserView(view)
+    win.addBrowserView(view)
   }
   
   function activateTab(viewId) {
@@ -34,7 +33,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     view.emitter = new EventEmitter()
     makeSoleChild(view)
     const size = win.getContentSize()
-    const topMargin = 0
+    const topMargin = 32
     const bottomMargin = 0
     const bounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
     view.setBounds(bounds)
@@ -88,10 +87,6 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     view.emitter.emit('deactivate-tab')
     view.emitter.emit('close')
     view.emitter.removeAllListeners()
-    /*
-    debug('destroy view.webContents')
-    view.webContents.destroy()
-    */
     debug('destroy view')
     view.destroy()
   }
@@ -100,9 +95,9 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     const keys = Object.keys(views).sort()
     const newId = keys[(keys.indexOf(currId)+keys.length+offset) % keys.length]
     console.log(`current id: ${currId}, ${typeof currId}`)
-    console.log(`keys: ${keys}`)
-    console.log(`index: ${keys.indexOf(currId)}`)
-    console.log(`new id: ${newId}`)
+    debug(`keys: ${keys}`)
+    debug(`index: ${keys.indexOf(currId)}`)
+    debug(`new id: ${newId}`)
     if (newId == currId || newId == undefined) return
     activateTab(newId)
   }
@@ -116,7 +111,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
   }
 
   function currentView() {
-    return views[currId] || win
+    return views[currId]
   }
   
   return {
