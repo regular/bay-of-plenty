@@ -11,7 +11,12 @@ const tabs = MutantArray()
 const active = Value()
 
 document.body.appendChild(
-  h('.tabbar',MutantMap(tabs, renderTab))
+  h('.topbar', [
+    h('.tabbar',MutantMap(tabs, renderTab)),
+    h('.button.prev-tab', '❬'),
+    h('.button.next-tab', '❭'),
+    h('.button.add-tab', '🞣')
+  ])
 )
 
 function renderTab(tab) {
@@ -21,7 +26,7 @@ function renderTab(tab) {
     })
   }, [
     h('.title', computed(tab, tab => tab.title)),
-    h('.close', 'x')
+    h('.close', '⮿')
   ])
 }
 
@@ -66,10 +71,30 @@ function styles() {
       overflow: hidden;
       font-family: sans-serif;
     }
+    .topbar {
+      background: #111;
+      display: grid;
+      place-content: start;
+      grid-template-columns: auto 16px 16px 32px;
+    }
+    .tab, .button {
+      cursor: pointer;
+    }
+    .topbar .button {
+      text-align: center;
+      font-size: 20px;
+      background: #111;
+      color: #333;
+      place-self: stretch;
+    }
+    .topbar .button:hover {
+      color: #aaa;
+    }
     .tabbar, .tab {
       height: 32px;
     }
     .tabbar {
+      max-width: calc(100vw - 64px);
       background-color: #111;
       display: grid;
       column-gap: 3px;
