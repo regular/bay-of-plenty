@@ -75,7 +75,7 @@
   "author": "regular",
   "license": "ISC",
   "devDependencies": {
-    "electron": "~2.0.13",
+    "electron": "~7.2.4",
     "electron-builder": "^19.46.9",
     "node-pre-gyp": "^0.12.0"
   },
