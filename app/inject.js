@@ -14,6 +14,7 @@ const Pool = require('./sbot-pool')
 const menuTemplate = require('./menu')
 const secure = require('./secure')
 const Tabs = require('./tabs')
+const Tabbar = require('./tabbar')
 const loadScript = require('./script-loader')
 
 const webPreferences = {
@@ -59,10 +60,12 @@ module.exports = function inject(electron, Sbot) {
       darkTheme: true,
       webPreferences
     })
+    win.openDevTools()
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
 
     const mainPage = await Page(win.webContents)
-    await loadScript(mainPage, join(__dirname, 'tabbar.js'))
+    await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'))
+    const tabbar = Tabbar(mainPage)
 
     const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
@@ -76,6 +79,15 @@ module.exports = function inject(electron, Sbot) {
     async function initTabView(view) {
       updateMenu(electron, win, view, tabs)
 
+      // keep tabbar in sync
+      tabbar.onNewTab(view.id, `Tab ${view.id}`)
+      view.on('activate-tab', ()=>{
+        tabbar.onTabActivated(view.id)
+      })
+      view.on('close', ()=>{
+        tabbar.onTabClosed(view.id)
+      })
+
       const page = await Page(view.webContents)
       debug('Page initialized')
       PageLog(page, tabidFromview(view))
@@ -84,12 +96,6 @@ module.exports = function inject(electron, Sbot) {
       })
 
       const openApp = OpenApp(pool, page, view, reflection)
-      
-      // when exposed here, the exposed function is broken
-      // after navigation. (it then is tha underlying native function)
-      // so, after navigation, we need to resotre the js part using
-      // exposeFunctionAgain
-      //await page.exposeFunction('myfunc', async (a)=>a+1)
       
       await page.evaluateOnNewDocument(debug=>{
         console.log(`%c setting localStorage.debug to %c ${debug}`, 'color: yellow;', 'color: green;')
@@ -117,6 +123,7 @@ module.exports = function inject(electron, Sbot) {
         }
         const {webapp, url} = result
         const name = webapp.value.content.name
+        tabbar.onTabTitleChanged(view.id, name)
         loadURL(page, url)
       })
     }

@@ -34,7 +34,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     makeSoleChild(view)
     const size = win.getContentSize()
     const topMargin = 32
-    const bottomMargin = 0
+    const bottomMargin = 500
     const bounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
     view.setBounds(bounds)
     view.setAutoResize({width: true, height: true})

@@ -1,47 +1,42 @@
-const h = require('mutant/html-element')
-const setStyles = require('module-styles')('bop-tabbar')
-const MutantArray = require('mutant/array')
-const MutantMap = require('mutant/map')
-const computed = require('mutant/computed')
+const debug = require('debug')('bop:tabbar')
 
-styles()
+module.exports = function(page) {
 
-const tabs = MutantArray()
-tabs.push({name: 'foo', id: 1})
+  function sendMessage(name, detail, cb) {
+    cb = cb || (()=>{})
+    const args = [fireEvent, name, detail]
+    debug('sendMessage %s %o', name, detail)
+    page.evaluate.apply(page, args)
+    .catch( err =>{
+      console.error(`tabbar: sendMessage failed ${err.message}`)
+      cb(err)
+    })
+    .then(()=>cb(null))
+  }
 
-document.body.appendChild(
-  h('.tabbar',MutantMap(tabs, renderTab))
-)
+  // evaled in browser context
+  function fireEvent(name, detail) {
+    const event = new CustomEvent(name, {detail})
+    window.dispatchEvent(event)
+  }
 
-function renderTab(tab) {
-  return h('.tab', computed(tab, tab => tab.name))
-}
+  function onNewTab(id, title) {
+    sendMessage('on-new-tab', {id, title})
+  }
+  function onTabActivated(id) {
+    sendMessage('on-tab-activated', {id})
 
-function styles() {
-  setStyles(`
-    html {
-      height: 100%;
-    }
-    html * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      height: 100%;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    .tabbar, .tab {
-      height: 32px;
-    }
-    .tabbar {
-      background-color: #111;
-    }
-    .tab {
-      display: inline-block;
-      color: #888;
-      border: 1px solid #666;
-    }
-  `)
+  }
+  function onTabClosed(id) {
+    sendMessage('on-tab-closed', {id})
+  }
+  function onTabTitleChanged(id, title) {
+    sendMessage('on-tab-title-changed', {id, title})
+  }
+  return {
+    onNewTab,
+    onTabActivated,
+    onTabClosed,
+    onTabTitleChanged
+  }
 }
