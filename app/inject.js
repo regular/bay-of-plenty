@@ -67,7 +67,14 @@ module.exports = function inject(electron, Sbot) {
     await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'))
     const tabbar = Tabbar(mainPage)
 
-    const tabs = Tabs(win, BrowserView, webPreferences, initTabView)
+    function makeView() {
+      return new BrowserView({webPreferences})
+    }
+
+    const tabs = Tabs(win, makeView, initTabView, {
+      topMargin: 32,
+      bottomMargin: 250
+    })
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
     win.on('closed', () => {
       debug('window closed')

@@ -72,6 +72,8 @@ function styles() {
       font-family: sans-serif;
     }
     .topbar {
+      height: 32px;
+      border-bottom: 1px solid #222;
       background: #111;
       display: grid;
       place-content: start;
@@ -81,6 +83,8 @@ function styles() {
       cursor: pointer;
     }
     .topbar .button {
+      height: 31px;
+      padding-top: 3px;
       text-align: center;
       font-size: 20px;
       background: #111;
@@ -91,7 +95,7 @@ function styles() {
       color: #aaa;
     }
     .tabbar, .tab {
-      height: 32px;
+      height: 29px;
     }
     .tabbar {
       max-width: calc(100vw - 64px);
@@ -112,6 +116,8 @@ function styles() {
       border: 1px solid #444;
       border-bottom: none;
       border-radius: 4px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
       max-width: 200px;
       align-items: center;
     }
@@ -122,10 +128,17 @@ function styles() {
       text-overflow: ellipsis;
     }
     .tab > .close {
+      color: #666;
       place-self: center;
     }
+    .tab > .close:hover {
+      color: #eee;
+    }
+    .tab:not(.active):hover .title {
+      color: #888;
+    }
     .tab.active {
-      color: #bbb;
+      color: #aaa;
       background: #333;
       border-color: #666;
     }

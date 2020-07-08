@@ -1,7 +1,8 @@
 const {EventEmitter} = require('events')
 const debug = require('debug')('bop:tabs')
 
-module.exports = function(win, BrowserView, webPreferences, init) {
+module.exports = function(win, makeView, init, opts) {
+  opts = opts || {}
   const views = Object.fromEntries(Array.from(win.getBrowserViews()).map(view=>[view.id, view]))
   let currId = Object.keys(views).sort()[0]
 
@@ -32,12 +33,11 @@ module.exports = function(win, BrowserView, webPreferences, init) {
   }
 
   function newTab() {
-    const view = new BrowserView({webPreferences})
+    const view = makeView()
     view.emitter = new EventEmitter()
     makeSoleChild(view)
     const size = win.getContentSize()
-    const topMargin = 32
-    const bottomMargin = 0
+    const {topMargin, bottomMargin} = opts
     const bounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
     view.setBounds(bounds)
     view.setAutoResize({width: true, height: true})
