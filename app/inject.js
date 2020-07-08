@@ -64,8 +64,25 @@ module.exports = function inject(electron, Sbot) {
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
 
     const mainPage = await Page(win.webContents)
-    await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'))
+    await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'), {
+      keepIntercepting: true
+    })
     const tabbar = Tabbar(mainPage)
+    tabbar.on('new-tab', e=>{
+      tabs.newTab()
+    })
+    tabbar.on('previous-tab', e=>{
+      tabs.previousTab()
+    })
+    tabbar.on('next-tab', e=>{
+      tabs.nextTab()
+    })
+    tabbar.on('activate-tab', e=>{
+      tabs.activateTab(e.id)
+    })
+    tabbar.on('close-tab', e=>{
+      tabs.closeTab(e.id)
+    })
 
     function makeView() {
       return new BrowserView({webPreferences})

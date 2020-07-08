@@ -13,9 +13,15 @@ const active = Value()
 document.body.appendChild(
   h('.topbar', [
     h('.tabbar',MutantMap(tabs, renderTab)),
-    h('.button.prev-tab', '❬'),
-    h('.button.next-tab', '❭'),
-    h('.button.add-tab', '🞣')
+    h('.button.prev-tab', {
+      'ev-click': e=>send('previous-tab')
+    }, '❬'),
+    h('.button.next-tab', {
+      'ev-click': e=>send('next-tab')
+    }, '❭'),
+    h('.button.add-tab', {
+      'ev-click': e=>send('new-tab')
+    }, '🞣')
   ])
 )
 
@@ -23,11 +29,31 @@ function renderTab(tab) {
   return h('.tab', {
     classList: computed([tab, active], (tab, active)=>{
       return tab.id == active ? ['active'] : []
-    })
+    }),
+    'ev-click': e=>send('activate-tab', {id:tab.id})
   }, [
     h('.title', computed(tab, tab => tab.title)),
-    h('.close', '⮿')
+    h('.close', {
+      'ev-click': e=> send('close-tab', {id:tab.id})
+    }, '⮿')
   ])
+}
+
+async function send(name, data) {
+  data = data || {}
+  const response = await fetch(`/${name}`, {
+    method: 'POST',
+    mode: 'same-origin',
+    cache: 'no-cache',
+    credentials: 'omit',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    redirect: 'error',
+    referrerPolicy: 'same-origin',
+    body: JSON.stringify(data)
+  })
+  return response.json()
 }
 
 window.addEventListener('on-new-tab', e=>{
@@ -67,6 +93,7 @@ function styles() {
       box-sizing: border-box;
     }
     body {
+      user-select: none;
       height: 100%;
       overflow: hidden;
       font-family: sans-serif;

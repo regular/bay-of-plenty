@@ -4,11 +4,12 @@ const Browserify = require('browserify')
 const indexhtmlify = require('indexhtmlify')
 const BufferList = require('bl')
 
-module.exports = async function(page, filename) {
+module.exports = async function(page, filename, opts) {
+  opts = opts || {}
   debug('setRequestInterception ...')
   await page.setRequestInterception(true)
   debug('setRequestInterception done.')
-  page.on('request', async req=>{
+  page.once('request', async req=>{
     debug('intercept request to %s', req.url())
     try {
       result = await compile(filename)
@@ -31,8 +32,10 @@ module.exports = async function(page, filename) {
       })
     }
   })
-  await page.goto('http://localhost/tabbar')
-  await page.setRequestInterception(false)
+  await page.goto('http://localhost/foo')
+  if (opts.keepIntercepting !== true) {
+    await page.setRequestInterception(false)
+  }
 }
 
 function compile(filename, cb) {
