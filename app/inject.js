@@ -84,13 +84,15 @@ module.exports = function inject(electron, Sbot) {
       view.on('activate-tab', ()=>{
         tabbar.onTabActivated(view.id)
       })
-      view.on('close', ()=>{
+      view.on('close', ({last})=>{
+        debug('view closed, was last:', last)
         tabbar.onTabClosed(view.id)
+        if (last && win && !win.isDestroyed()) win.close()
       })
 
       const page = await Page(view.webContents)
       debug('Page initialized')
-      PageLog(page, tabidFromview(view))
+      PageLog(page, view.id)
       const reflection = consoleReflection(page, err=>{
         console.error(`page reflection ended: ${err.message}`)
       })
@@ -112,7 +114,7 @@ module.exports = function inject(electron, Sbot) {
         debug(`frame navigated ${frame._url}`)
       })
 
-      page.on('domcontentloaded', async ()  =>{
+      page.on('domcontentloaded', ()  =>{
         reflection.enable()
       })
 
@@ -153,7 +155,7 @@ function OpenApp(pool, page, view, reflection) {
       }
 
       view.once('close', e=>{
-        debug(`view ${tabidFromview(view)} closed -- unref sbot`)
+        debug(`view ${view.id} closed -- unref sbot`)
         unref()
       })
 
@@ -202,8 +204,6 @@ function updateMenu(electron, win, view, tabs) {
       id: 'separator',
       type: 'separator'
     }))
-    label = 'Main Tab'
-    accelerator = `CmdOrCtrl+0`
   }
   tabMenu.append(new MenuItem({
     label,
@@ -211,9 +211,6 @@ function updateMenu(electron, win, view, tabs) {
     type: 'radio',
     id: label,
     click: ()=>{
-      if (label == 'Main Tab') {
-        return tabs.activateTab('_main')
-      }
       tabs.activateTab(`${view.id}`)
     }
   }))
@@ -221,12 +218,6 @@ function updateMenu(electron, win, view, tabs) {
   Menu.getApplicationMenu().getMenuItemById(label).checked = true
 
   win.setTitle(label)
-  view.on('deactivate-tab', ()=>{
-    if (!win.isDestroyed()) { // window might have been destroyed first!
-      win.setTitle('Main Tab') // we receive no activate-tab for the main tab
-      Menu.getApplicationMenu().getMenuItemById('Main Tab').checked = false
-    }
-  })
   view.on('activate-tab', ()=>{
     win.setTitle(label)
     Menu.getApplicationMenu().getMenuItemById(label).checked = true
@@ -254,14 +245,6 @@ function consoleMessageSource(webContents) {
     })
   })
   return p.source
-}
-
-function tabidFromview(view) {
-  let tabid = view.id
-  if (view.constructor.name == 'BrowserWindow') {
-    tabid = 0
-  }
-  return tabid
 }
 
 function wait(s) {

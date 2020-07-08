@@ -7,9 +7,12 @@ module.exports = function(win, BrowserView, webPreferences, init) {
 
   function makeSoleChild(view) {
     debug(`makeSoleChild view #${view.id}`)
-    while(win.getBrowserViews().length) {
-      win.removeBrowserView(win.getBrowserViews()[0])
+    debug('removing all views')
+    for(;;) {
+      let v = win.getBrowserViews()[0]
+      if (v) win.removeBrowserView(v); else break
     }
+    debug('adding view')
     win.addBrowserView(view)
   }
   
@@ -34,7 +37,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     makeSoleChild(view)
     const size = win.getContentSize()
     const topMargin = 32
-    const bottomMargin = 500
+    const bottomMargin = 0
     const bounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
     view.setBounds(bounds)
     view.setAutoResize({width: true, height: true})
@@ -50,7 +53,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
       if (view.id == currId) {
         view.emitter.emit('deactivate-tab')
       }
-      view.emitter.emit('close')
+      view.emitter.emit('close', {last: Object.keys(views).length == 0})
       view.emitter.removeAllListeners()
       view.destroy()
     }
@@ -62,8 +65,8 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     })
 
     view.webContents.once('dom-ready', e => {
-      console.log('dom ready on new tab')
-      view.webContents.executeJavaScript(`document.write('<h2>Index: ${currId}</h2>')`)
+      debug('dom ready on new tab')
+      //view.webContents.executeJavaScript(`document.write('<h2>Index: ${currId}</h2>')`)
       init({
         id: view.id,
         webContents: view.webContents,
@@ -85,7 +88,7 @@ module.exports = function(win, BrowserView, webPreferences, init) {
     nextTab()
     delete views[oldId]
     view.emitter.emit('deactivate-tab')
-    view.emitter.emit('close')
+    view.emitter.emit('close', {last: Object.keys(views).length == 0})
     view.emitter.removeAllListeners()
     debug('destroy view')
     view.destroy()
