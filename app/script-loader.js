@@ -42,6 +42,7 @@ function compile(filename, cb) {
   return new Promise( (resolve, reject) => {
     const browserify = Browserify()
     browserify.transform(require('brfs'))
+    browserify.transform(require('bricons'))
     browserify.add(filename)
     browserify.bundle()
     .pipe(BufferList( (err, buffer) => {

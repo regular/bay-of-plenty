@@ -25,6 +25,8 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
+const DEBUG_TABS = 1
+
 module.exports = function inject(electron, Sbot) {
   const {app, BrowserWindow, BrowserView, Menu} = electron
   const pool = Pool(Sbot)
@@ -60,7 +62,9 @@ module.exports = function inject(electron, Sbot) {
       darkTheme: true,
       webPreferences
     })
-    win.openDevTools()
+    if (DEBUG_TABS) {
+      win.openDevTools()
+    }
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
 
     const mainPage = await Page(win.webContents)
@@ -90,7 +94,7 @@ module.exports = function inject(electron, Sbot) {
 
     const tabs = Tabs(win, makeView, initTabView, {
       topMargin: 32,
-      bottomMargin: 250
+      bottomMargin: DEBUG_TABS ? 250 : 0
     })
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
     win.on('closed', () => {

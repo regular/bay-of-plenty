@@ -5,6 +5,13 @@ const MutantMap = require('mutant/map')
 const computed = require('mutant/computed')
 const Value = require('mutant/value')
 
+const bricons = require('bricons')
+const Icon = require('./lib/svg-symbol')
+const closeCircle = Icon(bricons.svg('ionicons/close-circle'))
+const chevronForward = Icon(bricons.svg('ionicons/chevron-forward'))
+const chevronBack = Icon(bricons.svg('ionicons/chevron-back'))
+const add = Icon(bricons.svg('ionicons/add'))
+
 styles()
 
 const tabs = MutantArray()
@@ -15,13 +22,13 @@ document.body.appendChild(
     h('.tabbar',MutantMap(tabs, renderTab)),
     h('.button.prev-tab', {
       'ev-click': e=>send('previous-tab')
-    }, '❬'),
+    }, chevronBack()),
     h('.button.next-tab', {
       'ev-click': e=>send('next-tab')
-    }, '❭'),
+    }, chevronForward()),
     h('.button.add-tab', {
       'ev-click': e=>send('new-tab')
-    }, '🞣')
+    }, add())
   ])
 )
 
@@ -35,7 +42,7 @@ function renderTab(tab) {
     h('.title', computed(tab, tab => tab.title)),
     h('.close', {
       'ev-click': e=> send('close-tab', {id:tab.id})
-    }, '⮿')
+    }, closeCircle())
   ])
 }
 
@@ -115,11 +122,13 @@ function styles() {
       text-align: center;
       font-size: 20px;
       background: #111;
-      color: #333;
+      fill: #333;
+      stroke-color: #333;
       place-self: stretch;
     }
     .topbar .button:hover {
-      color: #aaa;
+      fill: #aaa;
+      stroke: white;
     }
     .tabbar, .tab {
       height: 29px;
@@ -155,11 +164,15 @@ function styles() {
       text-overflow: ellipsis;
     }
     .tab > .close {
-      color: #666;
+      width: 18px;
+      height: 18px;
+      fill: #666;
       place-self: center;
     }
     .tab > .close:hover {
-      color: #eee;
+      fill: #e77;
+      stroke: white;
+      stroke-width: 20px;
     }
     .tab:not(.active):hover .title {
       color: #888;
