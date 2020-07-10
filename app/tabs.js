@@ -75,15 +75,16 @@ module.exports = function(win, makeView, init, opts) {
         removeAllListeners: view.emitter.removeAllListeners.bind(view.emitter)
       })
     })
-    view.webContents.loadFile(__dirname + '/public/newtab.html')
+    //view.webContents.loadFile(__dirname + '/public/newtab.html')
+    view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
   }
 
   function closeTab(id) {
-    const oldId = id || currId
+    const oldId = id == undefined ? currId : id
     debug(`close tab ${oldId}`)
     const view = views[oldId]
     if (!view) {
-      return console.error(`view ${oldId} not found`)
+      return console.error(`faile to close: view ${oldId} not found`)
     }
     if (currId == oldId && Object.keys(views).length > 1) {
       nextTab()

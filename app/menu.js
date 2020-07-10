@@ -36,10 +36,10 @@ module.exports = function menuTemplate(app, tabs) {
     { label: "Tabs",
       id: 'tabs',
       submenu: [
-        { label: "New Tab", accelerator: "CmdOrCtrl+T", click: tabs.newTab },
-        { label: "Close Tab", accelerator: "CmdOrCtrl+W", click: tabs.closeTab },
-        { label: "Next Tab", accelerator: "Alt+CmdOrCtrl+Right", click: tabs.nextTab },
-        { label: "Previous Tab", accelerator: "Alt+CmdOrCtrl+Left", click: tabs.previousTab }
+        { label: "New Tab", accelerator: "CmdOrCtrl+T", click: ()=> tabs.newTab() },
+        { label: "Close Tab", accelerator: "CmdOrCtrl+W", click: ()=> tabs.closeTab() },
+        { label: "Next Tab", accelerator: "Alt+CmdOrCtrl+Right", click: ()=> tabs.nextTab() },
+        { label: "Previous Tab", accelerator: "Alt+CmdOrCtrl+Left", click: ()=> tabs.previousTab() }
       ]
     }
   ]
