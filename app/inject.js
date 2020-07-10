@@ -25,7 +25,7 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
-const DEBUG_TABS = 0
+const DEBUG_TABS = 1
 
 module.exports = function inject(electron, Sbot) {
   const {app, BrowserWindow, BrowserView, Menu} = electron
@@ -57,6 +57,7 @@ module.exports = function inject(electron, Sbot) {
 
     win = new BrowserWindow({
       backgroundColor: '#333', 
+      title: 'Bay of Plenty',
       width: 1200,
       height: Math.round(1200*9/16),
       darkTheme: true,
@@ -262,9 +263,9 @@ function updateMenu(electron, win, view, tabs) {
   Menu.setApplicationMenu(appMenu)
   Menu.getApplicationMenu().getMenuItemById(label).checked = true
 
-  win.setTitle(label)
+  //win.setTitle(label)
   view.on('activate-tab', ()=>{
-    win.setTitle(label)
+    //win.setTitle(label)
     Menu.getApplicationMenu().getMenuItemById(label).checked = true
   })
   view.on('close', ()=>{
