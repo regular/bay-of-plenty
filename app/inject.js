@@ -118,7 +118,7 @@ module.exports = function inject(electron, Sbot) {
         if (last && win && !win.isDestroyed()) win.close()
       })
 
-      tabbar.onTabAddTag(view.id, 'loading')
+      //tabbar.onTabAddTag(view.id, 'loading')
 
       const page = await Page(view.webContents)
       debug('Page initialized')
@@ -127,7 +127,7 @@ module.exports = function inject(electron, Sbot) {
         console.error(`page reflection ended: ${err.message}`)
       })
 
-      const openApp = OpenApp(pool, page, view, reflection)
+      const openApp = OpenApp(pool, page, view, reflection, tabbar)
       
       await page.evaluateOnNewDocument(debug=>{
         console.log(`%c setting localStorage.debug to %c ${debug}`, 'color: yellow;', 'color: green;')
@@ -145,6 +145,7 @@ module.exports = function inject(electron, Sbot) {
       })
 
       page.on('domcontentloaded', ()  =>{
+        debug('domcontentloaded')
         reflection.enable()
       })
 
@@ -155,20 +156,20 @@ module.exports = function inject(electron, Sbot) {
         }
         const {webapp, url} = result
         const name = webapp.value.content.name
-        tabbar.onTabTitleChanged(view.id, name)
+        //tabbar.onTabTitleChanged(view.id, name)
         loadURL(page, url).then(()=>{
-          console.log('removing loading tag')
-          tabbar.onTabRemoveTag(view.id, 'loading')
+          //tabbar.onTabRemoveTag(view.id, 'loading')
         })
       })
     }
   }
 }
 
-function OpenApp(pool, page, view, reflection) {
+function OpenApp(pool, page, view, reflection, tabbar) {
 
   return function openApp(invite, id, cb) {
     debug('openAPp called')
+    tabbar.onTabAddTag(view.id, 'loading')
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
@@ -198,9 +199,19 @@ function OpenApp(pool, page, view, reflection) {
         const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
         reflection.reset()
 
+        debug('webapp: %O', result.kv.value.content)
+        const title = result.kv.value.content.name
+        tabbar.onTabTitleChanged(view.id, title)
+
         page.once('domcontentloaded', async ()  =>{
-          console.log('domcontentloaded')
+          debug('domcontentloaded (launch page)')
           ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
+
+          page.once('domcontentloaded', async e  =>{
+            debug('domcontentloaded (webapp)')
+            debug('removing loading tag')
+            tabbar.onTabRemoveTag(view.id, 'loading')
+          })
 
           debug('setting browser keypair')
           await page.evaluate(async (keys)=>{
