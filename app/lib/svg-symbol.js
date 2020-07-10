@@ -4,8 +4,8 @@ module.exports = function addSymbol(src) {
   const id = `_${crypto.randomBytes(7).toString('hex')}`
   const sym = makeSymbol(id, src)
   document.head.appendChild(sym)
-  return function() {
-    return makeInstance(id)
+  return function(opts) {
+    return makeInstance(id, opts)
   }
 }
 function makeSymbol(id, src) {
@@ -21,17 +21,35 @@ function makeSymbol(id, src) {
       ${inner}
       </symbol>
     </svg>`
-  return p.children[0]
+  const newSvg = p.children[0]
+  removeStrokeStyle(newSvg)
+  removeTitle(newSvg)
+  return newSvg
 }
 
-function makeInstance(id) {
+function makeInstance(id, opts) {
+  opts = opts || {}
   const p = document.createElement('div')
   p.innerHTML = `
   <svg style="width:100%; height:100%">
+    ${opts.title ? '<title>' + opts.title + '</title>' : ''}
     <use xlink:href="#${id}"/>
   </svg>`
-  return p.children[0]
+  const svg = p.children[0]
+  return svg
 }
+
+function removeTitle(svg) {
+  svg.querySelectorAll('title').forEach(el=>el.parentElement.removeChild(el))
+}
+function removeStrokeStyle(svg) {
+  svg.querySelectorAll('[style]').forEach(el=>{
+    const style = el.getAttribute('style')
+    const newStyle = style.replace(/stroke\:[^;]+(;|$)/,'')
+    el.setAttribute('style', newStyle)
+  })
+}
+
 
 /*
 //const s = require('mutant/svg-element')

@@ -22,13 +22,13 @@ document.body.appendChild(
     h('.tabbar',MutantMap(tabs, renderTab)),
     h('.button.prev-tab', {
       'ev-click': e=>send('previous-tab')
-    }, chevronBack()),
+    }, chevronBack({title: 'previous tab'})),
     h('.button.next-tab', {
       'ev-click': e=>send('next-tab')
-    }, chevronForward()),
+    }, chevronForward({title: 'next tab'})),
     h('.button.add-tab', {
       'ev-click': e=>send('new-tab')
-    }, add())
+    }, add({title: 'open new tab'}))
   ])
 )
 
@@ -42,7 +42,7 @@ function renderTab(tab) {
     h('.title', computed(tab, tab => tab.title)),
     h('.close', {
       'ev-click': e=> send('close-tab', {id:tab.id})
-    }, closeCircle())
+    }, closeCircle({title: 'close tab'}))
   ])
 }
 
@@ -122,13 +122,11 @@ function styles() {
       text-align: center;
       font-size: 20px;
       background: #111;
-      fill: #333;
-      stroke-color: #333;
+      stroke: #333;
       place-self: stretch;
     }
     .topbar .button:hover {
-      fill: #aaa;
-      stroke: white;
+      stroke: #aaa;
     }
     .tabbar, .tab {
       height: 29px;
@@ -171,8 +169,6 @@ function styles() {
     }
     .tab > .close:hover {
       fill: #e77;
-      stroke: white;
-      stroke-width: 20px;
     }
     .tab:not(.active):hover .title {
       color: #888;
