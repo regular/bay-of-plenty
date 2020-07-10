@@ -118,6 +118,8 @@ module.exports = function inject(electron, Sbot) {
         if (last && win && !win.isDestroyed()) win.close()
       })
 
+      tabbar.onTabAddTag(view.id, 'loading')
+
       const page = await Page(view.webContents)
       debug('Page initialized')
       PageLog(page, view.id)
@@ -154,7 +156,10 @@ module.exports = function inject(electron, Sbot) {
         const {webapp, url} = result
         const name = webapp.value.content.name
         tabbar.onTabTitleChanged(view.id, name)
-        loadURL(page, url)
+        loadURL(page, url).then(()=>{
+          console.log('removing loading tag')
+          tabbar.onTabRemoveTag(view.id, 'loading')
+        })
       })
     }
   }
@@ -216,6 +221,7 @@ async function loadURL(page, url) {
   const response = await page.goto(url, {
     timeout: 90000
   })
+  console.error('done loading')
   if (!response.ok()) {
     throw new Error(`Server response: ${response.status()} ${response.statusText()}`)
   }

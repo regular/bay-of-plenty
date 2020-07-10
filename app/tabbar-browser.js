@@ -11,6 +11,10 @@ const closeCircle = Icon(bricons.svg('ionicons/close-circle'))
 const chevronForward = Icon(bricons.svg('ionicons/chevron-forward'))
 const chevronBack = Icon(bricons.svg('ionicons/chevron-back'))
 const add = Icon(bricons.svg('ionicons/add'))
+//const spinner = Icon(bricons.svg('samherbert/rings'))
+///const spinner = Icon(bricons.svg('samherbert/puff'))
+//const spinner = Icon(bricons.svg('samherbert/tail-spin'))
+const spinner = Icon(bricons.svg('samherbert/oval'))
 
 styles()
 
@@ -35,11 +39,12 @@ document.body.appendChild(
 function renderTab(tab) {
   return h('.tab', {
     classList: computed([tab, active], (tab, active)=>{
-      return tab.id == active ? ['active'] : []
+      return tab.id == active ? ['active'].concat(tab.tags) : tab.tags
     }),
     'ev-click': e=>send('activate-tab', {id:tab.id})
   }, [
     h('.title', computed(tab, tab => tab.title)),
+    h('.spinner', spinner()),
     h('.close', {
       'ev-click': e=> send('close-tab', {id:tab.id})
     }, closeCircle({title: 'close tab'}))
@@ -65,7 +70,7 @@ async function send(name, data) {
 
 window.addEventListener('on-new-tab', e=>{
   const {id, title} = e.detail
-  tabs.push({title, id})
+  tabs.push({title, id, tags: []})
   active.set(id)
 })
 
@@ -86,7 +91,22 @@ window.addEventListener('on-tab-title-changed', e=>{
   const x = tabs.find( x=>x.id==id )
   if (x === undefined) return console.error('on tab tilte changed: tab not found', id)
   const i = tabs.indexOf(x)
-  tabs.put(i, {id, title})
+  tabs.put(i, Object.assign(x, {title}))
+})
+window.addEventListener('on-tab-add-tag', e=>{
+  const {id, tag} = e.detail
+  const x = tabs.find( x=>x.id==id )
+  if (x === undefined) return console.error('on tab add tag: tab not found', id)
+  const i = tabs.indexOf(x)
+  tabs.put(i, Object.assign(x, {tags: x.tags.concat([tag])}))
+})
+window.addEventListener('on-tab-remove-tag', e=>{
+  const {id, tag} = e.detail
+  const x = tabs.find( x=>x.id==id )
+  if (x === undefined) return console.error('on tab remove tag: tab not found', id)
+  const i = tabs.indexOf(x)
+  const tags = x.tags.filter(t=>t !== tag)
+  tabs.put(i, Object.assign(x, {tags}))
 })
 
 function styles() {
@@ -166,6 +186,19 @@ function styles() {
       height: 18px;
       fill: #666;
       place-self: center;
+    }
+    .tab > .spinner {
+      stroke: #eee;
+      width: 18px;
+      height: 18px;
+      stroke-width: 10px;
+      place-self: center;
+    }
+    .tab.loading .close {
+      display: none;
+    }
+    .tab:not(.loading) .spinner {
+      display: none;
     }
     .tab > .close:hover {
       fill: #e77;
