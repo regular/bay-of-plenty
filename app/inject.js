@@ -25,7 +25,7 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
-const DEBUG_TABS = 1
+const DEBUG_TABS = 0
 
 module.exports = function inject(electron, Sbot) {
   const {app, BrowserWindow, BrowserView, Menu} = electron

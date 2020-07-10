@@ -78,14 +78,16 @@ module.exports = function(win, makeView, init, opts) {
     view.webContents.loadFile(__dirname + '/public/newtab.html')
   }
 
-  function closeTab() {
-    const oldId = currId
+  function closeTab(id) {
+    const oldId = id || currId
     debug(`close tab ${oldId}`)
     const view = views[oldId]
     if (!view) {
       return console.error(`view ${oldId} not found`)
     }
-    nextTab()
+    if (currId == oldId && Object.keys(views).length > 1) {
+      nextTab()
+    }
     delete views[oldId]
     view.emitter.emit('deactivate-tab')
     view.emitter.emit('close', {last: Object.keys(views).length == 0})
