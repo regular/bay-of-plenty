@@ -76,7 +76,7 @@ module.exports = function(win, makeView, init, opts) {
       })
     })
     //view.webContents.loadFile(__dirname + '/public/newtab.html')
-    view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
+    view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
   }
 
   function closeTab(id) {
