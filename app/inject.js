@@ -8,7 +8,8 @@ const invites = require('tre-invite-code')
 
 const Page = require('./page')
 const PageLog = require('./page-log')
-const consoleReflection = require('./lib/page-console-reflection')
+const detectErrors = require('./lib/page-detect-errors')
+const ConsoleReflection = require('./lib/page-console-reflection')
 const Pool = require('./sbot-pool')
 
 const menuTemplate = require('./menu')
@@ -25,7 +26,7 @@ const webPreferences = {
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
-const DEBUG_TABS = 1
+const DEBUG_TABS = process.env.DEBUG_TABS
 
 module.exports = function inject(electron, Sbot) {
   const {app, BrowserWindow, BrowserView, Menu} = electron
@@ -66,7 +67,7 @@ module.exports = function inject(electron, Sbot) {
     if (DEBUG_TABS) {
       win.openDevTools()
     }
-    win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E`')
+    win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
 
     const mainPage = await Page(win.webContents)
     await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'), {
@@ -109,7 +110,7 @@ module.exports = function inject(electron, Sbot) {
       updateMenu(electron, win, view, tabs)
 
       // keep tabbar in sync
-      tabbar.onNewTab(view.id, `Tab ${view.id}`)
+      tabbar.onNewTab(view.id, `⌘${view.id} — loading`)
       view.on('activate-tab', ()=>{
         tabbar.onTabActivated(view.id)
       })
@@ -119,14 +120,42 @@ module.exports = function inject(electron, Sbot) {
         if (last && win && !win.isDestroyed()) win.close()
       })
 
-      //tabbar.onTabAddTag(view.id, 'loading')
-
       const page = await Page(view.webContents)
       debug('Page initialized')
       PageLog(page, view.id)
-      const reflection = consoleReflection(page, err=>{
+
+      const reflection = ConsoleReflection(page, err=>{
         console.error(`page reflection ended: ${err.message}`)
       })
+      /*
+      pull(
+        detectErrors(page),
+        pull.filter(e =>{
+          const {type, msg} = e
+          if (type == 'console.error') {
+            return false
+          }
+          if (type == 'http status') {
+            if (msg.startsWith('301')) return false
+          }
+          return true
+        }),
+        pull.drain( e =>{
+          console.error(`Tab ${view.id}: ${e.type} ${e.msg}`)
+          //tabbar.onTabAddTag(view.id, 'alert')
+          const message = {
+            text: ()=>e.msg,
+            type: ()=>e.type,
+            location: ()=>null,
+            args: ()=>[],
+            viewId: view.id
+          }
+          tabbarErrorSink.push(message)
+        }, err=>{
+          if (err) console.error(`detectErrors stream endedn: ${err.message}`)
+        })
+      )
+      */
 
       const openApp = OpenApp(pool, page, view, reflection, tabbar)
       

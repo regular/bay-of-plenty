@@ -24,7 +24,7 @@ module.exports = function(page, onEnd) {
   function sendMessage(msg, cb) {
     const jsHandles = msg.args()
     const args = [fireEvent, msg.text(), msg.type(), msg.location(), ...jsHandles]
-    debug('sendMessage')
+    debug('fire event %s %s %O', args[1], args[2], args[3])
     page.evaluate.apply(page, args)
     .catch( err =>{
       if (/can be evaluated only in the context they were created/.test(err.message)) {
@@ -61,9 +61,19 @@ module.exports = function(page, onEnd) {
     buffer = []
   }
 
-  page.on(Events.Page.Console, message =>{
+  // text(), type(), location(), args()
+  function push(message) {
     pushable.push(message)
+  }
+
+  page.on(Events.Page.Console, message =>{
+    push(message)
   })
 
-  return {abort: drain.abort, enable, reset}
+  return {
+    abort: drain.abort,
+    enable,
+    reset,
+    push
+  }
 }
