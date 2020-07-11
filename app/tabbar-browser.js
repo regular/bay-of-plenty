@@ -11,6 +11,7 @@ const closeCircle = Icon(bricons.svg('ionicons/close-circle'))
 const chevronForward = Icon(bricons.svg('ionicons/chevron-forward'))
 const chevronBack = Icon(bricons.svg('ionicons/chevron-back'))
 const add = Icon(bricons.svg('ionicons/add'))
+const alertCircle = Icon(bricons.svg('ionicons/alert-circle'))
 //const spinner = Icon(bricons.svg('samherbert/rings'))
 ///const spinner = Icon(bricons.svg('samherbert/puff'))
 //const spinner = Icon(bricons.svg('samherbert/tail-spin'))
@@ -44,6 +45,7 @@ function renderTab(tab) {
     'ev-click': e=>send('activate-tab', {id:tab.id})
   }, [
     h('.title', computed(tab, tab => tab.title)),
+    h('.alert', alertCircle({title: 'an error occured'})),
     h('.spinner', spinner()),
     h('.close', {
       'ev-click': e=> send('close-tab', {id:tab.id})
@@ -182,11 +184,25 @@ function styles() {
       max-width: 200px;
       align-items: center;
     }
+    .tab.alert {
+      grid-template-columns: 1fr auto 32px;
+    }
     .tab > .title {
       padding-left: 6px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+    }
+    .tab:not(.alert) .alert {
+      display: none;
+    }
+    .tab > .alert {
+      width: 18px;
+      height: 18px;
+      fill: red;
+      background: #ddd;
+      border-radius: 50%;
+      place-self: center;
     }
     .tab > .close {
       width: 18px;
