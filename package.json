@@ -55,7 +55,7 @@
   "author": "regular",
   "license": "MIT",
   "dependencies": {
-    "electron": "^9.0.4",
+    "electron": "^9.1.0",
     "electron-builder": "^22.7.0",
     "electron-rebuild": "^1.11.0",
     "node-abi": "^2.18.0",
