@@ -53,6 +53,9 @@ module.exports = function(webContents) {
       if (d) d(rest.join('.'))
       else debug(`emit ${name}`)
     }
+    if (name == 'Network.loadingFailed') {
+      debug('XXXX loadingFailed: %O', event)
+    }
     if (name == 'Log.entryAdded') {
       debug('Log entry: %O', event)
     }

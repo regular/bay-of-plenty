@@ -6,17 +6,22 @@ const Pushable = require('pull-pushable')
 
 const invites = require('tre-invite-code')
 
+const supportsColor = require('supports-color')
 const Page = require('./page')
 const PageLog = require('./page-log')
-const detectErrors = require('./lib/page-detect-errors')
+const LogFunAnsi = require('./log-fun-ansi')
 const ConsoleReflection = require('./lib/page-console-reflection')
-const Pool = require('./sbot-pool')
+const detectErrors = require('./lib/page-detect-errors')
 
 const menuTemplate = require('./menu')
+const loadScript = require('./script-loader')
+
 const secure = require('./secure')
+const Pool = require('./sbot-pool')
 const Tabs = require('./tabs')
 const Tabbar = require('./tabbar')
-const loadScript = require('./script-loader')
+
+const colorSupportLevel = (supportsColor.stderr && supportsColor.stderr.level) || 0
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -122,40 +127,33 @@ module.exports = function inject(electron, Sbot) {
 
       const page = await Page(view.webContents)
       debug('Page initialized')
-      PageLog(page, view.id)
+      PageLog(page)
+        .use(LogFunAnsi(view.id), {colorSupportLevel})
 
       const reflection = ConsoleReflection(page, err=>{
         console.error(`page reflection ended: ${err.message}`)
       })
-      /*
+
       pull(
         detectErrors(page),
         pull.filter(e =>{
           const {type, msg} = e
-          if (type == 'console.error') {
-            return false
-          }
-          if (type == 'http status') {
-            if (msg.startsWith('301')) return false
-          }
           return true
         }),
         pull.drain( e =>{
-          console.error(`Tab ${view.id}: ${e.type} ${e.msg}`)
-          //tabbar.onTabAddTag(view.id, 'alert')
+          console.error(`Tab ${view.id}: ${e.type} ${e.text}`)
+          tabbar.onTabAddTag(view.id, 'alert')
           const message = {
-            text: ()=>e.msg,
+            text: ()=>e.text,
             type: ()=>e.type,
-            location: ()=>null,
-            args: ()=>[],
-            viewId: view.id
+            location: ()=>{return {url:'', lineNumber:0}},
+            args: ()=>[e.text]
           }
-          tabbarErrorSink.push(message)
+          reflection.push(message)
         }, err=>{
           if (err) console.error(`detectErrors stream endedn: ${err.message}`)
         })
       )
-      */
 
       const openApp = OpenApp(pool, page, view, reflection, tabbar)
       

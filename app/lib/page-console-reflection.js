@@ -24,7 +24,7 @@ module.exports = function(page, onEnd) {
   function sendMessage(msg, cb) {
     const jsHandles = msg.args()
     const args = [fireEvent, msg.text(), msg.type(), msg.location(), ...jsHandles]
-    debug('fire event %s %s %O', args[1], args[2], args[3])
+    debug('fire [%s] "%s" %O', args[2], args[1], args[3])
     page.evaluate.apply(page, args)
     .catch( err =>{
       if (/can be evaluated only in the context they were created/.test(err.message)) {

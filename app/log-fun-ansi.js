@@ -1,9 +1,6 @@
-const util = require('util')
 const debug = require('debug')('bop:browser-console')
-const Format = require('console-with-style')
 const supportsColor = require('supports-color')
 const colorSupportLevel = (supportsColor.stderr && supportsColor.stderr.level) || 0
-const format = Format(/*colorSupportLevel*/ 0)
 const ansi = require('ansi-styles')
 const icons = require('log-symbols')
 
@@ -20,16 +17,13 @@ const levelSymbols = {
   warning: icons.warning,
   info: icons.info
 }
-// TODO: move color/console specific stuff
-// into log-fun-ansi
-// Support a stack of log-fun, so detect errors can use it.
+
 module.exports = function(tabid) {
   let currUrl
-  return function ({consoleMessage, values}) {
-    const sym = tabid < numberSymbols.length ? numberSymbols[tabid] : `${tabid}`
+  const sym = tabid < numberSymbols.length ? numberSymbols[tabid] : `${tabid}`
+  return function ({type, text, location}) {
     let loc = ''
-    const type = consoleMessage.type()
-    const {lineNumber, url} = consoleMessage.location()
+    const {lineNumber, url} = location
     if (url !== currUrl) {
       debug('In', url)
       currUrl = url
@@ -37,11 +31,6 @@ module.exports = function(tabid) {
     if (lineNumber !== undefined) {
       loc = `:${lineNumber} `
     }
-    if (!values.length) {
-      values.unshift(consoleMessage.text())
-    }
-    const text = typeof values[0] == 'string' ? format.apply(null, values)
-      : values.map(stringify).join(' ')
     if (debug.enabled && (type !== 'log' || process.env.DEBUG_LOG)) {
       let prefix = '', postfix = ''
       if (colorWraps[type]) {
@@ -52,8 +41,3 @@ module.exports = function(tabid) {
   }
 }
 
-function stringify(v) {
-  if (typeof v == 'string') return v
-  if (typeof v == 'number' || typeof v == 'boolean') return `${v}`
-  return util.inspect(v, {colors: colorSupportLevel > 0})
-}
