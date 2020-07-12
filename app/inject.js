@@ -129,6 +129,16 @@ module.exports = function inject(electron, Sbot) {
       debug('Page initialized')
       PageLog(page)
         .use(LogFunAnsi(view.id), {colorSupportLevel})
+        .use(({text, type})=>{
+          if (type == 'error') {
+            if (text.startsWith("error loading sodium bindings")) return
+            if (text.startsWith("falling back to javascript")) return
+            tabbar.onTabAddTag(view.id, 'alert')
+            console.log(
+              `setting alert in tab ${view.id} because console.error was called with "${text}"`
+            )
+          }
+        }, {colorSupportLevel: 0})
 
       const reflection = ConsoleReflection(page, err=>{
         console.error(`page reflection ended: ${err.message}`)
