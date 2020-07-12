@@ -12,19 +12,24 @@ module.exports = async function(page, filename, opts) {
   page.once('request', async req=>{
     debug('intercept request to %s', req.url())
     try {
+      debug('compile')
       result = await compile(filename)
+      debug('compile done')
       /* TODO
       res.setHeader(
         'Content-Security-Policy', 
         `script-src 'sha256-${result.sha}';`
       )
       */
+      debug('sending response')
       await req.respond({
         status: 200,
         contentType: 'text/html',
         body: result.body
       })
     } catch(err) {
+      debug('compile failed')
+      console.error(`error compiling: ${err.message} ${err.annotated}`)
       await req.respond({
         status: 503,
         contentType: 'text/plain',
@@ -32,8 +37,10 @@ module.exports = async function(page, filename, opts) {
       })
     }
   })
+  debug('navigating')
   await page.goto('http://localhost/foo')
   if (opts.keepIntercepting !== true) {
+    debug('stop intercepting network requests')
     await page.setRequestInterception(false)
   }
 }
