@@ -22,8 +22,23 @@ module.exports = function(page) {
   })
   page.on('requestfailed', request => {
     const errorText = request.failure().errorText
-    const text = `${errorText} ${request.resourceType()} ${request.method()} ${request.url()}`
-    debug('requestfailed %s %O', text, request.headers())
+    const type = request.resourceType()
+    const method = request.method()
+    const url = request.url()
+    const response = request.response()
+    const status = response.status()
+    const ok = response.ok()
+    const text = `${errorText} ${type} ${method} ${url} ${status} ok: ${ok}`
+    debug('requestfailed %s', text)
+    debug(`response was: ${status} ok: ${ok}`)
+
+    if (method == 'HEAD' && 
+        type == 'fetch' &&
+        ok == true) {
+      debug('this is considered a bogus error: the fetch actually suceeded.')
+      return
+    }
+
     pushable.push({
       type: 'network-error',
       text
