@@ -6,12 +6,8 @@ const Pushable = require('pull-pushable')
 
 const invites = require('tre-invite-code')
 
-const supportsColor = require('supports-color')
 const Page = require('./page')
-const PageLog = require('./page-log')
-const LogFunAnsi = require('./log-fun-ansi')
-const ConsoleReflection = require('./lib/page-console-reflection')
-const detectErrors = require('./lib/page-detect-errors')
+const initLogging = require('./lib/logging')
 
 const menuTemplate = require('./menu')
 const loadScript = require('./script-loader')
@@ -20,8 +16,6 @@ const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const Tabs = require('./tabs')
 const Tabbar = require('./tabbar')
-
-const colorSupportLevel = (supportsColor.stderr && supportsColor.stderr.level) || 0
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -127,66 +121,21 @@ module.exports = function inject(electron, Sbot) {
 
       const page = await Page(view.webContents)
       debug('Page initialized')
-      PageLog(page)
-        .use(LogFunAnsi(view.id), {colorSupportLevel})
-        .use(({text, type})=>{
-          if (type == 'error') {
-            if (text.startsWith("error loading sodium bindings")) return
-            if (text.startsWith("falling back to javascript")) return
-            tabbar.onTabAddTag(view.id, 'alert')
-            console.log(
-              `setting alert in tab ${view.id} because console.error was called with "${text}"`
-            )
-          }
-        }, {colorSupportLevel: 0})
 
-      const reflection = ConsoleReflection(page, err=>{
-        console.error(`page reflection ended: ${err.message}`)
+      function setAlert(text) {
+        tabbar.onTabAddTag(view.id, 'alert')
+        console.log(
+          `setting alert in tab ${view.id} because console.error was called with "${text}"`
+        )
+      }
+
+      initLogging(page, {
+        tabid: view.id,
+        setAlert
       })
 
-      pull(
-        detectErrors(page),
-        pull.filter(e =>{
-          const {type, msg} = e
-          return true
-        }),
-        pull.drain( e =>{
-          console.error(`Tab ${view.id}: ${e.type} ${e.text}`)
-          tabbar.onTabAddTag(view.id, 'alert')
-          const message = {
-            text: ()=>e.text,
-            type: ()=>e.type,
-            location: ()=>{return {url:'', lineNumber:0}},
-            args: ()=>[e.text]
-          }
-          reflection.push(message)
-        }, err=>{
-          if (err) console.error(`detectErrors stream endedn: ${err.message}`)
-        })
-      )
-
-      const openApp = OpenApp(pool, page, view, reflection, tabbar)
+      const openApp = OpenApp(pool, page, view, /*reflection*/null, tabbar)
       
-      await page.evaluateOnNewDocument(debug=>{
-        console.log(`%c setting localStorage.debug to %c ${debug}`, 'color: yellow;', 'color: green;')
-        localStorage.debug=debug
-      }, process.env.DEBUG || '')
-
-      page.on('request', request=>{
-        if (request.isNavigationRequest()) {
-          debug(`navigation request to ${request.url()}`)
-          reflection.reset()
-        }
-      })
-      page.on('framenavigated', frame =>{
-        debug(`frame navigated ${frame._url}`)
-      })
-
-      page.on('domcontentloaded', ()  =>{
-        debug('domcontentloaded')
-        reflection.enable()
-      })
-
       openApp(null, null, (err, result) =>{
         if (err) {
           console.error(err.message)
@@ -235,7 +184,8 @@ function OpenApp(pool, page, view, reflection, tabbar) {
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
         if (err) return cb(err)
         const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
-        reflection.reset()
+        //TODO
+        //reflection.reset()
 
         debug('webapp: %O', result.kv.value.content)
         const title = result.kv.value.content.name
