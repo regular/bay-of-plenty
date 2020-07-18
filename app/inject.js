@@ -1,13 +1,8 @@
 const debug = require('debug')('bop:main')
 const {join} = require('path')
 
-const pull = require('pull-stream')
-const Pushable = require('pull-pushable')
-
-const invites = require('tre-invite-code')
-
 const Page = require('./page')
-const initLogging = require('./lib/logging')
+const Logging = require('./lib/logging')
 
 const menuTemplate = require('./menu')
 const loadScript = require('./script-loader')
@@ -16,6 +11,7 @@ const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const Tabs = require('./tabs')
 const Tabbar = require('./tabbar')
+const OpenApp = require('./open-app')
 
 const webPreferences = {
   enableRemoteModule: false,
@@ -129,12 +125,27 @@ module.exports = function inject(electron, Sbot) {
         )
       }
 
-      initLogging(page, {
+      Logging(page, {
         tabid: view.id,
         setAlert
       })
 
-      const openApp = OpenApp(pool, page, view, /*reflection*/null, tabbar)
+      function onLoading(loading) {
+        if (loading) {
+          tabbar.onTabAddTag(view.id, 'loading')
+        } else {
+          tabbar.onTabRemoveTag(view.id, 'loading')
+        }
+      }
+
+      function onTitleChanged(title) {
+        tabbar.onTabTitleChanged(view.id, title)
+      }
+
+      const openApp = OpenApp(pool, page, view, {
+        onLoading,
+        onTitleChanged
+      })
       
       openApp(null, null, (err, result) =>{
         if (err) {
@@ -152,68 +163,6 @@ module.exports = function inject(electron, Sbot) {
   }
 }
 
-function OpenApp(pool, page, view, reflection, tabbar) {
-
-  return function openApp(invite, id, cb) {
-    debug('openAPp called')
-    tabbar.onTabAddTag(view.id, 'loading')
-    const conf = invite ? confFromInvite(invite) : null
-    if (invite && !conf) {
-      const err = new Error('invite parse error')
-      debug(err.message)
-      return cb(err)
-    }
-
-    const {unref, promise} = pool.get({conf, id})
-    promise.catch(err =>{
-      debug(`sbot-pool failed: ${err.message}`)
-      return cb(err)
-    }).then( ({ssb, config, myid, browserKeys}) => {
-       debug(`browser public key: ${browserKeys.public}`)
-      // only when sbot uses canned config
-      if (!invite && !id) {
-        ssb.bayofplenty.setOpenAppCallback(openApp)
-      }
-
-      view.once('close', e=>{
-        debug(`view ${view.id} closed -- unref sbot`)
-        unref()
-      })
-
-      const bootKey = (conf && conf.boot) || config.boot
-      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
-        if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
-        //TODO
-        //reflection.reset()
-
-        debug('webapp: %O', result.kv.value.content)
-        const title = result.kv.value.content.name
-        tabbar.onTabTitleChanged(view.id, title)
-
-        page.once('domcontentloaded', async ()  =>{
-          debug('domcontentloaded (launch page)')
-          ssb.bayofplenty.addWindow(view, browserKeys)
-
-          page.once('domcontentloaded', async e  =>{
-            debug('domcontentloaded (webapp)')
-            debug('removing loading tag')
-            tabbar.onTabRemoveTag(view.id, 'loading')
-          })
-
-          debug('setting browser keypair')
-          await page.evaluate(async (keys)=>{
-            console.log("setting keys")
-            window.localStorage["tre-keypair"] = JSON.stringify(keys)
-            console.log('%c done setting keys', 'color: yellow;');
-          }, browserKeys)
-        })
-
-        cb(null, {webapp: result.kv, url})
-      })
-    })
-  }
-}
 
 async function loadURL(page, url) {
   console.error(`loading ${url} ...`)
@@ -250,9 +199,7 @@ function updateMenu(electron, win, view, tabs) {
   Menu.setApplicationMenu(appMenu)
   Menu.getApplicationMenu().getMenuItemById(label).checked = true
 
-  //win.setTitle(label)
   view.on('activate-tab', ()=>{
-    //win.setTitle(label)
     Menu.getApplicationMenu().getMenuItemById(label).checked = true
   })
   view.on('close', ()=>{
@@ -261,15 +208,4 @@ function updateMenu(electron, win, view, tabs) {
   })
 }
 
-function confFromInvite(invite) {
-  invite = invite.replace(/\s*/g,'')
-  const conf = invites.parse(invite)
-  return conf ? conf : null
-}
-
-function wait(s) {
-  return new Promise( resolve => {
-    setTimeout(resolve, s * 1000)
-  })
-}
 
