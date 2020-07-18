@@ -13,7 +13,6 @@ const FlumeviewLevel = require('flumeview-level')
 const {generate} = require('ssb-keys')
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
-const Notify = require('pull-notify')
 const pkg = require('./package.json')
 const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
@@ -47,8 +46,7 @@ exports.manifest = {
   listPublicKeys: 'source',
   addIdentity: 'async',
   avatarUpdates: 'source',
-  logStream: 'source',
-  consoleMessageStream: 'source'
+  logStream: 'source'
 }
 
 exports.init = function (ssb, config) {
@@ -58,7 +56,6 @@ exports.init = function (ssb, config) {
   const logger = logging(ssb)
 
   logger.subscribe(ssb.id, LOG_LEVEL, log)
-  const consoleMessageNotifiers = {}
 
   const sv = ssb._flumeUse('WebappIndex', makeIndex())
   
@@ -136,22 +133,8 @@ exports.init = function (ssb, config) {
     fn.apply(this, args)
   })
 
-  function addConsoleStream(source, id) {
-    debug(`Adding console message source for ${id}`)
-    const notify = consoleMessageNotifiers[id] = consoleMessageNotifiers[id] || Notify()
-    pull(
-      source,
-      pull.drain(notify, err=>{
-        notify.end(err)
-        delete consoleMessageNotifiers[id]
-      })
-    )
-  }
-
-  function addWindow(win, browserKeys, consoleOutputStream) {
+  function addWindow(win, browserKeys) {
     windows.push(win)
-    addConsoleStream(consoleOutputStream, browserKeys.id)
-
     emptyQueue()
   }
 
@@ -262,17 +245,6 @@ exports.init = function (ssb, config) {
     return p.source
   }
 
-  sv.consoleMessageStream = function() {
-    const {id} = this
-    debug(`getting consoleMessageStream for ${id}`)
-    const notify = consoleMessageNotifiers[id]
-    if (!notify) {
-      debug(`id ${id} not found.`)
-      return pull.error(`Unknown id: ${id}`)
-    }
-    return notify.listen()
-  }
-  
   return sv
 }
 

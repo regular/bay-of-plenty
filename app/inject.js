@@ -193,7 +193,7 @@ function OpenApp(pool, page, view, reflection, tabbar) {
 
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
-          ssb.bayofplenty.addWindow(view, browserKeys, consoleMessageSource(view.webContents))
+          ssb.bayofplenty.addWindow(view, browserKeys)
 
           page.once('domcontentloaded', async e  =>{
             debug('domcontentloaded (webapp)')
@@ -265,19 +265,6 @@ function confFromInvite(invite) {
   invite = invite.replace(/\s*/g,'')
   const conf = invites.parse(invite)
   return conf ? conf : null
-}
-
-// TODO: remove
-function consoleMessageSource(webContents) {
-  const p = Pushable(true)
-
-  webContents.on('console-message', (e, level, message, line, sourceUrl) =>{
-    p.push({
-      level: '_ info warn error'.split(' ')[level],
-      message, line
-    })
-  })
-  return p.source
 }
 
 function wait(s) {
