@@ -6,6 +6,7 @@ module.exports = function OpenApp(pool, page, view, opts) {
 
   return function openApp(invite, id, cb) {
     debug('openAPp called')
+    debug(`onLoading ${view.id} true`)
     onLoading(true)
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
@@ -34,7 +35,7 @@ module.exports = function OpenApp(pool, page, view, opts) {
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
         if (err) return cb(err)
         const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
-        //TODO
+        //TODO: needed?
         //reflection.reset()
 
         debug('webapp: %O', result.kv.value.content)
@@ -48,6 +49,7 @@ module.exports = function OpenApp(pool, page, view, opts) {
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
+            debug(`onLoading ${view.id} false`)
             onLoading(false)
           })
 

@@ -1,16 +1,13 @@
 const debug = require('debug')('bop:main')
-const {join} = require('path')
 
 const Page = require('./page')
 const Logging = require('./lib/logging')
+const makeTabs = require('./lib/tabs')
 
 const menuTemplate = require('./menu')
-const loadScript = require('./script-loader')
 
 const secure = require('./secure')
 const Pool = require('./sbot-pool')
-const Tabs = require('./tabs')
-const Tabbar = require('./tabbar')
 const OpenApp = require('./open-app')
 
 const webPreferences = {
@@ -34,8 +31,9 @@ module.exports = function inject(electron, Sbot) {
 
   let win
   app.on('ready', start)
+  app.on('will-quit', shutdown)
 
-  app.on('will-quit', e=>{
+  function shutdown(e) {
     e.preventDefault()
 
     pool.allDone().then(()=>{
@@ -46,7 +44,7 @@ module.exports = function inject(electron, Sbot) {
         process.exit(0)
       }, 1000)
     })
-  })
+  }
 
   async function start() {
     secure(app)  
@@ -59,67 +57,42 @@ module.exports = function inject(electron, Sbot) {
       darkTheme: true,
       webPreferences
     })
+    win.on('closed', () => {
+      debug('window closed')
+      win = null
+    })
     if (DEBUG_TABS) {
       win.openDevTools()
     }
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
-
     const mainPage = await Page(win.webContents)
-    await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'), {
-      keepIntercepting: true
-    })
-    const tabbar = Tabbar(mainPage)
-    tabbar.on('new-tab', e=>{
-      tabs.newTab()
-    })
-    tabbar.on('previous-tab', e=>{
-      tabs.previousTab()
-    })
-    tabbar.on('next-tab', e=>{
-      tabs.nextTab()
-    })
-    tabbar.on('activate-tab', e=>{
-      tabs.activateTab(e.id)
-    })
-    tabbar.on('close-tab', e=>{
-      tabs.closeTab(e.id)
-    })
 
     function makeView() {
       return new BrowserView({webPreferences})
     }
 
-    const tabs = Tabs(win, makeView, initTabView, {
-      topMargin: 32,
-      bottomMargin: DEBUG_TABS ? 250 : 0
+    const tabs = await makeTabs(win, mainPage, {
+      makeView,
+      initTabView,
+      DEBUG_TABS
     })
+
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
-    win.on('closed', () => {
-      debug('window closed')
-      win = null
-    })
 
     tabs.newTab()
 
     async function initTabView(view) {
       updateMenu(electron, win, view, tabs)
 
-      // keep tabbar in sync
-      tabbar.onNewTab(view.id, `⌘${view.id} — loading`)
-      view.on('activate-tab', ()=>{
-        tabbar.onTabActivated(view.id)
-      })
       view.on('close', ({last})=>{
         debug('view closed, was last:', last)
-        tabbar.onTabClosed(view.id)
         if (last && win && !win.isDestroyed()) win.close()
       })
-
       const page = await Page(view.webContents)
       debug('Page initialized')
 
       function setAlert(text) {
-        tabbar.onTabAddTag(view.id, 'alert')
+        tabs.addTag(view.id, 'alert')
         console.log(
           `setting alert in tab ${view.id} because console.error was called with "${text}"`
         )
@@ -130,16 +103,14 @@ module.exports = function inject(electron, Sbot) {
         setAlert
       })
 
+      const viewId = view.id
       function onLoading(loading) {
-        if (loading) {
-          tabbar.onTabAddTag(view.id, 'loading')
-        } else {
-          tabbar.onTabRemoveTag(view.id, 'loading')
-        }
+        console.log(`on loading ${loading} ${viewId}`)
+        tabs[loading ? 'addTag' : 'removeTag'](viewId, 'loading')
       }
 
       function onTitleChanged(title) {
-        tabbar.onTabTitleChanged(view.id, title)
+        tabs.setTitle(viewId, title)
       }
 
       const openApp = OpenApp(pool, page, view, {
@@ -152,12 +123,7 @@ module.exports = function inject(electron, Sbot) {
           console.error(err.message)
           app.quit()
         }
-        const {webapp, url} = result
-        const name = webapp.value.content.name
-        //tabbar.onTabTitleChanged(view.id, name)
-        loadURL(page, url).then(()=>{
-          //tabbar.onTabRemoveTag(view.id, 'loading')
-        })
+        loadURL(page, result.url)
       })
     }
   }
@@ -165,11 +131,11 @@ module.exports = function inject(electron, Sbot) {
 
 
 async function loadURL(page, url) {
-  console.error(`loading ${url} ...`)
+  debug(`loading ${url} ...`)
   const response = await page.goto(url, {
     timeout: 90000
   })
-  console.error('done loading')
+  debug('done loading')
   if (!response.ok()) {
     throw new Error(`Server response: ${response.status()} ${response.statusText()}`)
   }
@@ -207,5 +173,4 @@ function updateMenu(electron, win, view, tabs) {
     Menu.getApplicationMenu().getMenuItemById(label).visible = false
   })
 }
-
 

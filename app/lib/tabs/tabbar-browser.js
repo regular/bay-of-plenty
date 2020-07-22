@@ -6,7 +6,7 @@ const computed = require('mutant/computed')
 const Value = require('mutant/value')
 
 const bricons = require('bricons')
-const Icon = require('./lib/svg-symbol')
+const Icon = require('../svg-symbol')
 const closeCircle = Icon(bricons.svg('ionicons/close-circle'))
 const chevronForward = Icon(bricons.svg('ionicons/chevron-forward'))
 const chevronBack = Icon(bricons.svg('ionicons/chevron-back'))

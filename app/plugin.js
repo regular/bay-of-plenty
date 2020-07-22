@@ -83,6 +83,7 @@ exports.init = function (ssb, config) {
     if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
     debug('HTTP request for path', u.pathname)
+
     if (u.pathname.startsWith('/about/')) {
       const bootKey = decodeURIComponent(u.pathname.split('/')[2])
       debug(`request for about page, bootKey: ${bootKey}`)
@@ -255,7 +256,7 @@ function client_log(msg) {
   return bop.log(msg)
 }
 
-module.exports.sendAboutPage = sendAboutPage
+//module.exports.sendAboutPage = sendAboutPage
 
 function sendAboutPage(res) {
   const body = BufferList()
@@ -286,10 +287,10 @@ function sendAboutPage(res) {
       const bl_hash = BufferList()
       bl_hash.append('\n')
       bl_hash.append(buffer)
-      /*
-      buffer_hash = Buffer.from('\nconsole.log("hello")')
-      buffer = Buffer.from('console.log("hello")')
-      */
+
+      //buffer_hash = Buffer.from('\nconsole.log("hello")')
+      //buffer = Buffer.from('console.log("hello")')
+
       const sha = crypto.createHash('sha256')
         .update(bl_hash.slice())
         .digest('base64')
