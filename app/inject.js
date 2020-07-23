@@ -91,6 +91,7 @@ module.exports = function inject(electron, Sbot) {
       })
       const page = await Page(view.webContents)
       debug('Page initialized')
+
       page.once('close', ()=>{
         debug('page close event')
       })
@@ -118,18 +119,14 @@ module.exports = function inject(electron, Sbot) {
         tabs.setTitle(viewId, title)
       }
 
-      function getViewById(id) {
-        return BrowserView.fromId(id)
-      }
-
-      const openApp = OpenApp(pool, page, {
+      const openApp = OpenApp(pool, {
         onLoading,
-        onTitleChanged,
-        getViewById
+        onTitleChanged
       })
       
       openApp(null, null, {
-        viewId: view.id
+        viewId: view.id,
+        page
       }, (err, result) =>{
         if (err) {
           console.error(err.message)

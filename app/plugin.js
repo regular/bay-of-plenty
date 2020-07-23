@@ -52,13 +52,13 @@ exports.manifest = {
 exports.init = function (ssb, config) {
   debug('INFO: plugin init')
 
-  const viewIds = {} // map browser ssb id to view id
+  let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
   // taken from ssb-master
   ssb.auth.hook(function (fn, args) {
     const id = args[0]
     const cb = args[1]
     debug('auth called for %s', id)
-    const ok = viewIds[id] !== undefined
+    const ok = tabs[id] !== undefined
     cb(null, ok ? {allow: null, deny: null} : null)
   })
 
@@ -139,17 +139,34 @@ exports.init = function (ssb, config) {
     debug('close')
     logger.unsubscribe(LOG_LEVEL, log)
     windows = []
+    tabs = {}
     deallocPort(config.host, config.port)
     deallocPort('127.0.0.1', config.ws.port)
     deallocPort('localhost', config.ws.port)
     fn.apply(this, args)
   })
 
-  function addWindow(view, browserKeys) {
+  function addTab(page, viewId, browserKeys) {
     const id = browserKeys.id
-    viewIds[id] = view.id
-    debug('addWindow: Tab %s is using ssb id %s', view.id, id)
-    windows.push(view)
+  
+    // did a page change its identity?
+    const removes = []
+    for(let i in tabs) {
+      if (tabs[i].page == page) {
+        debug('tab %d has changed its browser id', tabs[i].viewId)
+        removes.push(i)
+      }
+    }
+    removes.forEach(i=>delete tabs[i])
+
+    debug('add tab %d, browser id %s', viewId, id)
+    tabs[id] = {page, viewId}
+    page.once('close', ()=>{
+      debug('tab %d closed', viewId)
+      delete tabs[id]
+    })
+    // TODO
+    //windows.push(view)
     emptyQueue()
   }
 
@@ -201,7 +218,7 @@ exports.init = function (ssb, config) {
     emptyQueue()
   }
 
-  sv.addWindow = addWindow
+  sv.addTab = addTab
   sv.log = log
 
   let openAppCallback = null
@@ -217,15 +234,13 @@ exports.init = function (ssb, config) {
     opts = opts || {}
     if (!openAppCallback) return cb(new Error('No openAppCallback set'))
     debug('openApp called via rpc by %s', this.id)
-    const viewId = viewIds[this.id]
-    if (viewId == undefined) {
-      debug('No view id found for %s', this.id)
+    const tab = tabs[this.id]
+    if (tab == undefined) {
+      debug('No page found for %s', this.id)
       return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
     }
-    debug('openApp in tab %s', viewId)
-    openAppCallback(invite, id, Object.assign({}, opts, {
-      viewId
-    }), (err, kvm)=>{
+    debug('openApp in tab %s', tab.viewId)
+    openAppCallback(invite, id, Object.assign({}, opts, tab), (err, kvm)=>{
       if (err) return cb(err)
       debug('openApp %O', kvm)
       cb(null, kvm)

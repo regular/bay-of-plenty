@@ -2,14 +2,15 @@ const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
 const ssbKeys = require('ssb-keys')
 
-module.exports = function OpenApp(pool, page, conf) {
-  const {onLoading, onTitleChanged, getViewById} = conf
+module.exports = function OpenApp(pool, conf) {
+  const {onLoading, onTitleChanged} = conf
 
   return function openApp(invite, id, opts, cb) {
     debug('openAPp called')
-    const view = getViewById(opts.viewId)
-    if (!view) return cb(new Error(`Unable to find view with id ${opts.viewId}`))
-    debug(`onLoading ${view.id} true`)
+    const {page, viewId} = opts
+    if (!page) return cb(new Error(`page not specified`))
+    if (viewId == undefined) return cb(new Error(`viewId not specified viewId`))
+    debug(`onLoading ${viewId} true`)
     onLoading(true, opts)
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
@@ -24,17 +25,14 @@ module.exports = function OpenApp(pool, page, conf) {
       return cb(err)
     }).then( ({ssb, config, myid}) => {
       const browserKeys = ssbKeys.generate()
-      //config.master = config.master || []
-      //config.master.push(browserKeys.id)
       debug(`browser public key: ${browserKeys.id}`)
-      //debug(`master: ${config.master}`)
       // only when sbot uses canned config
       if (!invite && !id) {
         ssb.bayofplenty.setOpenAppCallback(openApp)
       }
 
-      view.once('close', e=>{
-        debug(`view ${view.id} closed -- unref sbot`)
+      page.once('close', e=>{
+        debug(`tab ${viewId} closed -- unref sbot`)
         unref()
       })
 
@@ -51,12 +49,12 @@ module.exports = function OpenApp(pool, page, conf) {
 
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
-          ssb.bayofplenty.addWindow(view, browserKeys)
+          ssb.bayofplenty.addTab(page, viewId, browserKeys)
 
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
-            debug(`onLoading ${view.id} false`)
+            debug(`onLoading ${viewId} false`)
             onLoading(false, opts)
           })
 
