@@ -36,11 +36,6 @@ module.exports = function(webContents) {
     }
     return session.sendCommand.apply(session, args)
   }
-  /*
-  client._connection = {
-    session: ()=>client
-  }
-  */
   session.on('message', (_, name, event)=>{
     if (name == 'Target.attachedToTarget') {
       debug('suppress %s %O', name, event)
@@ -69,9 +64,15 @@ module.exports = function(webContents) {
     }
     client.emit(name, event)
   })
+  let onClose
   const target = {
-    _isClosedPromise: new Promise(resolve=>{resolve(false)})
+    _isClosedPromise: new Promise(resolve=>{onClose = resolve})
   }
+  webContents.once('destroyed', ()=>{
+    debug('webContents was destroyed')
+    onClose(true)
+  })
+
   const ignoreHTTPSErrors = false
   const defaultViewport = null
   const screenshotTaskQueue = null

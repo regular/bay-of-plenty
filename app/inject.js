@@ -34,8 +34,9 @@ module.exports = function inject(electron, Sbot) {
   app.on('will-quit', shutdown)
 
   function shutdown(e) {
+    debug('shutdown called')
     e.preventDefault()
-
+    debug('waiting for all sbots to close')
     pool.allDone().then(()=>{
       debug('All sbots are closed')
       // give it a second to finish log output
@@ -90,6 +91,9 @@ module.exports = function inject(electron, Sbot) {
       })
       const page = await Page(view.webContents)
       debug('Page initialized')
+      page.once('close', ()=>{
+        debug('page close event')
+      })
 
       function setAlert(text) {
         tabs.addTag(view.id, 'alert')
