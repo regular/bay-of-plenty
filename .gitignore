@@ -5,3 +5,4 @@ dist/
 *.invite
 app/package-lock.json
 package-lock.json
+app/.tre
