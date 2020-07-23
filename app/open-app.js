@@ -1,13 +1,16 @@
 const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
+const ssbKeys = require('ssb-keys')
 
-module.exports = function OpenApp(pool, page, view, opts) {
-  const {onLoading, onTitleChanged} = opts
+module.exports = function OpenApp(pool, page, conf) {
+  const {onLoading, onTitleChanged, getViewById} = conf
 
-  return function openApp(invite, id, cb) {
+  return function openApp(invite, id, opts, cb) {
     debug('openAPp called')
+    const view = getViewById(opts.viewId)
+    if (!view) return cb(new Error(`Unable to find view with id ${opts.viewId}`))
     debug(`onLoading ${view.id} true`)
-    onLoading(true)
+    onLoading(true, opts)
     const conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
@@ -19,8 +22,12 @@ module.exports = function OpenApp(pool, page, view, opts) {
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
       return cb(err)
-    }).then( ({ssb, config, myid, browserKeys}) => {
-       debug(`browser public key: ${browserKeys.public}`)
+    }).then( ({ssb, config, myid}) => {
+      const browserKeys = ssbKeys.generate()
+      //config.master = config.master || []
+      //config.master.push(browserKeys.id)
+      debug(`browser public key: ${browserKeys.id}`)
+      //debug(`master: ${config.master}`)
       // only when sbot uses canned config
       if (!invite && !id) {
         ssb.bayofplenty.setOpenAppCallback(openApp)
@@ -40,7 +47,7 @@ module.exports = function OpenApp(pool, page, view, opts) {
 
         debug('webapp: %O', result.kv.value.content)
         const title = result.kv.value.content.name
-        onTitleChanged(title)
+        onTitleChanged(title, opts)
 
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
@@ -50,13 +57,13 @@ module.exports = function OpenApp(pool, page, view, opts) {
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
             debug(`onLoading ${view.id} false`)
-            onLoading(false)
+            onLoading(false, opts)
           })
 
           debug('setting browser keypair')
           await page.evaluate(async (keys)=>{
             console.log("setting keys")
-            window.localStorage["tre-keypair"] = JSON.stringify(keys)
+            window.sessionStorage["tre-keypair"] = JSON.stringify(keys)
             console.log('%c done setting keys', 'color: yellow;');
           }, browserKeys)
         })

@@ -51,6 +51,17 @@ exports.manifest = {
 
 exports.init = function (ssb, config) {
   debug('INFO: plugin init')
+
+  const viewIds = {} // map browser ssb id to view id
+  // taken from ssb-master
+  ssb.auth.hook(function (fn, args) {
+    const id = args[0]
+    const cb = args[1]
+    debug('auth called for %s', id)
+    const ok = viewIds[id] !== undefined
+    cb(null, ok ? {allow: null, deny: null} : null)
+  })
+
   let windows = []
   const queue = []
   const logger = logging(ssb)
@@ -134,8 +145,11 @@ exports.init = function (ssb, config) {
     fn.apply(this, args)
   })
 
-  function addWindow(win, browserKeys) {
-    windows.push(win)
+  function addWindow(view, browserKeys) {
+    const id = browserKeys.id
+    viewIds[id] = view.id
+    debug('addWindow: Tab %s is using ssb id %s', view.id, id)
+    windows.push(view)
     emptyQueue()
   }
 
@@ -195,9 +209,23 @@ exports.init = function (ssb, config) {
     openAppCallback = cb
   }
   
-  sv.openApp = function(invite, id, cb) {
+  sv.openApp = function(invite, id, opts, cb) {
+    if (typeof opts == 'function') {
+      cb = opts
+      opts = undefined
+    }
+    opts = opts || {}
     if (!openAppCallback) return cb(new Error('No openAppCallback set'))
-    openAppCallback(invite, id, (err, kvm)=>{
+    debug('openApp called via rpc by %s', this.id)
+    const viewId = viewIds[this.id]
+    if (viewId == undefined) {
+      debug('No view id found for %s', this.id)
+      return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
+    }
+    debug('openApp in tab %s', viewId)
+    openAppCallback(invite, id, Object.assign({}, opts, {
+      viewId
+    }), (err, kvm)=>{
       if (err) return cb(err)
       debug('openApp %O', kvm)
       cb(null, kvm)

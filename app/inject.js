@@ -103,25 +103,33 @@ module.exports = function inject(electron, Sbot) {
         setAlert
       })
 
-      const viewId = view.id
-      function onLoading(loading) {
+      function onLoading(loading, opts) {
+        const {viewId} = opts
         console.log(`on loading ${loading} ${viewId}`)
         tabs[loading ? 'addTag' : 'removeTag'](viewId, 'loading')
       }
 
-      function onTitleChanged(title) {
+      function onTitleChanged(title, opts) {
+        const {viewId} = opts
         tabs.setTitle(viewId, title)
       }
 
-      const openApp = OpenApp(pool, page, view, {
+      function getViewById(id) {
+        return BrowserView.fromId(id)
+      }
+
+      const openApp = OpenApp(pool, page, {
         onLoading,
-        onTitleChanged
+        onTitleChanged,
+        getViewById
       })
       
-      openApp(null, null, (err, result) =>{
+      openApp(null, null, {
+        viewId: view.id
+      }, (err, result) =>{
         if (err) {
           console.error(err.message)
-          app.quit()
+          return app.quit()
         }
         loadURL(page, result.url)
       })

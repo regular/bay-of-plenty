@@ -24,7 +24,7 @@
     "mutant": "^3.23.0",
     "pull-stream": "^3.6.14",
     "ssb-revisions": "^1.4.1",
-    "tre-client": "^2.2.0",
+    "tre-client": "^3.1.0",
     "tre-fonts": "^1.6.1",
     "tre-images": "^1.13.1",
     "tre-invite-code": "^1.1.0",

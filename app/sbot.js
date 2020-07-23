@@ -37,7 +37,9 @@ module.exports = function(config, cb) {
       debug(`public key ${keys.id}`)
       debug(`network key ${config.caps.shs}`)
       debug(`datapath: ${config.path}`)
+      /*
       const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
+      */
       if (config.autoconnect) {
         let ac = config.autoconnect
         if (typeof ac == 'string') ac = [ac]
@@ -58,7 +60,7 @@ module.exports = function(config, cb) {
       // TODO: only if canned
       addBlobs(ssb, join(__dirname, 'blobs'), err =>{
         if (err) return cb(err)
-        cb(null, ssb, config, keys.id, browserKeys)
+        cb(null, ssb, config, keys.id/*,browserKeys*/)
       })
     })
   })

@@ -17,8 +17,8 @@ module.exports = function loadOrCreateConfigFile(config, cb) {
   debug(`loadOrCreate ${config.path}`)
   mkdirp.sync(config.path)
 
-  const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
-  config.master = [browserKeys.id]
+  //const browserKeys = ssbKeys.loadOrCreateSync(join(config.path, 'browser-keys'))
+  //config.master = [browserKeys.id]
 
   configurePorts(config, (err, config) => {
     if (err) return cb(err)
