@@ -1,4 +1,4 @@
-const {Events} = require('puppeteer-core/lib/Events')
+const {Events} = require('puppeteer-core/lib/cjs/puppeteer/common/Events')
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
 const debug = require('debug')('bop:console-reflection')

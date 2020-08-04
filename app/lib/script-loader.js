@@ -6,11 +6,17 @@ const BufferList = require('bl')
 
 module.exports = async function(page, filename, opts) {
   opts = opts || {}
+  const random = crypto.randomBytes(32).toString('hex')
+  const domain = opts.domain || 'http://localhost/'
   debug('setRequestInterception ...')
   await page.setRequestInterception(true)
   debug('setRequestInterception done.')
-  page.once('request', async req=>{
-    debug('intercept request to %s', req.url())
+  page[opts.keepIntercepting ? 'on' : 'once']('request', async req=>{
+    debug('intercept request to %s', req.url().slice(0,512))
+    if (!req.url().endsWith(random)) {
+      debug('ignoring')
+      return req.continue()
+    }
     try {
       debug('compile')
       result = await compile(filename)
@@ -24,6 +30,9 @@ module.exports = async function(page, filename, opts) {
       debug('sending response')
       await req.respond({
         status: 200,
+        headers: {
+          'x-bay-of-plenty-script-loader': filename
+        },
         contentType: 'text/html',
         body: result.body
       })
@@ -38,7 +47,7 @@ module.exports = async function(page, filename, opts) {
     }
   })
   debug('navigating')
-  await page.goto('http://localhost/foo')
+  await page.goto(`${domain}${random}`)
   if (opts.keepIntercepting !== true) {
     debug('stop intercepting network requests')
     await page.setRequestInterception(false)

@@ -1,6 +1,8 @@
+const fs = require('fs')
 const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
 const ssbKeys = require('ssb-keys')
+const loadScript = require('./lib/script-loader')
 
 module.exports = function OpenApp(pool, conf) {
   const {onLoading, onTitleChanged} = conf
@@ -12,13 +14,24 @@ module.exports = function OpenApp(pool, conf) {
     if (viewId == undefined) return cb(new Error(`viewId not specified viewId`))
     debug(`onLoading ${viewId} true`)
     onLoading(true, opts)
-    const conf = invite ? confFromInvite(invite) : null
+    let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
       debug(err.message)
       return cb(err)
     }
-
+    if (opts.launchLocal) {
+      try {
+        debug('reading local .trerc')
+        conf = JSON.parse(fs.readFileSync('.trerc'))
+      } catch(err) {
+        const msg = `Error loading load local .trerc for launcing ${opts.launchLocal}: ${err.message}`
+        return cb(new Error(msg))
+      }
+      conf.bayOfPlenty = conf.bayOfPlenty || {}
+      debug('conf is %O', conf)
+      conf.bayOfPlenty.launchLocal = opts.launchLocal
+    }
     const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
@@ -36,17 +49,7 @@ module.exports = function OpenApp(pool, conf) {
         unref()
       })
 
-      const bootKey = (conf && conf.boot) || config.boot
-      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
-        if (err) return cb(err)
-        const url = `http://127.0.0.1:${config.ws.port}/about/${encodeURIComponent(bootKey)}`
-        //TODO: needed?
-        //reflection.reset()
-
-        debug('webapp: %O', result.kv.value.content)
-        const title = result.kv.value.content.name
-        onTitleChanged(title, opts)
-
+      function setupEventHandlers() {
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
           ssb.bayofplenty.addTab(page, viewId, browserKeys)
@@ -64,10 +67,37 @@ module.exports = function OpenApp(pool, conf) {
             window.sessionStorage["tre-keypair"] = JSON.stringify(keys)
             console.log('%c done setting keys', 'color: yellow;');
           }, browserKeys)
-        })
 
+          if (opts.launchLocal) {
+            loadScript(page, opts.launchLocal, {
+              keepIntercepting: true,
+              domain: `http://127.0.0.1:${config.ws.port}/`
+            })
+          }
+
+        })
+      }
+
+      if (opts.launchLocal) {
+        debug(`launch local: ${opts.launchLocal}`)
+        onTitleChanged('local / debug', opts)
+        setupEventHandlers()
+        const url = `http://127.0.0.1:${config.ws.port}/launch/`
+        cb(null, {url})
+        return
+      }
+
+      const bootKey = (conf && conf.boot) || config.boot
+      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
+        if (err) return cb(err)
+        const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
+        debug('webapp: %O', result.kv.value.content)
+        const title = result.kv.value.content.name
+        onTitleChanged(title, opts)
+        setupEventHandlers()
         cb(null, {webapp: result.kv, url})
       })
+
     })
   }
 }

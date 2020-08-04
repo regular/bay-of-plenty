@@ -1,5 +1,5 @@
 const {EventEmitter} = require('events')
-const {Page} = require('puppeteer-core/lib/Page')
+const {Page} = require('puppeteer-core/lib/cjs/puppeteer/common/Page')
 const debug = require('debug')('bop:page')
 const d_cdp = require('debug')('bop:cdp')
 const d_cdp_scopes = {

@@ -95,12 +95,34 @@ exports.init = function (ssb, config) {
     const u = parse('http://makeurlparseright.com'+req.url)
     debug('HTTP request for path', u.pathname)
 
-    if (u.pathname.startsWith('/about/')) {
-      const bootKey = decodeURIComponent(u.pathname.split('/')[2])
-      debug(`request for about page, bootKey: ${bootKey}`)
+    const launchLocal = config.bayOfPlenty && config.bayOfPlenty.launchLocal
+    if (launchLocal) {
+      const ws_address = JSON.stringify(ssb.ws.getAddress())
+      if (u.pathname == '/.trerc') {
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify({
+          caps: config.caps, // TODO: this leaks appKey to the public 
+          tre: config.tre
+        }, null, 2))
+        return
+      }
+      if (u.pathname == '/.tre/ws-address') {
+        res.setHeader('Content-Type', 'application/json')
+        res.end(ws_address)
+        return
+      }
+    }
+
+    if (u.pathname.startsWith('/launch/')) {
+      if (launchLocal) {
+        debug(`request for launch page with local file: ${launchLocal}`)
+      } else {
+        const bootKey = decodeURIComponent(u.pathname.split('/')[2])
+        debug(`request for launch page with bootKey: ${bootKey}`)
+      }
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
-      return sendAboutPage(res)
+      return sendLaunchPage(res, {launchLocal})
     }
 
     if (!u.pathname.startsWith('/blobs/get/')) return next()
@@ -301,12 +323,14 @@ function client_log(msg) {
 
 //module.exports.sendAboutPage = sendAboutPage
 
-function sendAboutPage(res) {
+function sendLaunchPage(res, opts) {
+  const {launchLocal} = opts
   const body = BufferList()
   body.append(h('div.bayofplenty', {
     style: 'opacity: 0'
   }, [
     h('h1', 'Bay of Plenty'),
+    launchLocal ? h('.filepath', launchLocal) : [],
     h('h2', 'Versions'),
     h('ul.versions', 
       Object.keys(process.versions).map(k => {
@@ -318,7 +342,7 @@ function sendAboutPage(res) {
 
   const browserify = Browserify()
   browserify.transform(require('brfs'))
-  browserify.add(join(__dirname, 'launch.js'))
+  browserify.add(join(__dirname, launchLocal ? 'launch-local.js' : 'launch.js'))
   browserify.bundle()
     .pipe(BufferList( (err, buffer) => {
       if (err) {

@@ -15,8 +15,13 @@ module.exports = function(page) {
   })
   page.on('response', response => {
     const status = response.status()
+    if (response.status() == 0 && response.statusText() == '' &&
+      Object.keys(response.headers()).length == 0) {
+      debug('degraded response object, probably intercepted, ignoring')
+      return
+    }
     if (status < 200 || status >= 400) {
-    debug('http status %O', response)
+      debug('http status %O', response.headers())
       pushable.push({type: 'network-error', text: `${status} ${response.url()}`})
     }
   })

@@ -1,3 +1,5 @@
+const argv = require('minimist')(process.argv.slice(2))
+ 
 if (process.env.THROW_SODIUM_NATIVE) {
   console.log('sodium-native ...')
   const sn = require('sodium-native')
@@ -10,4 +12,4 @@ if (process.env.THROW_DEPRECATION) {
 const electron = require('electron')
 const sbot = require('./sbot')
 
-require('./inject.js')(electron, sbot)
+require('./inject.js')(electron, sbot, argv)

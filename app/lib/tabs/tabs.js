@@ -32,7 +32,8 @@ module.exports = function(win, makeView, init, opts) {
     }
   }
 
-  function newTab() {
+  function newTab(newTabOpts) {
+    debug('new tab called with options: %O', newTabOpts)
     const view = makeView()
     view.emitter = new EventEmitter()
     makeSoleChild(view)
@@ -73,7 +74,7 @@ module.exports = function(win, makeView, init, opts) {
         once: view.emitter.once.bind(view.emitter),
         on: view.emitter.on.bind(view.emitter),
         removeAllListeners: view.emitter.removeAllListeners.bind(view.emitter)
-      })
+      }, newTabOpts)
     })
     //view.webContents.loadFile(__dirname + '/public/newtab.html')
     view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')

@@ -13,7 +13,7 @@ module.exports = async function initTabs(win, mainPage, opts) {
 
   const tabbar = Tabbar(mainPage)
 
-  async function initNewTab(view) {
+  async function initNewTab(view, newTabOpts) {
     // keep tabbar in sync
     tabbar.onNewTab(view.id, `⌘${view.id} — loading`)
     view.on('activate-tab', ()=>{
@@ -22,7 +22,7 @@ module.exports = async function initTabs(win, mainPage, opts) {
     view.on('close', ()=>{
       tabbar.onTabClosed(view.id)
     })
-    await initTabView(view)
+    await initTabView(view, newTabOpts)
   }
 
   const tabs = Tabs(win, makeView, initNewTab, {

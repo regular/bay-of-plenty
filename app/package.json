@@ -29,7 +29,7 @@
     "non-private-ip": "^1.4.4",
     "pull-glob": "^1.0.7",
     "pull-notify": "^0.1.1",
-    "puppeteer-core": "^4.0.1",
+    "puppeteer-core": "^5.2.1",
     "puppeteer-log": "^1.0.0",
     "query-string": "^6.2.0",
     "range-parser": "^1.2.0",

@@ -1,3 +1,5 @@
+const fs = require('fs')
+const {resolve} = require('path')
 const debug = require('debug')('bop:main')
 
 const Page = require('./page')
@@ -20,9 +22,22 @@ process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
 const DEBUG_TABS = process.env.DEBUG_TABS
 
-module.exports = function inject(electron, Sbot) {
+module.exports = function inject(electron, Sbot, argv) {
   const {app, BrowserWindow, BrowserView, Menu} = electron
   const pool = Pool(Sbot)
+  
+  let [filename] = argv._
+  if (filename) {
+    if (!fs.existsSync(filename)) {
+      console.error(`File not found: ${filename}`)
+      process.exit(1)
+    } else {
+      filename = resolve(filename)
+      console.log(`Running ${filename}`)
+    }
+  } else {
+    console.log('Running default app')
+  }
 
   app.allowRendererProcessReuse = true
 
@@ -80,9 +95,12 @@ module.exports = function inject(electron, Sbot) {
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
 
-    tabs.newTab()
+    tabs.newTab({
+      launchLocal: filename
+    })
 
-    async function initTabView(view) {
+    async function initTabView(view, newTabOpts) {
+      debug('init tab: %O', newTabOpts)
       updateMenu(electron, win, view, tabs)
 
       view.on('close', ({last})=>{
@@ -124,10 +142,10 @@ module.exports = function inject(electron, Sbot) {
         onTitleChanged
       })
       
-      openApp(null, null, {
+      openApp(null, null, Object.assign({
         viewId: view.id,
         page
-      }, (err, result) =>{
+      }, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)
           return app.quit()
