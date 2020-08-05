@@ -1,4 +1,6 @@
 const fs = require('fs')
+const locateTrerc = require('./lib/locate-trerc')
+const {resolve, join} = require('path')
 const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
 const ssbKeys = require('ssb-keys')
@@ -22,15 +24,17 @@ module.exports = function OpenApp(pool, conf) {
     }
     if (opts.launchLocal) {
       try {
-        debug('reading local .trerc')
+        const trePath = locateTrerc(resolve('.'))
+        debug('reading local .trerc at %s', trePath)
         conf = JSON.parse(fs.readFileSync('.trerc'))
+        conf.path = conf.path || join(trePath, '.tre')
       } catch(err) {
         const msg = `Error loading load local .trerc for launcing ${opts.launchLocal}: ${err.message}`
         return cb(new Error(msg))
       }
       conf.bayOfPlenty = conf.bayOfPlenty || {}
-      debug('conf is %O', conf)
       conf.bayOfPlenty.launchLocal = opts.launchLocal
+      debug('conf is %O', conf)
     }
     const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{

@@ -30,26 +30,34 @@ module.exports = function Pool(Sbot) {
   function makePromise({conf, id}) {
     return new Promise( (resolve, reject) => {
       if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
-      conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf || {})
+      conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf)
       
       if (!conf.network) return reject(new Error('No network specified'))
       
+      function makeSbot(conf) {
+        Sbot(conf, (err, ssb, config, myid, browserKeys) => {
+          if (err) {
+            console.error(`Error starting sbot ${err.message}`)
+            return reject(error)
+          }
+          debug(`sbot started, ssb id ${myid}, datapath: ${config.path}`)
+          resolve({
+            ssb, config, myid, browserKeys
+          })
+        })
+      }
+
+      if (conf.path) {
+        return makeSbot(conf)
+      }
+
       debug(`find datapath for network=${conf.network} id=${id}`)
       findDataPath(conf.network, id)
       .catch(reject)
       .then(datapath => {
         debug(`datapath is ${datapath}`)
         conf.path = datapath
-        Sbot(conf, (err, ssb, config, myid, browserKeys) => {
-          if (err) {
-            console.error(`Error starting sbot ${err.message}`)
-            return reject(error)
-          }
-          debug(`sbot started, ssb id ${myid}, datapath: ${datapath}`)
-          resolve({
-            ssb, config, myid, browserKeys
-          })
-        })
+        makeSbot(conf)
       })
     })
   }
