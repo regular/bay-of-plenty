@@ -23,7 +23,9 @@ process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 const DEBUG_TABS = process.env.DEBUG_TABS
 
 module.exports = function inject(electron, Sbot, argv) {
-  const {app, BrowserWindow, BrowserView, Menu} = electron
+  debug('argv: %o', argv)
+
+  const {app, BrowserWindow, BrowserView, Menu, session} = electron
   const pool = Pool(Sbot)
   
   let [filename] = argv._
@@ -63,6 +65,10 @@ module.exports = function inject(electron, Sbot, argv) {
   }
 
   async function start() {
+    if (argv['clear-cache']) {
+      console.log('clearing cache')
+      await session.defaultSession.clearCache()
+    }
     secure(app)  
 
     win = new BrowserWindow({
