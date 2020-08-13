@@ -17,13 +17,15 @@ module.exports = async function initLogging(page, opts) {
       if (type == 'error') {
         if (text.startsWith("error loading sodium bindings")) return
         if (text.startsWith("falling back to javascript")) return
-        if (text.startsWith('Refused to execute inline script because it violates the following Content Security Policy directive')) {
-          const shas = []
-          text.replace(/'sha256-[^']+'/g, x=>shas.push(x))
+
+        const csp_violation = text.match(/violates the following Content Security Policy directive: "([^"]+)".*a hash \('([^']+)'\)/) 
+
+        if (csp_violation) {
+          const [_,sent,expected] = csp_violation
           console.error(`
-            CSP inline-script violation
-            browser expected: ${shas[1]}
-            we calculated: ${shas[0]}
+            CSP violation
+            browser expected: ${expected}
+            we sent: ${sent}
           `) 
         }
         setAlert(text)
