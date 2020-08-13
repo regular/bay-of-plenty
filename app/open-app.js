@@ -4,7 +4,8 @@ const {resolve, join} = require('path')
 const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
 const ssbKeys = require('ssb-keys')
-const loadScript = require('./lib/script-loader')
+//const loadScript = require('./lib/script-loader')
+const buildOnDemand = require('./lib/build-on-demand')
 
 module.exports = function OpenApp(pool, conf) {
   const {onLoading, onTitleChanged} = conf
@@ -73,9 +74,8 @@ module.exports = function OpenApp(pool, conf) {
           }, browserKeys)
 
           if (opts.launchLocal) {
-            loadScript(page, opts.launchLocal, {
-              keepIntercepting: true,
-              domain: `http://127.0.0.1:${config.ws.port}/`
+            buildOnDemand(ssb, page, opts.launchLocal, {
+              origin: `http://127.0.0.1:${config.ws.port}/`
             })
           }
 

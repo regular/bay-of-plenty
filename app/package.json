@@ -16,6 +16,7 @@
     "btoa": "^1.2.1",
     "console-with-style": "^1.1.0",
     "debug": "^4.1.1",
+    "eol-fix-stream": "^1.0.0",
     "flumeview-level": "github:regular/flumeview-level",
     "hyperscript": "^2.0.2",
     "hyperstream": "^1.2.2",
@@ -55,5 +56,11 @@
     "node-abi": "^2.18.0",
     "node-pre-gyp": "^0.15.0"
   },
-  "keywords": []
+  "keywords": [],
+  "browserify": {
+    "transform": [
+      "brfs",
+      "bricons"
+    ]
+  }
 }

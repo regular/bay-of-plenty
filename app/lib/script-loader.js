@@ -1,9 +1,6 @@
 const crypto = require('crypto')
 const debug = require('debug')('bop:script-loader')
-const Browserify = require('browserify')
-const indexhtmlify = require('indexhtmlify')
-const BufferList = require('bl')
-const htmlInlineEscape = require('./html-inline-escape')
+const compile = require('./compile')
 
 module.exports = async function(page, filename, opts) {
   opts = opts || {}
@@ -20,18 +17,20 @@ module.exports = async function(page, filename, opts) {
     }
     try {
       debug('compile')
-      result = await compile(filename)
+      result = await new Promise( (resolve, reject) => {
+        compile(filename, (err, result) => {
+          if (err) return reject(err)
+          resolve(result)
+        })
+      })
       debug('compile done')
-      /* TODO
-      res.setHeader(
-        'Content-Security-Policy', 
-        `script-src 'sha256-${result.sha}';`
-      )
-      */
+
       debug('sending response')
       await req.respond({
         status: 200,
         headers: {
+          'Content-Security-Policy':
+            `script-src 'sha256-${result.sha}';`,
           'x-bay-of-plenty-script-loader': filename
         },
         contentType: 'text/html',
@@ -55,36 +54,3 @@ module.exports = async function(page, filename, opts) {
   }
 }
 
-function compile(filename, cb) {
-  return new Promise( (resolve, reject) => {
-    const browserify = Browserify()
-    browserify.transform(require('brfs'))
-    browserify.transform(require('bricons'))
-    browserify.add(filename)
-    browserify.bundle()
-    .pipe(BufferList( (err, buffer) => {
-      if (err) {
-        console.error(err.annotated)
-        return reject(err)
-      }
-      buffer = Buffer.from(htmlInlineEscape(buffer.toString()))
-      const bl_hash = BufferList()
-      bl_hash.append(Buffer.from('\n'))
-      bl_hash.append(buffer)
-      const sha = crypto.createHash('sha256')
-        .update(bl_hash.slice())
-        .digest('base64')
-
-      const doc = BufferList()
-      doc.append(buffer)
-      doc.pipe(indexhtmlify())
-      .pipe(BufferList( (err, buffer) => {
-        if (err) {
-          console.error(err.message)
-          return reject(err)
-        }
-        resolve({sha, body:buffer})
-      }))
-    }))
-  })
-}
