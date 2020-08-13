@@ -13,6 +13,7 @@ const FlumeviewLevel = require('flumeview-level')
 const {generate} = require('ssb-keys')
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
+const toPull = require('stream-to-pull-stream')
 const pkg = require('./package.json')
 const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
@@ -91,9 +92,22 @@ exports.init = function (ssb, config) {
   }
 
   ssb.ws.use(function (req, res, next) {
-    if (!(req.method === "GET" || req.method == 'HEAD')) return next()
     const u = parse('http://makeurlparseright.com'+req.url)
     debug('HTTP request for path', u.pathname)
+    if(req.method === 'POST' && u.pathname == '/blobs/add') {
+      pull(
+        toPull.source(req),
+        ssb.blobs.add(null, function (err, hash) {
+          debug('blob upload done: %o %s', err, hash)
+          res.end(JSON.stringify({
+            hash,
+            url: `/blobs/get/${encodeURIComponent(hash)}`
+          }))
+        })
+      )
+      return
+    }
+    if (!(req.method === "GET" || req.method == 'HEAD')) return next()
 
     const launchLocal = config.bayOfPlenty && config.bayOfPlenty.launchLocal
     if (launchLocal) {
