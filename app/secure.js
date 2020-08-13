@@ -4,7 +4,7 @@
 const {shell} = require('electron')
 const debug = require('debug')('bop:security')
 
-const SECURE = false
+const SECURE = true
 
 function isURLAllowed(url) {
   if (url.startsWith('chrome-devtools://')) return true
@@ -44,6 +44,10 @@ module.exports = function(app) {
       'content-security-policy'
     )) {
       debug('Found existing CSP', details.responseHeaders['Content-Security-Policy'])
+      return cb({})
+    }
+
+    if (details.url.startsWith('devtools:')) {
       return cb({})
     }
 

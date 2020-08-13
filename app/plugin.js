@@ -26,8 +26,6 @@ const btoa = require('btoa')
 const LOG_LEVELS = 'error warning notice info'.split(' ')
 const LOG_LEVEL = 4
 
-const SECURE = false
-
 function makeIndex() {
   return FlumeviewLevel(1, function map(kv) {
     const {value} = kv
@@ -51,7 +49,7 @@ exports.manifest = {
 }
 
 exports.init = function (ssb, config) {
-  debug('INFO: plugin init')
+  debug('init')
 
   let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
   // taken from ssb-master
@@ -150,23 +148,15 @@ exports.init = function (ssb, config) {
     getScriptHashForBlob(blob, (err, scriptHash) => {
       if (err) {
         debug('Failed to get script hash for blob', err.message)
+        //return res.end(503, `Failed to get script hash: ${err.message}`)
         return next()
       }
       debug('requested blob is webapp with script hash %s', scriptHash)
 
-      if (SECURE) {
-        /* TODO
-         * For some reason, Chromium and tre-apps-deplay
-         * have different opinions of how the hash
-         * should look like, IF THE FILE IS LARGE.
-         * Until this is resolved, we sadly have to disable CSP
-         */
-
-        res.setHeader(
-          'Content-Security-Policy', 
-          `script-src 'sha256-${scriptHash}';`
-        )
-      }
+      res.setHeader(
+        'Content-Security-Policy', 
+        `script-src 'sha256-${scriptHash}';`
+      )
       return next()
     })
   })
