@@ -3,6 +3,7 @@ const debug = require('debug')('bop:script-loader')
 const Browserify = require('browserify')
 const indexhtmlify = require('indexhtmlify')
 const BufferList = require('bl')
+const htmlInlineEscape = require('./html-inline-escape')
 
 module.exports = async function(page, filename, opts) {
   opts = opts || {}
@@ -66,6 +67,7 @@ function compile(filename, cb) {
         console.error(err.annotated)
         return reject(err)
       }
+      buffer = Buffer.from(htmlInlineEscape(buffer.toString()))
       const bl_hash = BufferList()
       bl_hash.append(Buffer.from('\n'))
       bl_hash.append(buffer)
