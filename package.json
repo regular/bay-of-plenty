@@ -24,8 +24,7 @@
       "!node_modules/sodium-native/prebuilds",
       "!node_modules/sodium-native/libsodium",
       "!node_modules/sodium-native/src",
-      "node_modules/sodium-native/prebuilds/${platform}-${arch}/electron.abi${env.ABI}.node",
-      "node_modules/sodium-native/prebuilds/${platform}-${arch}/libsodium.*",
+      "node_modules/sodium-native/prebuilds/${platform}-${arch}",
       "public/**"
     ],
     "mac": {
@@ -55,11 +54,11 @@
   "author": "regular",
   "license": "MIT",
   "dependencies": {
-    "electron": "^9.1.0",
-    "electron-builder": "^22.7.0",
-    "electron-rebuild": "^1.11.0",
-    "node-abi": "^2.18.0",
-    "node-gyp": "^7.0.0",
+    "electron": "9.1.0",
+    "electron-builder": "^22.8.0",
+    "electron-rebuild": "^2.0.1",
+    "node-abi": "^2.19.1",
+    "node-gyp": "^7.1.0",
     "node-pre-gyp": "^0.15.0"
   },
   "repository": {
