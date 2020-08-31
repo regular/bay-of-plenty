@@ -1,6 +1,6 @@
 const crypto = require('crypto')
 const debug = require('debug')('bop:script-loader')
-const compile = require('./compile')
+const compile = require('tre-compile/compile')
 
 module.exports = async function(page, filename, opts) {
   opts = opts || {}

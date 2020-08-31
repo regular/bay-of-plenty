@@ -1,7 +1,7 @@
 const {parse} = require('url')
 const crypto = require('crypto')
 const debug = require('debug')('bop:build-on-demand')
-const compile = require('./compile')
+const compile = require('tre-compile/compile')
 
 module.exports = async function(ssb, page, filename, opts) {
   opts = opts || {}

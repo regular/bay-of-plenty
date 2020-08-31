@@ -13,7 +13,7 @@ module.exports = function addBlobs(ssb, dir, cb) {
       debug('adding blob %s ...', fn)
       pull(
         toPull.source(fs.createReadStream(fn)),
-        ssb.blobs.add( null, (err, hash)=>{
+        ssb.blobs.add((err, hash)=>{
           debug('blobs.add done: %o, %s', err, hash)
           cb(err, hash)
         })

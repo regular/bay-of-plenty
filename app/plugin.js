@@ -325,7 +325,7 @@ function client_log(msg) {
   return bop.log(msg)
 }
 
-//module.exports.sendAboutPage = sendAboutPage
+// TODO: use tre-compile
 
 function sendLaunchPage(res, opts) {
   const {launchLocal} = opts
@@ -356,7 +356,6 @@ function sendLaunchPage(res, opts) {
         return process.exit(1)
       }
       const bl_hash = BufferList()
-      bl_hash.append('\n')
       bl_hash.append(buffer)
 
       //buffer_hash = Buffer.from('\nconsole.log("hello")')

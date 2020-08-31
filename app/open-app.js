@@ -11,7 +11,7 @@ module.exports = function OpenApp(pool, conf) {
   const {onLoading, onTitleChanged} = conf
 
   return function openApp(invite, id, opts, cb) {
-    debug('openAPp called')
+    debug('openApp called')
     const {page, viewId} = opts
     if (!page) return cb(new Error(`page not specified`))
     if (viewId == undefined) return cb(new Error(`viewId not specified viewId`))
@@ -24,6 +24,7 @@ module.exports = function OpenApp(pool, conf) {
       return cb(err)
     }
     if (opts.launchLocal) {
+      debug('launchLocal is set')
       try {
         const trePath = locateTrerc(resolve('.'))
         debug('reading local .trerc at %s', trePath)
@@ -36,6 +37,8 @@ module.exports = function OpenApp(pool, conf) {
       conf.bayOfPlenty = conf.bayOfPlenty || {}
       conf.bayOfPlenty.launchLocal = opts.launchLocal
       debug('conf is %O', conf)
+    } else {
+      debug('launchLocal is not set')
     }
     const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{

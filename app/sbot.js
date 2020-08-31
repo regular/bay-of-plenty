@@ -58,8 +58,10 @@ module.exports = function(config, cb) {
         })
       )
       // TODO: only if canned
+      debug('adding blobs ...')
       addBlobs(ssb, join(__dirname, 'blobs'), err =>{
         if (err) return cb(err)
+        debug('done adding blobs.')
         cb(null, ssb, config, keys.id/*,browserKeys*/)
       })
     })

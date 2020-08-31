@@ -21,9 +21,9 @@
   "dependencies": {
     "debug": "^4.1.1",
     "module-styles": "^1.0.0",
-    "mutant": "^3.23.0",
+    "mutant": "^3.29.0",
     "pull-stream": "^3.6.14",
-    "ssb-revisions": "^1.4.1",
+    "ssb-revisions": "^1.5.0",
     "tre-client": "^3.1.0",
     "tre-fonts": "^1.6.1",
     "tre-images": "^1.13.1",
