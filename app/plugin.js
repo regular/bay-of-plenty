@@ -58,7 +58,9 @@ exports.init = function (ssb, config) {
     const cb = args[1]
     debug('auth called for %s', id)
     const ok = tabs[id] !== undefined
-    cb(null, ok ? {allow: null, deny: null} : null)
+    if (ok) return cb(null, {allow: null, deny: null})
+    fn.apply(this, args)
+    //cb(null, ok ? {allow: null, deny: null} : null)
   })
 
   let windows = []
@@ -91,11 +93,12 @@ exports.init = function (ssb, config) {
 
   ssb.ws.use(function (req, res, next) {
     const u = parse('http://makeurlparseright.com'+req.url)
-    debug('HTTP request for path', u.pathname)
+    debug('%s request for path', req.method, u.pathname)
     if(req.method === 'POST' && u.pathname == '/blobs/add') {
+      debug('adding blob ...')
       pull(
         toPull.source(req),
-        ssb.blobs.add(null, function (err, hash) {
+        ssb.blobs.add(function (err, hash) {
           debug('blob upload done: %o %s', err, hash)
           res.end(JSON.stringify({
             hash,
@@ -105,7 +108,7 @@ exports.init = function (ssb, config) {
       )
       return
     }
-    if (!(req.method === "GET" || req.method == 'HEAD')) return next()
+    if (req.method !== "GET" && req.method !== 'HEAD') return next()
 
     const launchLocal = config.bayOfPlenty && config.bayOfPlenty.launchLocal
     if (launchLocal) {

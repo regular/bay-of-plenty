@@ -49,7 +49,8 @@
     "tre-bot": "^2.2.0",
     "tre-client": "^3.1.0",
     "tre-compile": "^1.0.0",
-    "tre-invite-code": "^1.1.0"
+    "tre-invite-code": "^1.1.0",
+    "zerr": "^1.0.4"
   },
   "devDependencies": {
     "atob": "^2.1.2",

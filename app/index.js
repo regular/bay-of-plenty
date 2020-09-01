@@ -10,6 +10,6 @@ if (process.env.THROW_DEPRECATION) {
 }
 
 const electron = require('electron')
-const sbot = require('./sbot')
+const sbot = require('./sbot')(argv)
 
 require('./inject.js')(electron, sbot, argv)
