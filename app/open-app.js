@@ -31,7 +31,7 @@ module.exports = function OpenApp(pool, conf) {
         conf = JSON.parse(fs.readFileSync('.trerc'))
         conf.path = conf.path || join(trePath, '.tre')
       } catch(err) {
-        const msg = `Error loading load local .trerc for launcing ${opts.launchLocal}: ${err.message}`
+        const msg = `Error loading local .trerc for launcing ${opts.launchLocal}: ${err.message}`
         return cb(new Error(msg))
       }
       conf.bayOfPlenty = conf.bayOfPlenty || {}
