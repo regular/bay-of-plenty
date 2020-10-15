@@ -49,6 +49,19 @@ module.exports = function inject(electron, Sbot, argv) {
   let win
   app.on('ready', start)
   app.on('will-quit', shutdown)
+  app.on('quit', (e, code) => {
+    debug('quit %d', code)
+  })
+  process.on('uncaughtException', err=>{
+    console.error('uncaught exception', err.message, err.stack)
+    process.exitCode = process.exitCode || 1
+    app.quit()
+  })
+  process.on('unhandledRejection', err=>{
+    console.error('unhandled rejection', err.message, err.stack)
+    process.exitCode = process.exitCode || 2
+    app.quit()
+  })
 
   function shutdown(e) {
     debug('shutdown called')
@@ -59,7 +72,7 @@ module.exports = function inject(electron, Sbot, argv) {
       // give it a second to finish log output
       setTimeout( ()=>{
         debug('Good Bye!')
-        process.exit(0)
+        process.exit(process.exitCode)
       }, 1000)
     })
   }
@@ -154,7 +167,7 @@ module.exports = function inject(electron, Sbot, argv) {
       }, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)
-          return app.quit()
+          throw err
         }
         loadURL(page, result.url)
       })
