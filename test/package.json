@@ -1,0 +1,18 @@
+{
+  "name": "bay-of-plenty-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
+  "license": "AGPLv3",
+  "dependencies": {
+    "pull-spawn-process": "^0.3.0",
+    "pull-stream": "^3.6.14",
+    "ssb-zero-conf-client": "^1.0.1",
+    "tape": "^5.0.1"
+  }
+}
