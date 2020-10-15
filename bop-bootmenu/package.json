@@ -4,14 +4,17 @@
   "description": "bay-of-plenty netwaork/application menu",
   "main": "index.js",
   "scripts": {
-    "deploy": "tre-bot blobs.get \"$(~/dev/tre/tre-init/bin/apps-deploy.js index.js --first --force|jsonpath-dl value.content.codeBlob)\" > ../app/blobs/bop-menu",
+    "deploy": "tre-compile index.js > ../app/blobs/bop-menu",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/regular/bop-bootmenu.git"
   },
-  "keywords": [],
+  "keywords": [
+    "bay of plenty",
+    "tre"
+  ],
   "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
   "license": "AGPL-3.0-or-later",
   "bugs": {
@@ -36,5 +39,8 @@
       "tre-fonts": true,
       "tre-stylesheets": true
     }
+  },
+  "devDependencies": {
+    "tre-compile": "^2.0.0"
   }
 }
