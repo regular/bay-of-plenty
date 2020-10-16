@@ -26,7 +26,7 @@ module.exports = function(page) {
     debug('sendMessage %s %o', name, detail)
     page.evaluate.apply(page, args)
     .catch( err =>{
-      console.error(`tabbar: sendMessage failed ${err.message}`)
+      console.error(`tabbar: sendMessage "${name}" failed ${err.message}`)
       cb(err)
     })
     .then(()=>cb(null))

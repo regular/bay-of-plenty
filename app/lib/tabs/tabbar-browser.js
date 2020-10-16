@@ -17,6 +17,8 @@ const alertCircle = Icon(bricons.svg('ionicons/alert-circle'))
 //const spinner = Icon(bricons.svg('samherbert/tail-spin'))
 const spinner = Icon(bricons.svg('samherbert/oval'))
 
+document.title = 'bop-tabbar'
+
 styles()
 
 const tabs = MutantArray()

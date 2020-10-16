@@ -1,15 +1,17 @@
+const {basename} = require('path')
 const crypto = require('crypto')
 const debug = require('debug')('bop:script-loader')
 const compile = require('tre-compile/compile')
 
 module.exports = async function(page, filename, opts) {
   opts = opts || {}
-  const random = crypto.randomBytes(32).toString('hex')
+  const random = basename(filename)+crypto.randomBytes(32).toString('hex')
   const domain = opts.domain || 'http://localhost/'
   debug('setRequestInterception ...')
   await page.setRequestInterception(true)
   debug('setRequestInterception done.')
-  page[opts.keepIntercepting ? 'on' : 'once']('request', async req=>{
+  //page[opts.keepIntercepting ? 'on' : 'once']('request', async req=>{
+  page.once('request', async req=>{
     debug('intercept request to %s', req.url().slice(0,512))
     if (!req.url().endsWith(random)) {
       debug('ignoring')

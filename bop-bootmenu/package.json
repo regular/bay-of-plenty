@@ -4,7 +4,7 @@
   "description": "bay-of-plenty netwaork/application menu",
   "main": "index.js",
   "scripts": {
-    "deploy": "tre-compile index.js --force > ../app/blobs/bop-menu && tre apps deploy --revRoot %nW1nU < ../app/blobs/bop-menu",
+    "deploy": "source ./.env && tre-compile index.js --force > ../app/blobs/bop-menu && tre-apps-deploy --revRoot %nW1nU < ../app/blobs/bop-menu",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,11 +22,10 @@
   },
   "homepage": "https://github.com/regular/bop-bootmenu#readme",
   "dependencies": {
-    "debug": "^4.1.1",
+    "debug": "^4.2.0",
     "module-styles": "^1.0.0",
     "mutant": "^3.29.0",
     "pull-stream": "^3.6.14",
-    "ssb-revisions": "^1.5.0",
     "tre-client": "^3.1.0",
     "tre-fonts": "^1.6.1",
     "tre-images": "^1.13.1",
@@ -41,6 +40,27 @@
     }
   },
   "devDependencies": {
+    "brfs": "^2.0.2",
+    "bricons": "^1.2.1",
+    "browserify-swap": "^0.2.2",
+    "sodium-browserify-tweetnacl": "^0.2.6",
+    "tre-cli-apps": "^2.0.2",
     "tre-compile": "^2.0.0"
+  },
+  "browserify": {
+    "transform": [
+      "brfs",
+      "bricons",
+      "browserify-swap"
+    ]
+  },
+  "browserify-swap": {
+    "@packages": [
+      "chloride"
+    ],
+    "dev": {
+      ".*node_modules/chloride/index.js$": "sodium-browserify-tweetnacl",
+      ".*node_modules/chloride/browser.js$": "sodium-browserify-tweetnacl"
+    }
   }
 }

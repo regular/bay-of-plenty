@@ -19,5 +19,12 @@ const index_path = resolve(join(
 ))
 
 module.exports = function(args, opts) {
-  return spawn(electron_path, [index_path, '--'].concat(args), opts)
+  let spawn_args = [index_path]
+  if (opts.remoteDebuggingPort !== undefined) {
+    spawn_args.push(`--remote-debugging-port=${opts.remoteDebuggingPort}`)
+    delete opts.remoteDebuggingPort
+  }
+  spawn_args.push('--')
+  spawn_args = spawn_args.concat(args)
+  return spawn(electron_path, spawn_args, opts)
 }
