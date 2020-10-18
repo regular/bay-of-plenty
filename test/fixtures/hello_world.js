@@ -1,2 +1,1 @@
-document.title = 'Hello World!'
-console.log('hello world!')
+document.body.innerText = 'hello world!'

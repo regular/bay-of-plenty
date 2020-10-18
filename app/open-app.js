@@ -1,11 +1,13 @@
 const fs = require('fs')
 const locateTrerc = require('./lib/locate-trerc')
-const {resolve, join} = require('path')
+const {resolve, join, dirname} = require('path')
 const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
 const ssbKeys = require('ssb-keys')
 //const loadScript = require('./lib/script-loader')
 const buildOnDemand = require('./lib/build-on-demand')
+const rc = require('rc')
+const minimist = require('minimist')
 
 module.exports = function OpenApp(pool, conf) {
   const {onLoading, onTitleChanged} = conf
@@ -25,15 +27,20 @@ module.exports = function OpenApp(pool, conf) {
     }
     if (opts.launchLocal) {
       debug('launchLocal is set')
-      try {
-        const trePath = locateTrerc(resolve('.'))
-        debug('reading local .trerc at %s', trePath)
-        conf = JSON.parse(fs.readFileSync('.trerc'))
-        conf.path = conf.path || join(trePath, '.tre')
-      } catch(err) {
-        const msg = `Error loading local .trerc for launcing ${opts.launchLocal}: ${err.message}`
+      const i = process.argv.indexOf('--')
+      const argv = i !== -1 ? process.argv.slice(i+1) : process.argv.slice(2)
+      console.log('XXX', argv)
+      conf = rc('tre', {}, minimist(argv))
+      console.log('xxx %o', conf)
+        //const trePath = locateTrerc(resolve('.'))
+        //debug('reading local .trerc at %s', trePath)
+        //conf = JSON.parse(fs.readFileSync('.trerc'))
+  
+      if (!conf.config) {
+        const msg = `Error loading local .trerc for launcing ${opts.launchLocal}`
         return cb(new Error(msg))
       }
+      conf.path = conf.path || join(dirname(conf.config), '.tre')
       conf.bayOfPlenty = conf.bayOfPlenty || {}
       conf.bayOfPlenty.launchLocal = opts.launchLocal
       debug('conf is %O', conf)

@@ -1,44 +1,48 @@
 //jshint esversion: 9
 //jshint -W079
+const fs = require('fs')
+const {join} = require('path')
+const crypto = require('crypto')
 const test = require('tape')
 const spawn_bop = require('./lib/spawn-bop-with-puppeteer')
+const wait = require('./lib/wait')
+const mkdirp = require('mkdirp').sync
 
 test('hello world!', t=>{
-  const bop = spawn_bop([`${__dirname}/fixtures/hello_world.js`], {
+  const dir = `/tmp/${Date.now()}`
+  mkdirp(dir)
+  const configPath = join(dir, 'config')
+  console.log('configPath', configPath)
+  fs.writeFileSync(configPath, JSON.stringify({
+    network: `*${crypto.randomBytes(32).toString('base64')}.random`,
+  }), 'utf8')
+
+  const bop = spawn_bop([
+    `${__dirname}/fixtures/hello_world.js`,
+    `--config=${configPath}`
+  ], {
     env: Object.assign({}, process.env, {
       DEBUG: 'bop:script-loader',
       DEBUG_COLORS: 1
     })
   }, (err, browser) =>{
-    t.error(err)
-    
-    let numPages = 0
-    browser.on('targetcreated', target=>{
-      console.log('new', target.type(), target.url())
-    })
-    browser.on('targetchanged', async target => {
-      console.log('changed', target.type(), target.url())
-      if (target.type() == 'page') numPages++
-      if (numPages < 3) return
-
-      let tabbar, hello
-      const pages = await browser.pages()
-      const titles = await Promise.all(pages.map(p=>p.title()))
-      titles.forEach( (t, i) =>{
-        console.log(`- ${t}`)
-        if (t.startsWith('Bay of Plenty')) {
-          tabbar = pages[i]
-        } else {
-          hello = pages[i]
-        }
-      })
-      if (!tabbar) return t.fail('no tabbar')
-      if (!hello) return t.fail('no hello world tab')
-
-      const close = await tabbar.waitForSelector('.tab.active .close')
+    t.error(err, 'puppeteer connected')
+    ;(async function() {
+      const appTarget = await browser.waitForTarget(t=>t.url().includes('hello_world'))
+      t.ok(appTarget, 'app tab found')
+      const page = await appTarget.page()
+      const body = await page.$('body')
+      const text = await body.evaluate( el=>el.innerText )
+      console.log(text) 
+      t.equal(text, 'hello world!')
+      //await wait(1000)
+      const tabbarTarget = await browser.waitForTarget(t=>t.url().includes('tabbar-browser'))
+      t.ok(tabbarTarget, 'tabbar found')
+      const tabbar = await tabbarTarget.page()
+      const close = await tabbar.waitForSelector('.tab.active .close', {visible: true})
       console.log('Clicking close')
       await close.click()
-    })
+    })()
   })
 
   /*

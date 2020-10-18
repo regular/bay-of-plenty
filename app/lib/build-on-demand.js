@@ -1,11 +1,12 @@
 const {parse} = require('url')
+const {basename} = require('path')
 const crypto = require('crypto')
 const debug = require('debug')('bop:build-on-demand')
 const compile = require('tre-compile/compile')
 
 module.exports = async function(ssb, page, filename, opts) {
   opts = opts || {}
-  const random = crypto.randomBytes(32).toString('hex')
+  const random = basename(filename) + crypto.randomBytes(32).toString('hex')
   const origin = opts.origin || 'http://localhost/'
 
   ssb.ws.use(function(req, res, next) {

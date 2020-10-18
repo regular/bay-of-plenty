@@ -20,6 +20,9 @@ module.exports = function(args, opts, cb) {
     puppeteer.connect({
       browserURL: `http://127.0.0.1:${remoteDebuggingPort}`
     }).then(browser=>{
+      browser.on('targetchanged', async target => {
+        console.log('taget changed', target.type(), target.url())
+      })
       cb(null, browser)
     }).catch(err => {
       console.log(err.message)
