@@ -7,9 +7,8 @@ const ssbKeys = require('ssb-keys')
 //const loadScript = require('./lib/script-loader')
 const buildOnDemand = require('./lib/build-on-demand')
 const rc = require('rc')
-const minimist = require('minimist')
 
-module.exports = function OpenApp(pool, conf) {
+module.exports = function OpenApp(pool, conf, argv) {
   const {onLoading, onTitleChanged} = conf
 
   return function openApp(invite, id, opts, cb) {
@@ -27,10 +26,7 @@ module.exports = function OpenApp(pool, conf) {
     }
     if (opts.launchLocal) {
       debug('launchLocal is set')
-      const i = process.argv.indexOf('--')
-      const argv = i !== -1 ? process.argv.slice(i+1) : process.argv.slice(2)
-      console.log('XXX', argv)
-      conf = rc('tre', {}, minimist(argv))
+      conf = rc('tre', {}, argv)
       console.log('xxx %o', conf)
         //const trePath = locateTrerc(resolve('.'))
         //debug('reading local .trerc at %s', trePath)

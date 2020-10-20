@@ -159,7 +159,7 @@ module.exports = function inject(electron, Sbot, argv) {
       const openApp = OpenApp(pool, {
         onLoading,
         onTitleChanged
-      })
+      }, argv)
       
       openApp(null, null, Object.assign({
         viewId: view.id,
