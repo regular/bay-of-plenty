@@ -1,0 +1,16 @@
+{
+  "network": "*GcygjYu5eYjlaHGacbUZD0Um35e78CEZ05jA3oxgtC0=.random",
+  "caps": {
+    "shs": "GcygjYu5eYjlaHGacbUZD0Um35e78CEZ05jA3oxgtC0="
+  },
+  "ws": {
+    "port": 55555
+  },
+  "tre": {
+    "branches": {
+      "root": "%Z10rIFsvdljIlHuA3lWQ+teOSUoD06uIFg7tD2Yz1y4=.sha256",
+      "webapps": "%Z10rIFsvdljIlHuA3lWQ+teOSUoD06uIFg7tD2Yz1y4=.sha256"
+    }
+  },
+  "boot": "%bp81moH1w0yZ6jQDp3fcCqT43Kd6oqSR+hHA8Rvs02Y=.sha256"
+}

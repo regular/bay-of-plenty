@@ -24,7 +24,7 @@ module.exports = function OpenApp(pool, conf, argv) {
       debug(err.message)
       return cb(err)
     }
-    if (opts.launchLocal) {
+    if (opts.launchLocal || argv.config) {
       debug('launchLocal is set')
       conf = rc('tre', {}, argv)
       console.log('xxx %o', conf)
