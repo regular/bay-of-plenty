@@ -1,4 +1,5 @@
 {
+  "party": true,
   "timeout": 0,
   "pub": true,
   "local": true,

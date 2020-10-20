@@ -1,11 +1,11 @@
 {
-  "party": true,
-  "timeout": 0,
-  "pub": true,
-  "local": true,
-  "friends": {
-    "dunbar": 150,
-    "hops": 3
+  "network": "*FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c=.ed25519",
+  "autofollow": "@i0xWLOUzr5rTvcwSxSY+saTVZNZENgk7FGLccjzcZ1E=.ed25519",
+  "boot": "%nW1nUljNyveaZ9/Dh/i6UtsJGHpZVFVqOSV8WfYj7Do=.sha256",
+  "autoconnect": "net:138.201.131.83:63942~shs:Z9nZknO0mKsIjMnmiJLNRX+kLpT4JkgEytgYd9Ga0AA=" ,
+  "port": 63942,
+  "ws": {
+    "port": 63943
   },
   "connections": {
     "outgoing": {
@@ -31,33 +31,5 @@
         }
       ]
     }
-  },
-  "timers": {
-    "connection": 0,
-    "reconnect": 5000,
-    "ping": 300000,
-    "handshake": 5000
-  },
-  "caps": {
-    "shs": "FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c="
-  },
-  "logging": {
-    "level": "notice"
-  },
-  "autofollow": "@i0xWLOUzr5rTvcwSxSY+saTVZNZENgk7FGLccjzcZ1E=.ed25519",
-  "boot": "%nW1nUljNyveaZ9/Dh/i6UtsJGHpZVFVqOSV8WfYj7Do=.sha256",
-  "network": "*FZ0EmZO8NAhI8BLk5F1gxdBOTOO42BV9V6R4+KZS77c=.ed25519",
-  "port": 63942,
-  "ws": {
-    "port": 63943
-  },
-  "blobs": {
-    "legacy": false,
-    "sympathy": 10,
-    "max": 314572800
-  },
-  "autoconnect": "net:138.201.131.83:63942~shs:Z9nZknO0mKsIjMnmiJLNRX+kLpT4JkgEytgYd9Ga0AA=" ,
-  "lan": {
-    "legacy": false
   }
 }
