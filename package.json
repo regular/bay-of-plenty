@@ -4,6 +4,7 @@
   "description": "A multi-network, multi-application client for secure scuttlebutt",
   "main": "index.js",
   "scripts": {
+    "test": "tape test/*.js",
     "start": "electron app/index.js",
     "upgrade": "npm i {electron,electron-builder,electron-rebuild,node-abi,node-gyp,node-pre-gyp}@latest",
     "make": "ABI=$(electron -a) electron-builder build --publish never",
@@ -59,7 +60,8 @@
     "electron-rebuild": "^2.2.0",
     "node-abi": "^2.19.1",
     "node-gyp": "^7.1.1",
-    "node-pre-gyp": "^0.15.0"
+    "node-pre-gyp": "^0.15.0",
+    "tape": "^5.0.1"
   },
   "repository": {
     "type": "git",
