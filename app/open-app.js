@@ -25,9 +25,8 @@ module.exports = function OpenApp(pool, conf, argv) {
       return cb(err)
     }
     if (opts.launchLocal || argv.config) {
-      debug('launchLocal is set')
       conf = rc('tre', {}, argv)
-      console.log('xxx %o', conf)
+      console.log('read local config:  %o', conf)
         //const trePath = locateTrerc(resolve('.'))
         //debug('reading local .trerc at %s', trePath)
         //conf = JSON.parse(fs.readFileSync('.trerc'))
@@ -36,13 +35,19 @@ module.exports = function OpenApp(pool, conf, argv) {
         const msg = `Error loading local .trerc for launcing ${opts.launchLocal}`
         return cb(new Error(msg))
       }
+      if (conf.launchLocal) opts.launchLocal = conf.launchLocal
       conf.path = conf.path || join(dirname(conf.config), '.tre')
       conf.bayOfPlenty = conf.bayOfPlenty || {}
       conf.bayOfPlenty.launchLocal = opts.launchLocal
       debug('conf is %O', conf)
+    }
+
+    if (opts.launchLocal) {
+      debug('launchLocal is set')
     } else {
       debug('launchLocal is not set')
     }
+
     const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
