@@ -24,7 +24,7 @@ test('sandview-app', t=>{
     `--config=${configPath}`
   ], {
     env: Object.assign({}, process.env, {
-      DEBUG: 'tre-compile,browserify-swap,bop:browser-console',
+      DEBUG: 'sandbox*,pull-sandbox,ssb:sandviews*,bop:sbot-pool,bop:browser-console',
       DEBUG_COLORS: 1
     })
   }, (err, _browser) =>{
