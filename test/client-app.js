@@ -16,7 +16,7 @@ test('sandview-app', t=>{
   console.log('configPath', configPath)
   const appkey = crypto.randomBytes(32).toString('base64')
   fs.writeFileSync(configPath, JSON.stringify({
-    network: `*${appkey}.random`,
+    network: `*${appkey}.random`
   }), 'utf8')
 
   const bop = spawn_bop([
@@ -36,6 +36,16 @@ test('sandview-app', t=>{
     })()
   })
 
+
+  async function clickClose() {
+    const tabbarTarget = await browser.waitForTarget(t=>t.url().includes('tabbar-browser'))
+    t.ok(tabbarTarget, 'tabbar found')
+    const tabbar = await tabbarTarget.page()
+    const close = await tabbar.waitForSelector('.tab.active .close', {visible: true})
+    console.log('Clicking close')
+    await close.click()
+  }
+
   bop.stdout.on('data', data =>{
     //process.stdout.write(data)
   })
@@ -43,14 +53,7 @@ test('sandview-app', t=>{
     //process.stdout.write(data)
     if (data.includes(`app key: ${appkey}`)) {
       t.pass('app logged corret app key')
-      ;(async function() {
-        const tabbarTarget = await browser.waitForTarget(t=>t.url().includes('tabbar-browser'))
-        t.ok(tabbarTarget, 'tabbar found')
-        const tabbar = await tabbarTarget.page()
-        const close = await tabbar.waitForSelector('.tab.active .close', {visible: true})
-        console.log('Clicking close')
-        await close.click()
-      })()
+      clickClose()
     }
   })
 
