@@ -15,13 +15,15 @@ module.exports = function(args, opts, cb) {
   return bop
 
   function connect(remoteDebuggingPort, cb) {
+    let currTargetId = 0
     console.log('connecting to debug port', remoteDebuggingPort)
     connecting = true
     puppeteer.connect({
       browserURL: `http://127.0.0.1:${remoteDebuggingPort}`
     }).then(browser=>{
       browser.on('targetchanged', async target => {
-        console.log('taget changed', target.type(), target.url())
+        if (target.id == undefined) target.id = currTargetId++
+        console.log('target %d (%s) URL changed: %s', target.id, target.type(), target.url())
       })
       cb(null, browser)
     }).catch(err => {

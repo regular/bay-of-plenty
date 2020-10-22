@@ -20,11 +20,11 @@ test('sandview-app', t=>{
   }), 'utf8')
 
   const bop = spawn_bop([
-    `${__dirname}/fixtures/sandview-app/index.js`,
+    `${__dirname}/fixtures/client-app/index.js`,
     `--config=${configPath}`
   ], {
     env: Object.assign({}, process.env, {
-      DEBUG: 'tre-compile,browserify-swap,bop:browser-console',
+      DEBUG: 'bop:browser-console',
       DEBUG_COLORS: 1
     })
   }, (err, _browser) =>{
@@ -35,28 +35,22 @@ test('sandview-app', t=>{
       t.ok(appTarget, 'app tab found')
     })()
   })
-  
-  async function clickClose() {
-    const tabbarTarget = await browser.waitForTarget(t=>t.url().includes('tabbar-browser'))
-    t.ok(tabbarTarget, 'tabbar found')
-    const tabbar = await tabbarTarget.page()
-    const close = await tabbar.waitForSelector('.tab.active .close', {visible: true})
-    console.log('Clicking close')
-    await close.click()
-  }
 
   bop.stdout.on('data', data =>{
-    process.stdout.write(data)
+    //process.stdout.write(data)
   })
   bop.stderr.on('data', data =>{
-    process.stdout.write(data)
+    //process.stdout.write(data)
     if (data.includes(`app key: ${appkey}`)) {
-      t.pass('app logged correct app key')
-      //clickCLose()
-    }
-    if (data.includes('sandview handle:')) {
-      t.pass('app logged sandview handle')
-      clickClose()
+      t.pass('app logged corret app key')
+      ;(async function() {
+        const tabbarTarget = await browser.waitForTarget(t=>t.url().includes('tabbar-browser'))
+        t.ok(tabbarTarget, 'tabbar found')
+        const tabbar = await tabbarTarget.page()
+        const close = await tabbar.waitForSelector('.tab.active .close', {visible: true})
+        console.log('Clicking close')
+        await close.click()
+      })()
     }
   })
 
