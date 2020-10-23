@@ -1,7 +1,7 @@
 - [ ] add pre-publish script to add bop-bootmenu blobs and flumelog
 - [ ] handle invite to same app with different autofollow (just follow)
-- [ ] hide invite form if there are apps
-- [ ] show invite form if there are no apps
+- [x] hide invite form if there are apps
+- [x] show invite form if there are no apps
 - [ ] if `autostart` is set, don't wait for app selection. (unluss alt ist pressed)
 - [ ] grid layout
 - [ ] update app entry after during boot
@@ -9,13 +9,7 @@
 - [ ] don't show about screen unless ESC is pressed
 - [ ] fade in acitvity indicator, make it smaller
 - [ ] cache result of awaitStable for 2 minutes or so
-- [ ] show version numbers on bootmenu screen
+- [x] show version numbers on bootmenu screen
 
 Later:
 - [ ] show webapp logo
-- [ ] 
-
-
-- [x] create new network with simple hello world webapp
-- [x] in bop, add a specialized bop-sbot
-  - [x] hardcoded caps and auto-follow

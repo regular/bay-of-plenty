@@ -28,7 +28,6 @@ client( (err, ssb, config) =>{
   const networks = computed(entries, entries => {
     return Object.keys(entries.reduce((acc, {invite})=>{
       const parsed = parse(invite)
-      console.log(parsed)
       if (parsed) acc[parsed.network] = true
       return acc
     }, {})).sort()

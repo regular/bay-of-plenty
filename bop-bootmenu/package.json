@@ -42,10 +42,10 @@
   "devDependencies": {
     "brfs": "^2.0.2",
     "bricons": "^1.2.1",
-    "browserify-swap": "^0.2.2",
+    "browserify-swap": "github:regular/browserify-swap",
     "sodium-browserify-tweetnacl": "^0.2.6",
     "tre-cli-apps": "^2.0.2",
-    "tre-compile": "^2.0.0"
+    "tre-compile": "^2.0.3"
   },
   "browserify": {
     "transform": [
