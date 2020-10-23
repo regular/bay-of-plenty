@@ -1,5 +1,6 @@
 const fs = require('fs')
 const {join} = require('path')
+const {isBlobId} = require('ssb-ref')
 const ssbKeys = require('ssb-keys')
 const pull = require('pull-stream')
 
@@ -53,14 +54,10 @@ module.exports = function(argv) {
             ssb.conn.connect(address)
           })
         }
-        pull(
-          ssb.about.socialValueStream({dest: keys.id, key: 'name'}),
-          pull.drain( name => {
-            avatarUpdate(config.network, keys.id, 'name', name)
-          }, err=>{
-            console.error(`socialValueStream er: ${err.message}`)
-          })
-        )
+
+        updateAvatars(ssb, config.network, keys.id, 'name')
+        updateAvatars(ssb, config.network, keys.id, 'image')
+
         // TODO: only if canned
         debug('adding blobs ...')
         addBlobs(ssb, join(__dirname, 'blobs'), err =>{
@@ -71,4 +68,24 @@ module.exports = function(argv) {
       })
     })
   }
+}
+
+function updateAvatars(ssb, network, id, key) {
+  const origin = ssb.ws.getAddress().match(/ws:([^~]*)/)[1]
+
+  pull(
+    ssb.about.socialValueStream({dest: id, key}),
+    pull.map( value =>{
+      if (isBlobId(value)) {
+        return `http:${origin}/blobs/get/${encodeURIComponent(value)}`
+      } else {
+        return value
+      }
+    }),
+    pull.drain( value => {
+      avatarUpdate(network, id, key, value)
+    }, err=>{
+      console.error(`socialValueStream er: ${err.message}`)
+    })
+  )
 }
