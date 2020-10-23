@@ -24,7 +24,7 @@ module.exports = function OpenApp(pool, conf, argv) {
       debug(err.message)
       return cb(err)
     }
-    if (opts.launchLocal || argv.config) {
+    if (!invite && (opts.launchLocal || argv.config)) {
       conf = rc('tre', {}, argv)
       console.log('read local config:  %o', conf)
         //const trePath = locateTrerc(resolve('.'))
