@@ -19,7 +19,7 @@ module.exports = function(argv) {
     return id
   })
   authorized.forEach(x =>{
-    debug('authorized %s', x)
+    console.error('authorized %s', x)
   })
   return {init}
 

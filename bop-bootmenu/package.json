@@ -58,7 +58,7 @@
     "@packages": [
       "chloride"
     ],
-    "dev": {
+    "default": {
       ".*node_modules/chloride/index.js$": "sodium-browserify-tweetnacl",
       ".*node_modules/chloride/browser.js$": "sodium-browserify-tweetnacl"
     }

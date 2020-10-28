@@ -55,6 +55,9 @@ function getEntry(network, id) {
 function avatarUpdate(network, id, key, value) {
   debug(`Updating avatar ${key} to ${value}, ${network} ${id}`)
   const entry = getEntry(network, id)
+  // TODO: if image, call thumbnailserver.addImageURL
+  // and replace value with its result
+  // TODO: this assumes thumbnail server's port never changes! bad.
   entry.avatar[key] = value
   setCold(network, id, entry.avatar)
   entry.notify(entry.avatar)

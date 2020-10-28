@@ -119,6 +119,7 @@ client( (err, ssb, config) =>{
           pull(
             ssb.bayofplenty.avatarUpdates(netkey, id),
             pull.drain(newAvatar =>{
+              debug('new avatar %o', newAvatar)
               avatar.set(newAvatar)
             }, err => {
               console.error(`avatarUpdates failed: ${err.message}`)
