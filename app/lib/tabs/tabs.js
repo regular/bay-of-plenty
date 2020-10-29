@@ -95,7 +95,7 @@ module.exports = function(win, makeView, init, opts) {
     view.emitter.emit('close', {last: Object.keys(views).length == 0})
     view.emitter.removeAllListeners()
     debug('destroy view')
-    view.destroy()
+    setTimeout( ()=> view.destroy(), 80)
   }
 
   function gotoTab(offset) {
