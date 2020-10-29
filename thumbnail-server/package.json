@@ -18,13 +18,13 @@
     "multiblob-http": "^1.0.0",
     "pull-level": "^2.0.4",
     "pull-stream": "^3.6.14",
-    "sharp": "^0.26.2",
+    "sharp": "0.25.x",
     "stream-to-pull-stream": "^1.7.3",
+    "mkdirp": "^1.0.4",
     "tre-image-size": "^1.1.0"
   },
   "devDependencies": {
     "tape": "^5.0.1",
-    "mkdirp": "^1.0.4",
     "pull-file": "^1.1.0"
   }
 }
