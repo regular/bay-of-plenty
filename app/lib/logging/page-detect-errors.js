@@ -31,8 +31,8 @@ module.exports = function(page) {
     const method = request.method()
     const url = request.url()
     const response = request.response()
-    const status = response.status()
-    const ok = response.ok()
+    const status = response && response.status()
+    const ok = response && response.ok()
     const text = `${errorText} ${type} ${method} ${url} ${status} ok: ${ok}`
     debug('requestfailed %s', text)
     debug(`response was: ${status} ok: ${ok}`)
