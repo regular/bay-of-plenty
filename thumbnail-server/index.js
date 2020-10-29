@@ -7,6 +7,7 @@ const DB = require('./db')
 const AddImageStream = require('./add-image-stream')
 const hyperquest = require('hyperquest')
 const toPull = require('stream-to-pull-stream')
+const mkdirp = require('mkdirp')
 
 function fetch(url) {
   return toPull.source(hyperquest(url))
@@ -14,12 +15,13 @@ function fetch(url) {
 
 module.exports = function(dir, config) {
   config = config || {}
+  mkdirp.sync(dir)
   const idFromURL = config.idFromURL || (x=>x)
   const port = config.port || 8080
   const host = config.host || 'localhost'
   const sizes = config.sizes || [256, 128, 64, 48, 16]
   const blobs = multiblob(dir)
-  const db = DB(join(dir))
+  const db = DB(dir)
   const addImageStream = AddImageStream(db, blobs, sizes)
   const server = http.createServer(multiblob_httpp(blobs, '/thumbnails'))
   const origin = `${host}:${port}`

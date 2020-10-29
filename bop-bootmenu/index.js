@@ -137,6 +137,12 @@ client( (err, ssb, config) =>{
             id,
             checked: computed(selected, selected => selected == id)
           }),
+          h('img.avatar', {
+            src: computed(avatar, avatar =>{
+              const thumb = avatar && avatar.image && avatar.image['32x32']
+              return thumb || ''
+            })
+          }),
           h('label', {
             'for': id
           }, computed(avatar, avatar =>{

@@ -1,15 +1,37 @@
 const fs = require('fs')
 const {join} = require('path')
+const {parse} = require('url')
 
 const Notify = require('pull-notify')
 const pull = require('pull-stream')
 const cat = require('pull-cat')
 const debug = require('debug')('bop:avatar-update')
 const networkDir = require('./lib/get-networks-dir')()
+const Server = require('../thumbnail-server')
 
 const storagePath = join(networkDir, '..', 'avatars.json')
 const cold = loadColdStorage()
 const entries = {}
+
+const server = Server(join(networkDir, '..', 'thumbnails'), {
+  sizes: [16, 32, 128],
+  idFromURL
+  // TODO: use port allocator
+})
+server.listen( err=>{
+  if (err) throw err
+  debug('thumbnail server is up')
+})
+
+function idFromURL(url) {
+  const {path} = parse(url)
+  if (!path) {
+    debug('invalid URL %s', url)
+    return url
+  }
+  const last = path.split('/').slice(-1)[0]
+  return decodeURIComponent(last)
+}
 
 function loadColdStorage() {
   debug(`Reading ${storagePath}`)
@@ -54,22 +76,38 @@ function getEntry(network, id) {
 
 function avatarUpdate(network, id, key, value) {
   debug(`Updating avatar ${key} to ${value}, ${network} ${id}`)
-  const entry = getEntry(network, id)
-  // TODO: if image, call thumbnailserver.addImageURL
-  // and replace value with its result
-  // TODO: this assumes thumbnail server's port never changes! bad.
-  entry.avatar[key] = value
-  setCold(network, id, entry.avatar)
-  entry.notify(entry.avatar)
+
+  const isURL = typeof value == 'string' && parse(value).protocol
+
+  if (!isURL) return setValue(value)
+
+  server.addImageURL(value, (err, result) => {
+    if (err) return console.error('Unable to add image url %s', err.message)
+    setValue(result)
+  })
+
+  function setValue(value) {
+    const entry = getEntry(network, id)
+    entry.avatar[key] = value
+    setCold(network, id, entry.avatar)
+    entry.notify(entry.avatar)
+  }
 }
 
 function getUpdates(network, id) {
   debug(`getting updates for: ${network} ${id}`)
   const entry = getEntry(network, id)
-  return cat([
-    pull.values([entry.avatar]),
-    entry.notify.listen()
-  ])
+  return pull(
+    cat([
+      pull.once(entry.avatar),
+      entry.notify.listen()
+    ]),
+    pull.map(entry=>{
+      // TODO: fix port number in URL, if it has changed
+      debug('announce %o', entry)
+      return entry
+    })
+  )
 }
 
 module.exports = {
