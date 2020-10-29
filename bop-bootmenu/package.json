@@ -4,7 +4,7 @@
   "description": "bay-of-plenty netwaork/application menu",
   "main": "index.js",
   "scripts": {
-    "deploy": "source ./.env && tre-compile index.js --force > ../app/blobs/bop-menu && tre-apps-deploy --revRoot %nW1nU < ../app/blobs/bop-menu",
+    "deploy": "tre-compile index.js --force > ../app/blobs/bop-menu && tre server run \"tre-apps-deploy --revRoot %nW1nU < ../app/blobs/bop-menu\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

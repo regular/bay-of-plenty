@@ -7,7 +7,7 @@ const pull = require('pull-stream')
 const cat = require('pull-cat')
 const debug = require('debug')('bop:avatar-update')
 const networkDir = require('./lib/get-networks-dir')()
-const Server = require('../thumbnail-server')
+const Server = require('thumbnail-server')
 
 const storagePath = join(networkDir, '..', 'avatars.json')
 const cold = loadColdStorage()
