@@ -8,7 +8,7 @@ const spawn_bop = require('./lib/spawn-bop-with-puppeteer')
 const wait = require('./lib/wait')
 const mkdirp = require('mkdirp').sync
 
-test('sandview-app', t=>{
+test('client-app', t=>{
   const dir = `/tmp/${Date.now()}`
   let browser
   mkdirp(dir)
@@ -47,10 +47,10 @@ test('sandview-app', t=>{
   }
 
   bop.stdout.on('data', data =>{
-    //process.stdout.write(data)
+    process.stdout.write(data)
   })
   bop.stderr.on('data', data =>{
-    //process.stdout.write(data)
+    process.stdout.write(data)
     if (data.includes(`app key: ${appkey}`)) {
       t.pass('app logged corret app key')
       clickClose()

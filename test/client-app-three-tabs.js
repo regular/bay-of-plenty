@@ -8,7 +8,7 @@ const spawn_bop = require('./lib/spawn-bop-with-puppeteer')
 const wait = require('./lib/wait')
 const mkdirp = require('mkdirp').sync
 
-test('sandview-app', t=>{
+test('client-app three tabs', t=>{
   const dir = `/tmp/${Date.now()}`
   let browser
   mkdirp(dir)
