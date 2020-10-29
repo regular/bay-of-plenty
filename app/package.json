@@ -44,6 +44,7 @@
     "ssb-sandboxed-views": "^2.0.2",
     "ssb-social-index": "^1.0.0",
     "stream-to-pull-stream": "^1.7.3",
+    "thumbnail-server": "file:../thumbnail-server",
     "tre-activity-indicator": "^1.0.0",
     "tre-boot": "^1.9.1",
     "tre-bot": "^2.4.0",
