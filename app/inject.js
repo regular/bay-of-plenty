@@ -15,7 +15,8 @@ const OpenApp = require('./open-app')
 const webPreferences = {
   enableRemoteModule: false,
   nodeIntegration: false,
-  contextIsolation: true
+  contextIsolation: true,
+  worldSafeExecuteJavaScript: true
 }
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
@@ -124,7 +125,9 @@ module.exports = function inject(electron, Sbot, argv) {
 
       view.on('close', ({last})=>{
         debug('view closed, was last:', last)
-        if (last && win && !win.isDestroyed()) win.close()
+        if (last && win && !win.isDestroyed()) {
+          setTimeout( ()=> win.close(), 80)
+        }
       })
       const page = await Page(view.webContents)
       debug('Page initialized')
