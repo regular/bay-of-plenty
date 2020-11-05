@@ -10,6 +10,7 @@ const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
 const RenderIdentities = require('./render-identities')
 
+
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
   const renderIdentities = RenderIdentities(ssb)
@@ -42,6 +43,7 @@ client( (err, ssb, config) =>{
     }
   }, false)
 
+
   document.body.appendChild(
     h('.bop-bootmenu', [
       h('.main', [
@@ -54,6 +56,9 @@ client( (err, ssb, config) =>{
       h('.versions', versions)
     ])
   )
+  setTimeout( ()=>{
+    document.body.classList.add('show')
+  }, 100)
 
   function renderMenu() {
     return computed(networks, networks=>{
@@ -239,9 +244,15 @@ styles(`
     outline-color: rgb(50,70,70);
   }
   body {
+    opacity: 0;
     background-color: #333;
     color: #bbb;
     font-family: sans-serif;
+  }
+  body.show {
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: 1s;
   }
   html, body {
     padding: 0;

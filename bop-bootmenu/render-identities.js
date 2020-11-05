@@ -156,6 +156,7 @@ styles(`
     grid-auto-flow: column;
     grid-auto-columns: ${SIZE*2}px;
     overflow-x: auto;
+    padding-left: 0;
   }
   .identities > ul > li {
     cursor: pointer;
