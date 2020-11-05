@@ -1,3 +1,44 @@
+STALE INDEXES
+
+- why don't names show up after upgrading backinks (or other ssb deps?)?
+- how do we force re-creation of the affected indexes?
+
+CAPS
+
+requesting thumbnails from the thumbnail server should be reserved for the bootmenu, becuase it leaks information about what apps are installed/which identities are controlled by the same person.
+
+Solition: a random string (thumbnail caps) is prefixed to the multiblob-http route. Apps get this as the thumbnail or avatar caps via sessionStorage/
+
+There's a file permissions.json that defines which apps (revRoot) have which caps.
+
+"%8yrd...": {
+  "open-app": true,
+  "thumbnails": true
+}
+
+HTTPS
+
+use https throughout BoP
+- ssb-ws
+- multiblob-http
+- tre-boot / BoP plugins
+
+How to install a self-signed non-expiring https certificate in Electron?
+How to use client certificates in Electron?
+
+STABILITY
+
+Make a click tests that uses two blob-based apps. The first one uses openApp to open the 2nd one (an app using sandviews) twice. Then the two tabs are closed. (this currently causes BoP to hang)
+
+This requires a script to automate network creation.
+This requires 'tre rpc' 
+tre-apps-deploy should not require root or webapps branch. It uses them if present.
+
+
+
+
+======= old
+
 ## About deprecation warnings
 - Buffer c'tor: used by some older modules that we indirectly depend on.
   We could patch these modules after `npm i` and send PRs upstream.
@@ -14,7 +55,7 @@
 
 - use it to reflect sbot log to about page
 - [x] use it to reflect console messages to webapps using original obects (jshandle)
-  we did that b firing a custom event on window
+  we did that by firing a custom event on window
 
 - implement pull-pupeteer-sink
   - takes a read function that is evaled in the browser
@@ -28,7 +69,7 @@
 
 - split plugin into atomic aspects
 - launch: openApp
-  serve lauch page
+  serve lauinch page
 
 - prepare PR against puppeteer
   - does the problem show in puppeteer;s own chromium?

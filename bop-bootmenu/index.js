@@ -8,9 +8,11 @@ const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
+const RenderIdentities = require('./render-identities')
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
+  const renderIdentities = RenderIdentities(ssb)
 
   const versions = Value()
   getVersions(ssb, config, (err, v) =>{
@@ -67,7 +69,7 @@ client( (err, ssb, config) =>{
                 h('span', 'Network: '),
                 h('span.netkey', netkey)
               ]),
-              renderIdsOfNetwork(netkey),
+              renderIdentities(netkey),
               renderAppsOfNetwork(netkey)
             ])
           ]) 
@@ -91,84 +93,6 @@ client( (err, ssb, config) =>{
     ])
   }
 
-  function renderIdsOfNetwork(netkey) {
-    const pubKeys = MutantArray()
-    const selected = Value(localStorage[`id-${netkey}`])
-    selected(v => localStorage[`id-${netkey}`] = v)
-
-    if (ssb.bayofplenty && ssb.bayofplenty.listPublicKeys) {
-      pull(
-        ssb.bayofplenty.listPublicKeys(netkey),
-        pull.collect( (err, results) => {
-          if (err) return console.error(err.message)
-          pubKeys.set(results)
-          if (!selected()) selected.set(results[0])
-        })
-      )
-    } else {
-      pubKeys.set(['default ID', 'additional ID'])
-    }
-    
-    return h('details.ids', {open: true}, [
-      h('summary', [
-        h('span', 'Identities')
-      ]),
-      h('ul.ids', MutantMap(pubKeys, id=>{
-        const avatar = Value()
-        if (ssb.bayofplenty && ssb.bayofplenty.avatarUpdates) {
-          pull(
-            ssb.bayofplenty.avatarUpdates(netkey, id),
-            pull.drain(newAvatar =>{
-              debug('new avatar %o', newAvatar)
-              avatar.set(newAvatar)
-            }, err => {
-              console.error(`avatarUpdates failed: ${err.message}`)
-            })
-          )
-        }
-        return h('li', {
-          classList: computed(selected, selected => selected == id ? ['selected'] : []),
-            'ev-click': e => selected.set(id)
-        }, [
-          h('input', {
-            type: 'radio',
-            name: netkey,
-            value: id,
-            id,
-            checked: computed(selected, selected => selected == id)
-          }),
-          h('img.avatar', {
-            src: computed(avatar, avatar =>{
-              const thumb = avatar && avatar.image && avatar.image['32x32']
-              return thumb || ''
-            })
-          }),
-          h('label', {
-            'for': id
-          }, computed(avatar, avatar =>{
-            return (avatar && avatar.name) ? avatar.name : '[no name assigned]'
-          })),
-          h('.feedid', id)
-        ])
-      })),
-      renderAddIdButton()
-    ])
-
-    function renderAddIdButton() {
-      if (ssb.bayofplenty && ssb.bayofplenty.addIdentity) {
-        return h('button.addIdentity',{
-          'ev-click': ()=>{
-            ssb.bayofplenty.addIdentity(netkey, (err, newId) =>{
-              if (err) return console.error(err)
-              pubKeys.push(newId)
-              selected.set(newId)
-            })
-          }
-        }, 'Add Identity')
-      }
-      return []
-    }
-  }
 
 
   function renderAppsOfNetwork(netkey) {
@@ -308,6 +232,9 @@ function shorter(s) {
 }
 
 styles(`
+  ::-webkit-scrollbar {                                                                                         
+    width: 0px !important;
+  }
   *:focus {
     outline-color: rgb(50,70,70);
   }
@@ -348,7 +275,7 @@ styles(`
   .bop-bootmenu h1 {
     margin: 1em 0em;
   }
-  .bop-bootmenu ul {
+  .bop-bootmenu ul.apps, ul.networks {
     padding: 0;
     list-style: none;
   }
@@ -377,18 +304,6 @@ styles(`
     font-size: 16px;
     padding: .3em 0em;
     padding-left: 1em;
-  }
-  .bop-bootmenu details.ids {
-    padding-left: 2em;
-  }
-  .bop-bootmenu ul.ids > li {
-    cursor: pointer;
-  }
-  .bop-bootmenu ul.ids > li.selected {
-    background: #555;
-  }
-  button.addIdentity {
-    font-size: .6em;
   }
   .bop-bootmenu ul.apps > li {
     background: #555;
