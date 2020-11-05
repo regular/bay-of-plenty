@@ -27,6 +27,14 @@ module.exports = function(ssb) {
     function manageScroll(ul) {
       const animate = Animator(x=>ul.scrollLeft = x)
       const abortWatch = selected(v=>{
+        scrollTo(v, 250)
+      })
+      // selection is set before lis exist
+      setTimeout( ()=>{
+        scrollTo(selected(), 0)
+      }, 100)
+
+      function scrollTo(v, duration) {
         v = safeId(v)
         const ulbr = ul.getBoundingClientRect()
         const li = ul.querySelector(`[data-id="${v}"]`)
@@ -36,9 +44,8 @@ module.exports = function(ssb) {
         const liHalfWidth = libr.width / 2
         const ulHalfWidth = ulbr.width / 2
         const targetValue = xoffset + liHalfWidth - ulHalfWidth
-        animate(ul.scrollLeft, targetValue, 250)
-      })
-      selected.set(selected())
+        animate(ul.scrollLeft, targetValue, duration)
+      }
       return ()=>{
         abortWatch()
         animate.cancel()
@@ -200,13 +207,13 @@ function Animator(setter) {
     t0 = Date.now()
     x0 = curr
     x1 = target
-    duration = dur || 2000
+    duration = dur
   }
 
   function animate() {
     const t = Date.now()
     const dt = Math.min(t - t0, duration)
-    const x = x0 + (dt / duration) * (x1 - x0)
+    const x = duration ? x0 + (dt / duration) * (x1 - x0) : x1
     setter(x)
     if (dt == duration) return
     rafHandle = raf(animate)
