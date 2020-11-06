@@ -9,7 +9,7 @@ const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
 const IdentitySelector = require('./identity-selector')
-
+const renderApps = require('./render-apps')
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
@@ -98,36 +98,34 @@ client( (err, ssb, config) =>{
     ])
   }
 
-
+  function launchApp(invite) {
+    if (appLoading()) return
+    const parsed = parse(invite)
+    if (!parsed) throw Error('invalid invite')
+    appLoading.set(invite)
+    const netkey = parsed.network 
+    const id = localStorage[`id-${netkey}`]
+    ssb.bayofplenty.openApp(invite, id, (err, result)=>{
+      if (err) {
+        appLoading.set(null)
+        console.error(err.message)
+        return
+      }
+      const {url} = result
+      document.location.href = url
+    })
+  }
 
   function renderAppsOfNetwork(netkey) {
-    return h('ul.apps', MutantMap(entries, e=>{
-      const {webapp, invite} = e
-      const parsed = parse(invite)
-      if (!parsed) return []
-      if (parsed.network !== netkey) return []
-      return h('li', {
-        classList: computed(appLoading, loading =>{
-          return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
-        }),
-        'ev-click': ev=>{
-          if (appLoading()) return
-          appLoading.set(invite)
-          const id = localStorage[`id-${netkey}`]
-          ssb.bayofplenty.openApp(invite, id, (err, result)=>{
-            if (err) {
-              appLoading.set(null)
-              return
-            }
-            const {url} = result
-            document.location.href = url
-          })
-        }
-      }, [ 
-        h('div.name', webapp.value.content.name),
-        h('div.description', webapp.value.content.description)
-      ])
-    }))
+    const my_entries = computed(entries, entries=>{
+      return entries.filter(e=>{
+        const {webapp, invite} = e
+        const parsed = parse(invite)
+        if (!parsed) return false
+        return parsed.network == netkey
+      })
+    })
+    return renderApps(my_entries, launchApp, appLoading)
   }
 
   function makeInviteForm() {
@@ -286,7 +284,7 @@ styles(`
   .bop-bootmenu h1 {
     margin: 1em 0em;
   }
-  .bop-bootmenu ul.apps, ul.networks {
+  .bop-bootmenu ul.networks {
     padding: 0;
     list-style: none;
   }
@@ -299,14 +297,11 @@ styles(`
   .bop-bootmenu .netkey, .feedid {
     font-family: monospace;
   }
-  .bop-bootmenu ul.apps, .invite-entry {
+  .bop-bootmenu .invite-entry {
     padding: 0;
     box-sizing: border-box;
     overflow-y: auto;
     margin: 1em 1em;
-  }
-  .bop-bootmenu ul.apps {
-    border: 1px solid #222;
   }
   .invite-entry textarea {
     background: #555;
@@ -315,32 +310,6 @@ styles(`
     font-size: 16px;
     padding: .3em 0em;
     padding-left: 1em;
-  }
-  .bop-bootmenu ul.apps > li {
-    background: #555;
-    border-top: 1px solid #666;
-    color: #bbb;
-    font-size: 16px;
-    padding: .3em 0em;
-    padding-left: 1em;
-  }
-  .bop-bootmenu ul.apps > li > div {
-    cursor: pointer;
-  }
-  .bop-bootmenu ul.apps > li:hover {
-    background-color: darkgreen;
-  }
-  .bop-bootmenu ul.apps > li.loading,
-  .bop-bootmenu ul.apps > li.loading:hover {
-    background-color: darkblue;
-  }
-  .bop-bootmenu ul.apps > li.hide {
-    opacity: 0.2;
-  }
-  .bop-bootmenu ul.apps > li .name {
-    font-size: 18px;
-    text-shadow: 1px 1px 1px  rgba(0,0,0,.4);
-    color: #ddd;
   }
   button {
     font-size: 16pt;
