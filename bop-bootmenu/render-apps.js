@@ -10,17 +10,14 @@ const svgSymbol = require('./svg-symbol')
 const iconPlaceholder = svgSymbol(
   bricons.svg('ionicons/flower')
 )
-/*
-flower
-card
-hammer
-grid
-*/
+/* flower card hammer grid */
 
 module.exports = function renderApps(entries, launchApp, appLoading) {
   return h('ul.apps', MutantMap(entries, e=>{
     const {webapp, invite} = e
+    const {repositoryBranch} = webapp.value.content
     return h('li', {
+      title: formatDesciption(webapp),
       classList: computed(appLoading, loading =>{
         return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
       }),
@@ -29,12 +26,23 @@ module.exports = function renderApps(entries, launchApp, appLoading) {
       }
     }, [ 
       h('.icon', [
-        iconPlaceholder()
+        iconPlaceholder(),
+        repositoryBranch !== 'master' ?  h('.branch', repositoryBranch) : []
       ]),
-      h('.name', webapp.value.content.name),
-      h('.description', webapp.value.content.description)
+      h('.name', formatName(webapp))
     ])
   }))
+}
+
+function formatName(webapp) {
+  let {name} = webapp.value.content
+  name = name.replace(/\s\[[^\]]+\]/,'') 
+  return name
+}
+
+function formatDesciption(webapp) {
+  let {description} = webapp.value.content
+  return description
 }
 
 styles(`
@@ -67,6 +75,7 @@ styles(`
     opacity: 0.2;
   }
   .bop-bootmenu ul.apps > li .icon {
+    position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
     border-radius: 20%;
@@ -75,10 +84,27 @@ styles(`
     margin: auto;
     margin-bottom: 5px;
     fill: #333;
+    overflow: hidden;
   }
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
+  }
+  .bop-bootmenu ul.apps > li .icon .branch {
+    width: 100%;
+    height: 25%;
+    background: yellow;
+    position: absolute;
+    bottom: 0px;
+    text-align: center;
+    color: black;
+    opacity: 0.4;
+    transform-origin: 50% -100%;
+    //transform: rotate(-45deg);
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: bolder;
+    padding-top: 5px;
   }
   .bop-bootmenu ul.apps > li .name,
   .bop-bootmenu ul.apps > li .description {
