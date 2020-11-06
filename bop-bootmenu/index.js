@@ -8,12 +8,12 @@ const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
-const RenderIdentities = require('./render-identities')
+const IdentitySelector = require('./identity-selector')
 
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
-  const renderIdentities = RenderIdentities(ssb)
+  const renderIdentities = IdentitySelector(ssb)
 
   const versions = Value()
   getVersions(ssb, config, (err, v) =>{
