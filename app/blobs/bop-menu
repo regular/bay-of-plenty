@@ -19,10 +19,10 @@
 <meta name="generator" content="tre-compile 2.0.3">
 <meta name="tre:repository-url" content="git@github.com:regular/bay-of-plenty.git">
 <meta name="tre:repository-branch" content="master">
-<meta name="tre:commit" content="v1.12.0-64-g96843f4-dirty">
+<meta name="tre:commit" content="v1.12.0-65-g6c1a6b1-dirty">
 <meta name="tre:main" content="index.js">
 <meta name="keywords" content="bay of plenty,tre">
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-9WSQLItvlAPlUCVaY1zwcs5X2W6HlYfJGKDEcR2jzak=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-GmawGSedTWzbAkTHMh0iwMFupAzFU83jILeRBEg6qVk=';">
 </head>
 <body></body>
 <script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -49118,17 +49118,14 @@ const svgSymbol = require('./svg-symbol')
 const iconPlaceholder = svgSymbol(
   "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ionicon\" viewBox=\"0 0 512 512\"><title>Flower</title><circle cx=\"256\" cy=\"256\" r=\"48\"/><path d=\"M475.93 303.91a67.49 67.49 0 00-44.34-115.53 5.2 5.2 0 01-4.58-3.21 5.21 5.21 0 011-5.51A67.83 67.83 0 00378 66.33h-.25A67.13 67.13 0 00332.35 84a5.21 5.21 0 01-5.52 1 5.23 5.23 0 01-3.22-4.58 67.68 67.68 0 00-135.23 0 5.2 5.2 0 01-3.21 4.58 5.21 5.21 0 01-5.52-1 67.11 67.11 0 00-45.44-17.69H134a67.91 67.91 0 00-50 113.34 5.21 5.21 0 011 5.51 5.2 5.2 0 01-4.58 3.21 67.71 67.71 0 000 135.23 5.23 5.23 0 014.58 3.23 5.22 5.22 0 01-1 5.52 67.54 67.54 0 0050.08 113h.25A67.38 67.38 0 00179.65 428a5.21 5.21 0 015.51-1 5.2 5.2 0 013.21 4.58 67.71 67.71 0 00135.23 0 5.23 5.23 0 013.22-4.58 5.21 5.21 0 015.51 1 67.38 67.38 0 0045.29 17.42h.25a67.48 67.48 0 0050.08-113 5.22 5.22 0 01-1-5.52 5.23 5.23 0 014.58-3.22 67.31 67.31 0 0044.4-19.77zM256 336a80 80 0 1180-80 80.09 80.09 0 01-80 80z\"/></svg>"
 )
-/*
-flower
-card
-hammer
-grid
-*/
+/* flower card hammer grid */
 
 module.exports = function renderApps(entries, launchApp, appLoading) {
   return h('ul.apps', MutantMap(entries, e=>{
     const {webapp, invite} = e
+    const {repositoryBranch} = webapp.value.content
     return h('li', {
+      title: formatDesciption(webapp),
       classList: computed(appLoading, loading =>{
         return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
       }),
@@ -49137,12 +49134,23 @@ module.exports = function renderApps(entries, launchApp, appLoading) {
       }
     }, [ 
       h('.icon', [
-        iconPlaceholder()
+        iconPlaceholder(),
+        repositoryBranch !== 'master' ?  h('.branch', repositoryBranch) : []
       ]),
-      h('.name', webapp.value.content.name),
-      h('.description', webapp.value.content.description)
+      h('.name', formatName(webapp))
     ])
   }))
+}
+
+function formatName(webapp) {
+  let {name} = webapp.value.content
+  name = name.replace(/\s\[[^\]]+\]/,'') 
+  return name
+}
+
+function formatDesciption(webapp) {
+  let {description} = webapp.value.content
+  return description
 }
 
 styles(`
@@ -49175,6 +49183,7 @@ styles(`
     opacity: 0.2;
   }
   .bop-bootmenu ul.apps > li .icon {
+    position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
     border-radius: 20%;
@@ -49183,10 +49192,27 @@ styles(`
     margin: auto;
     margin-bottom: 5px;
     fill: #333;
+    overflow: hidden;
   }
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
+  }
+  .bop-bootmenu ul.apps > li .icon .branch {
+    width: 100%;
+    height: 25%;
+    background: yellow;
+    position: absolute;
+    bottom: 0px;
+    text-align: center;
+    color: black;
+    opacity: 0.4;
+    transform-origin: 50% -100%;
+    //transform: rotate(-45deg);
+    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: bolder;
+    padding-top: 5px;
   }
   .bop-bootmenu ul.apps > li .name,
   .bop-bootmenu ul.apps > li .description {
