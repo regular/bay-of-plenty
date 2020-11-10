@@ -19,10 +19,10 @@
 <meta name="generator" content="tre-compile 2.0.3">
 <meta name="tre:repository-url" content="git@github.com:regular/bay-of-plenty.git">
 <meta name="tre:repository-branch" content="master">
-<meta name="tre:commit" content="v1.12.0-65-g6c1a6b1-dirty">
+<meta name="tre:commit" content="v1.12.0-66-g3b8ad3d-dirty">
 <meta name="tre:main" content="index.js">
 <meta name="keywords" content="bay of plenty,tre">
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-GmawGSedTWzbAkTHMh0iwMFupAzFU83jILeRBEg6qVk=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-sO8U+mOYTlR9+9f5R773acy+hOmGvbqf+E4QfytK7RQ=';">
 </head>
 <body></body>
 <script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -42,6 +42,9 @@ const raf = require('raf')
 const svgSymbol = require('./svg-symbol')
 const avatarPlaceholder = svgSymbol(
   "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ionicon\" viewBox=\"0 0 512 512\"><title>Person</title><path d=\"M332.64 64.58C313.18 43.57 286 32 256 32c-30.16 0-57.43 11.5-76.8 32.38-19.58 21.11-29.12 49.8-26.88 80.78C156.76 206.28 203.27 256 256 256s99.16-49.71 103.67-110.82c2.27-30.7-7.33-59.33-27.03-80.6zM432 480H80a31 31 0 01-24.2-11.13c-6.5-7.77-9.12-18.38-7.18-29.11C57.06 392.94 83.4 353.61 124.8 326c36.78-24.51 83.37-38 131.2-38s94.42 13.5 131.2 38c41.4 27.6 67.74 66.93 76.18 113.75 1.94 10.73-.68 21.34-7.18 29.11A31 31 0 01432 480z\"/></svg>"
+)
+const addSymbol = svgSymbol(
+  "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ionicon\" viewBox=\"0 0 512 512\"><title>Add</title><path fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"32\" d=\"M256 112v288M400 256H112\"/></svg>"
 )
 
 const SIZE = 128
@@ -81,13 +84,15 @@ module.exports = function(ssb) {
       }
     }
 
-    return h('.ieentities-container', [
+    return h('.identities-container', [
       h('.identities', [
         h('ul', {
           hooks: [manageScroll]
-        }, MutantMap(pubKeys, renderIdentity)),
-      ]),
-      renderAddIdButton()
+        }, [
+          MutantMap(pubKeys, renderIdentity),
+          renderAddIdButton()
+        ])
+      ])
     ])
 
     function renderIdentity(id) {
@@ -123,7 +128,7 @@ module.exports = function(ssb) {
 
     function renderAddIdButton() {
       if (!(ssb.bayofplenty && ssb.bayofplenty.addIdentity)) return []
-      return h('button.addIdentity',{
+      return h('li', {
         'ev-click': ()=>{
           ssb.bayofplenty.addIdentity(netkey, (err, newId) =>{
             if (err) return console.error(err)
@@ -131,7 +136,18 @@ module.exports = function(ssb) {
             selected.set(newId)
           })
         }
-      }, 'Add Identity')
+      }, [
+          h('.avatar', {
+            style: {
+              width: `${SIZE}px`,
+              height: `${SIZE}px`
+            }
+          }, addSymbol()),
+          h('label', [
+            h('.caption', 'Add Identity')
+          ])
+        ]
+      )
     }
   }
 
@@ -175,6 +191,9 @@ function safeId(v) {
 }
 
 styles(`
+  .identities-container {
+    -webkit-mask-image: linear-gradient(to right, transparent,black 20%, black 80%, transparent);
+  }
   .identities {
     width: 100%;
   }
@@ -190,7 +209,7 @@ styles(`
   .identities > ul > li {
     cursor: pointer;
     display: grid;
-    grid-template-rows: ${SIZE}px 2em;
+    grid-template-rows: ${SIZE}px 2.5em;
     row-gap: 1em;
     opacity: .5;
   }
@@ -201,6 +220,7 @@ styles(`
     border: 5px solid #222;
     justify-self: center;
     overflow: hidden;
+    -webkit-box-reflect: below 5px linear-gradient(to bottom, transparent, transparent 50%, rgba(0,0,0,0.25));
   }
   .identities > ul > li.selected > .avatar {
     border: 5px solid #aaa;
@@ -213,11 +233,15 @@ styles(`
   .identities > ul > li > label {
     overflow: hidden;
   }
-  .identities > ul > li > label .name {
+  .identities > ul > li > label div {
     white-space: break-spaces;
     text-align: center;
   }
-  .identities > ul > li.selected {
+  .identities > ul > li > label .caption {
+    font-style: italic;
+  }
+  .identities > ul > li.selected,
+  .identities > ul > li:hover {
     opacity: 1;
   }
   button.addIdentity {
@@ -323,7 +347,7 @@ client( (err, ssb, config) =>{
       return [
         h('h1', networks.length == 0 ?
           'Please enter invite code' :
-          'Select application to start'
+          ''
         ),
         h('ul.networks', networks.map(netkey => {
           return h('li', [
@@ -551,6 +575,9 @@ styles(`
   }
   .bop-bootmenu ul.networks, .add-app {
     width: 40em;
+  }
+  .bop-bootmenu ul.apps {
+    margin-top: 2em;
   }
   .bop-bootmenu .netkey, .feedid {
     font-family: monospace;

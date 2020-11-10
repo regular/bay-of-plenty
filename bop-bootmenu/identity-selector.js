@@ -14,6 +14,9 @@ const svgSymbol = require('./svg-symbol')
 const avatarPlaceholder = svgSymbol(
   bricons.svg('ionicons/person')
 )
+const addSymbol = svgSymbol(
+  bricons.svg('ionicons/add')
+)
 
 const SIZE = 128
 
@@ -52,13 +55,15 @@ module.exports = function(ssb) {
       }
     }
 
-    return h('.ieentities-container', [
+    return h('.identities-container', [
       h('.identities', [
         h('ul', {
           hooks: [manageScroll]
-        }, MutantMap(pubKeys, renderIdentity)),
-      ]),
-      renderAddIdButton()
+        }, [
+          MutantMap(pubKeys, renderIdentity),
+          renderAddIdButton()
+        ])
+      ])
     ])
 
     function renderIdentity(id) {
@@ -94,7 +99,7 @@ module.exports = function(ssb) {
 
     function renderAddIdButton() {
       if (!(ssb.bayofplenty && ssb.bayofplenty.addIdentity)) return []
-      return h('button.addIdentity',{
+      return h('li', {
         'ev-click': ()=>{
           ssb.bayofplenty.addIdentity(netkey, (err, newId) =>{
             if (err) return console.error(err)
@@ -102,7 +107,18 @@ module.exports = function(ssb) {
             selected.set(newId)
           })
         }
-      }, 'Add Identity')
+      }, [
+          h('.avatar', {
+            style: {
+              width: `${SIZE}px`,
+              height: `${SIZE}px`
+            }
+          }, addSymbol()),
+          h('label', [
+            h('.caption', 'Add Identity')
+          ])
+        ]
+      )
     }
   }
 
@@ -146,6 +162,9 @@ function safeId(v) {
 }
 
 styles(`
+  .identities-container {
+    -webkit-mask-image: linear-gradient(to right, transparent,black 20%, black 80%, transparent);
+  }
   .identities {
     width: 100%;
   }
@@ -161,7 +180,7 @@ styles(`
   .identities > ul > li {
     cursor: pointer;
     display: grid;
-    grid-template-rows: ${SIZE}px 2em;
+    grid-template-rows: ${SIZE}px 2.5em;
     row-gap: 1em;
     opacity: .5;
   }
@@ -172,6 +191,7 @@ styles(`
     border: 5px solid #222;
     justify-self: center;
     overflow: hidden;
+    -webkit-box-reflect: below 5px linear-gradient(to bottom, transparent, transparent 50%, rgba(0,0,0,0.25));
   }
   .identities > ul > li.selected > .avatar {
     border: 5px solid #aaa;
@@ -184,11 +204,15 @@ styles(`
   .identities > ul > li > label {
     overflow: hidden;
   }
-  .identities > ul > li > label .name {
+  .identities > ul > li > label div {
     white-space: break-spaces;
     text-align: center;
   }
-  .identities > ul > li.selected {
+  .identities > ul > li > label .caption {
+    font-style: italic;
+  }
+  .identities > ul > li.selected,
+  .identities > ul > li:hover {
     opacity: 1;
   }
   button.addIdentity {

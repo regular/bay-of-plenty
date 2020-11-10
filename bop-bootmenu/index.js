@@ -65,7 +65,7 @@ client( (err, ssb, config) =>{
       return [
         h('h1', networks.length == 0 ?
           'Please enter invite code' :
-          'Select application to start'
+          ''
         ),
         h('ul.networks', networks.map(netkey => {
           return h('li', [
@@ -293,6 +293,9 @@ styles(`
   }
   .bop-bootmenu ul.networks, .add-app {
     width: 40em;
+  }
+  .bop-bootmenu ul.apps {
+    margin-top: 2em;
   }
   .bop-bootmenu .netkey, .feedid {
     font-family: monospace;
