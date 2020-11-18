@@ -163,6 +163,7 @@ function safeId(v) {
 
 styles(`
   .identities-container {
+    width: 100%;
     -webkit-mask-image: linear-gradient(to right, transparent,black 20%, black 80%, transparent);
   }
   .identities {

@@ -10,76 +10,68 @@ const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
 const IdentitySelector = require('./identity-selector')
 const renderApps = require('./render-apps')
+const {makePane, makeDivider, makeSplitPane} = require('tre-split-pane')
+
+const getVersions = require('./get-versions')
+
+preventDblClickSelection()
+
+const versions = Value()
+const entries = MutantArray()
+const appLoading = Value()
+const selectedNetwork = Value()
+
+loadEntries(entries)
+
+entries(entries => {
+  localStorage.entries = JSON.stringify(entries)
+})
+
+const networks = networksFromEntries(entries)
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
   const renderIdentities = IdentitySelector(ssb)
 
-  const versions = Value()
+  let main, sidebar
+  document.body.appendChild(h('.bop-bootmenu', [
+    makeSplitPane({horiz: true}, [
+      makePane('25%',
+        sidebar = h('.sidebar', [
+          renderNetworkList(networks),
+          renderAddApp()
+        ])
+      ),
+      makeDivider(),
+      makePane('',
+        main = h('.main')
+      )
+    ]),
+    h('.versions', versions)
+  ]))
+
   getVersions(ssb, config, (err, v) =>{
+    if (err) console.error(err.message)
     versions.set(v)
   })
 
-  const entries = MutantArray()
-  loadEntries(entries)
-  const appLoading = Value()
-
-  entries(entries => {
-    localStorage.entries = JSON.stringify(entries)
-  })
-
-  const networks = computed(entries, entries => {
-    return Object.keys(entries.reduce((acc, {invite})=>{
-      const parsed = parse(invite)
-      if (parsed) acc[parsed.network] = true
-      return acc
-    }, {})).sort()
-  })
-
-  // prevent selection on dblclick
-  document.addEventListener('mousedown', function (event) {
-    if (event.detail > 1) {
-        event.preventDefault()
-    }
-  }, false)
-
-
-  document.body.appendChild(
-    h('.bop-bootmenu', [
-      h('.main', [
-        //h('h1', 'Bay of Plenty'),
-        h('.scroll-view', [
-          renderMenu(),
-          renderAddApp()
-        ])
-      ]),
-      h('.versions', versions)
+  main.appendChild(
+    h('.scroll-view', [
+      renderMenu()
     ])
   )
+
   setTimeout( ()=>{
     document.body.classList.add('show')
   }, 100)
 
   function renderMenu() {
-    return computed(networks, networks=>{
-      return [
-        h('h1', networks.length == 0 ?
-          'Please enter invite code' :
-          ''
-        ),
-        h('ul.networks', networks.map(netkey => {
-          return h('li', [
-            h('details', {open: true}, [
-              h('summary', [
-                h('span', 'Network: '),
-                h('span.netkey', netkey)
-              ]),
-              renderIdentities(netkey),
-              renderAppsOfNetwork(netkey)
-            ])
-          ]) 
-        }))
-      ]
+    return computed([networks, selectedNetwork], (networks, netkey) =>{
+      if (!netkey) return []
+      return h('.menu', [
+        renderIdentities(netkey),
+        renderAppsOfNetwork(netkey)
+      ])
     })
   }
 
@@ -91,7 +83,7 @@ client( (err, ssb, config) =>{
         })
       }, [
         h('summary', [
-          h('span', 'Add application')
+          h('span', 'Enter Invite Codee')
         ]),
         makeInviteForm()
       ])
@@ -189,6 +181,35 @@ client( (err, ssb, config) =>{
 
 // -- util
 
+function renderNetworkList(networks) {
+  return h('ul.networks', MutantMap(networks, netkey => {
+    return h('li', {
+      classList: computed(selectedNetwork, sel => netkey == sel ? ['selected'] : []),
+      'ev-click': ev =>{
+        selectedNetwork.set(netkey)
+      }
+    }, netkey)
+  }))
+}
+
+function preventDblClickSelection() {
+  document.addEventListener('mousedown', function (event) {
+    if (event.detail > 1) {
+        event.preventDefault()
+    }
+  }, false)
+}
+
+function networksFromEntries(entries) {
+  return computed(entries, entries => {
+    return Object.keys(entries.reduce((acc, {invite})=>{
+      const parsed = parse(invite)
+      if (parsed) acc[parsed.network] = true
+      return acc
+    }, {})).sort()
+  })
+}
+
 function loadEntries(entries) {
   let _entries = []
   try {
@@ -197,49 +218,26 @@ function loadEntries(entries) {
   } catch(e) {}
 }
 
-function getVersions(ssb, config, cb) {
-  const sep = ' • '
-  const copyright = 'Copyright 2019 Jan Bölsche'
-  let result = []
-
-  function postProc(result) {
-    if (result.length && result[0].startsWith('Bay')) {
-      result = [result[0]].concat([copyright]).concat(result.slice(1))
-    } else {
-      result.unshift(copyright)
-    }
-    return result.join(sep)
-  }
-
-  if (config && config.bootMsgRevision) {
-    result.push(`BOP Bootmenu ${shorter(config.bootMsgRevision || 'n/a')}`)
-  }
-  if (!ssb.bayofplenty) return cb(null, postProc(result))
-  ssb.bayofplenty.versions((err, versions)=>{
-    if (err) return cb(err)
-    const {node, modules, electron, chrome} = versions
-    result = result.concat([
-      `Node: ${node} (ABI ${modules})`,
-      `Electron ${electron}`,
-      `Chrome ${chrome}`
-    ])
-    result.unshift(
-      `Bay of Plenty ${versions['bay-of-plenty']}`
-    )
-    cb(null, postProc(result))
-  })
-}
-
-function shorter(s) {
-  return s.substr(0, 6)
-}
 
 styles(`
+  .horizontal-split-pane {
+    overflow: hidden;
+  }
+  html * {
+    box-sizing: border-box;
+  }
   ::-webkit-scrollbar {                                                                                         
     width: 0px !important;
   }
   *:focus {
     outline-color: rgb(50,70,70);
+  }
+  html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
   }
   body {
     opacity: 0;
@@ -252,19 +250,15 @@ styles(`
     transition-property: opacity;
     transition-duration: 1s;
   }
-  html, body {
-    padding: 0;
-    margin: 0;
-    height: 100%;
-  }
   .bop-bootmenu {
     display: grid;
     grid-auto-flow: row;
-    grid-template-rows: 1fr 2em;
+    grid-template-rows: minmax(0,1fr) 2.5em;
     place-items: stretch;
     padding: 0;
     margin: 0;
     height: 100%;
+    width: 100%;
   }
   .bop-bootmenu .versions {
     background: #222;
@@ -272,27 +266,50 @@ styles(`
     margin: 0;
     padding: .4em;
   }
+  .bop-bootmenu .sidebar {
+    background: #303030;
+    height:  100%;
+    width: 100%;
+    overflow: hidden;
+  }
+  .bop-bootmenu .sidebar ul.networks {
+    padding: 0;
+    list-style: none;
+    width: 100%;
+    font-size: 24pt;
+  }
+  .bop-bootmenu .sidebar ul.networks li {
+    width: calc(100% - 20px);
+    overflow: hidden;
+    user-select: all;
+    text-overflow: ellipsis;
+    font-family: monospace;
+  }
+  .bop-bootmenu .sidebar ul.networks li.selected {
+    background: green;
+  }
   .bop-bootmenu .main {
-    overflow-x: hidden;
+    overflow-x: visible;
     overflow-y: auto;
-    height: 100%;
     padding: 0;
     margin: 0;
     height: 100%;
-    justify-self: center;
+  }
+  @keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  .bop-bootmenu .menu {
+    animation-name: fadein;
+    animation-duration: 1s;
+    width: 80%;
+    margin: auto;
   }
   .bop-bootmenu h1 {
     margin: 1em 0em;
   }
-  .bop-bootmenu ul.networks {
-    padding: 0;
-    list-style: none;
-  }
   .bop-bootmenu li {
-    white-space: nowrap;
-  }
-  .bop-bootmenu ul.networks, .add-app {
-    width: 40em;
+    //white-space: nowrap;
   }
   .bop-bootmenu ul.apps {
     margin-top: 2em;
@@ -305,6 +322,7 @@ styles(`
     box-sizing: border-box;
     overflow-y: auto;
     margin: 1em 1em;
+    width: calc(100% - 2em);
   }
   .invite-entry textarea {
     background: #555;
@@ -313,6 +331,7 @@ styles(`
     font-size: 16px;
     padding: .3em 0em;
     padding-left: 1em;
+    width: 100%;
   }
   button {
     font-size: 16pt;

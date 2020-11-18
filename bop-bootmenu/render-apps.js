@@ -53,7 +53,7 @@ styles(`
     padding: 0;
     list-style: none;
     box-sizing: border-box;
-    overflow-y: auto;
+    overflow: visible;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: ${SIZE*1.2}px;
@@ -89,6 +89,14 @@ styles(`
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
+  }
+  .bop-bootmenu ul.apps > li.loading .icon {
+    z-index: 1;
+    transform-origin: 50% 50%;
+    transform: scale(2.5);
+    opacity: 0;
+    transition-property: opacity transform;
+    transition-duration: .75s;
   }
   .bop-bootmenu ul.apps > li .icon .branch {
     width: 100%;
