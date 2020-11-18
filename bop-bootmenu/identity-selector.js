@@ -99,7 +99,7 @@ module.exports = function(ssb) {
 
     function renderAddIdButton() {
       if (!(ssb.bayofplenty && ssb.bayofplenty.addIdentity)) return []
-      return h('li', {
+      return h('li.add', {
         'ev-click': ()=>{
           ssb.bayofplenty.addIdentity(netkey, (err, newId) =>{
             if (err) return console.error(err)
@@ -163,14 +163,17 @@ function safeId(v) {
 
 styles(`
   .identities-container {
+    margin-top: 2em;
     width: 100%;
     -webkit-mask-image: linear-gradient(to right, transparent,black 20%, black 80%, transparent);
   }
   .identities {
     width: 100%;
+    display: grid;
+    place-content: center;
+    border-bottom: 1px solid #aaa;
   }
   .identities > ul {
-    margin-top: 2em;
     font-size: ${SIZE/4}px;
     display: grid;
     grid-auto-flow: column;
@@ -193,6 +196,10 @@ styles(`
     justify-self: center;
     overflow: hidden;
     -webkit-box-reflect: below 5px linear-gradient(to bottom, transparent, transparent 50%, rgba(0,0,0,0.25));
+  }
+  .identities > ul > li.add > .avatar {
+    background: transparent;
+    border: none;
   }
   .identities > ul > li.selected > .avatar {
     border: 5px solid #aaa;

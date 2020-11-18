@@ -50,6 +50,7 @@ styles(`
     box-sizing: border-box;
   }
   .bop-bootmenu ul.apps {
+    margin-top: 4em;
     padding: 0;
     list-style: none;
     box-sizing: border-box;

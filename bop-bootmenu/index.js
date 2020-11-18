@@ -36,7 +36,7 @@ client( (err, ssb, config) =>{
   let main, sidebar
   document.body.appendChild(h('.bop-bootmenu', [
     makeSplitPane({horiz: true}, [
-      makePane('25%',
+      makePane('33%',
         sidebar = h('.sidebar', [
           renderNetworkList(networks),
           renderAddApp()
@@ -92,6 +92,7 @@ client( (err, ssb, config) =>{
 
   function launchApp(invite) {
     if (appLoading()) return
+    document.body.classList.add('loading')
     const parsed = parse(invite)
     if (!parsed) throw Error('invalid invite')
     appLoading.set(invite)
@@ -241,7 +242,8 @@ styles(`
   }
   body {
     opacity: 0;
-    background-color: #333;
+    //background-color: #202020;
+    background-color: #1f2029;
     color: #bbb;
     font-family: sans-serif;
   }
@@ -253,7 +255,7 @@ styles(`
   .bop-bootmenu {
     display: grid;
     grid-auto-flow: row;
-    grid-template-rows: minmax(0,1fr) 2.5em;
+    grid-template-rows: minmax(0,1fr) 2em;
     place-items: stretch;
     padding: 0;
     margin: 0;
@@ -261,16 +263,25 @@ styles(`
     width: 100%;
   }
   .bop-bootmenu .versions {
-    background: #222;
+    //background: #222;
+    background-color: #1e1e23;
     color: #666;
     margin: 0;
     padding: .4em;
   }
   .bop-bootmenu .sidebar {
-    background: #303030;
+    //background: #303030;
+    background-color: #22222d;
     height:  100%;
     width: 100%;
     overflow: hidden;
+  }
+  .loading .sidebar,
+  .loading .identities-container {
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 1s;
+    transition-delay: .5s;
   }
   .bop-bootmenu .sidebar ul.networks {
     padding: 0;
