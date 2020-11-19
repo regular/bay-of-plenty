@@ -13,6 +13,7 @@ const renderApps = require('./render-apps')
 const {makePane, makeDivider, makeSplitPane} = require('tre-split-pane')
 
 const getVersions = require('./get-versions')
+const reconnectStream = require('./reconnect-stream')
 
 preventDblClickSelection()
 
@@ -31,6 +32,10 @@ const networks = networksFromEntries(entries)
 
 client( (err, ssb, config) =>{
   if (err) return console.error(err)
+
+  const {avatarUpdates} = ssb.bayofplenty
+  ssb.bayofplenty.avatarUpdates = (n, i) => reconnectStream( ()=>avatarUpdates(n, i) )
+
   const renderIdentities = IdentitySelector(ssb)
 
   let main, sidebar
