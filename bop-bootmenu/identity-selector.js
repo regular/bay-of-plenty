@@ -63,7 +63,8 @@ module.exports = function(ssb) {
           MutantMap(pubKeys, renderIdentity),
           renderAddIdButton()
         ])
-      ])
+      ]),
+      h('.selected-id', selected)
     ])
 
     function renderIdentity(id) {
@@ -166,12 +167,23 @@ styles(`
     margin-top: 2em;
     width: 100%;
     -webkit-mask-image: linear-gradient(to right, transparent,black 20%, black 80%, transparent);
+    //border-bottom: 1px solid #aaa;
+  }
+  .identities-container > .selected-id {
+    display: grid;
+    justify-content: center;
+    margin-bottom: .6em;
+    user-select: all;
+    font-family: monospace;
+    opacity: 0.7;
+    //color: #111;
+    //background: #777;
+    padding: 4px;
   }
   .identities {
     width: 100%;
     display: grid;
     place-content: center;
-    border-bottom: 1px solid #aaa;
   }
   .identities > ul {
     font-size: ${SIZE/4}px;
@@ -180,6 +192,7 @@ styles(`
     grid-auto-columns: ${SIZE*2}px;
     overflow-x: auto;
     padding-left: 0;
+    margin-bottom: 0;
   }
   .identities > ul > li {
     cursor: pointer;
