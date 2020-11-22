@@ -12,7 +12,7 @@ module.exports = function(dir) {
   return {
     hasAllSizes,
     add,
-    getHashForId,
+    getHashAndFormatForId,
     close
   }
 
@@ -49,20 +49,23 @@ module.exports = function(dir) {
   }
   
   function add(id, entries, cb) {
-    const batch = entries.map( ({width, height, hash}) => {
+    const batch = entries.map( ({width, height, format, hash}) => {
       return {
         type: 'put',
         key: `${id}${width}x${height}`,
-        value: hash
+        value: hash + '|' + format
       }
     })
     db.batch(batch, cb)
   }
 
-  function getHashForId(id, width, height, cb) {
+  function getHashAndFormatForId(id, width, height, cb) {
     db.get(
       `${id}${width}x${height}`,
-      cb
+      (err, data) => {
+        if (err) return cb(err)
+        cb(null, data.split('|'))
+      }
     )
   }
 }

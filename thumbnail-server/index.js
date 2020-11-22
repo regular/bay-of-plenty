@@ -41,8 +41,9 @@ module.exports = function(dir, config) {
     const source = fetch(url)
     addImageStream(id, source, (err, result) =>{
       if (err) return cb(err)
-      cb(null, Object.fromEntries(Object.entries(result).map( ([size, hash])=>{
-        return [size, `http://${origin}/thumbnails/get/${encodeURIComponent(hash)}`]
+      cb(null, Object.fromEntries(Object.entries(result).map( ([size, hashAndFormat])=>{
+        const [hash, format] = hashAndFormat.split('|')
+        return [size, `http://${origin}/thumbnails/get/${encodeURIComponent(hash)}?contentType=${encodeURIComponent('image/'+format)}`]
       })))
     })
   }

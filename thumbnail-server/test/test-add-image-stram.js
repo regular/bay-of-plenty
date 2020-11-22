@@ -18,10 +18,11 @@ test('empty db', t=>{
 
   addImageStream('a', file(__dirname + '/fixtures/heart.svg'), (err, result) =>{
     t.error(err)
-    console.dir(result)
+    console.log('addImageStream retusn: %o',result)
 
     db.hasAllSizes('a', [64, 128], (err, result)=>{
       t.error(err)
+      console.log('hasAllSizes returns %o', result)
       t.ok(result, 'has all sizes')
       t.end()
     })
@@ -34,10 +35,11 @@ test('add already existing thumbs', t=>{
 
   addImageStream('a', file(__dirname + '/fixtures/heart.svg'), (err, result) =>{
     t.error(err)
-    console.dir(result)
+    console.log('addImageStream retusn: %o',result)
 
     db.hasAllSizes('a', [64, 128], (err, result)=>{
       t.error(err)
+      console.log('hasAllSizes returns %o', result)
       t.ok(result, 'has all sizes')
       t.end()
     })
@@ -49,10 +51,11 @@ test('add a pixmap, so we actually have to resize', t=>{
 
   addImageStream('b', file(__dirname + '/fixtures/ostrich.jpeg'), (err, result) =>{
     t.error(err)
-    console.dir(result)
+    console.log('addImageStream retusn: %o',result)
 
     db.hasAllSizes('b', [64, 128], (err, result)=>{
       t.error(err)
+      console.log('hasAllSizes returns %o', result)
       t.ok(result, 'has all sizes')
       t.end()
     })

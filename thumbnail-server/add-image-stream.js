@@ -13,9 +13,10 @@ module.exports = function(db, blobs, sizes) {
     
       scale(source, createSink, sizes, (err, result)=>{
         if (err) return cb(err)
-        const entries = Object.entries(result).map( ([size, hash]) =>{
+        const entries = Object.entries(result).map( ([size, hashAndFormat]) =>{
           const [width, height] = size.split('x')
-          return {width, height, hash}
+          const [hash, format] = hashAndFormat.split('|')
+          return {width, height, format, hash}
         })
         db.add(id, entries, err =>{
           if (err) return cb(err)

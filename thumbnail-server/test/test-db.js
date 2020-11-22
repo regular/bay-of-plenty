@@ -11,7 +11,7 @@ let db
 test('empty db', t=>{
   db = DB(dir)
 
-  db.getHashForId('id', 10, 10, (err, hash) => {
+  db.getHashAndFormatForId('id', 10, 10, (err, result) => {
     t.ok(err, 'getHashForId should error')
     db.hasAllSizes('id', [1,2,3], (err, result) =>{
       t.error(err, 'hasAllSizes should not error')
@@ -25,13 +25,13 @@ test('add some hashes', t=>{
   pull(
     pull.values([
       {id: 'a', entries: [
-        {width: 100, height: 200, hash: 'A'},
-        {width: 10, height: 10, hash: 'A-10'},
-        {width: 20, height: 20, hash: 'A-20'}
+        {width: 100, height: 200, hash: 'A', format:'foo'},
+        {width: 10, height: 10, hash: 'A-10', format:'foo'},
+        {width: 20, height: 20, hash: 'A-20', format: 'foo'}
       ]},
       {id: 'b', entries:[
-        {width: 200, height: 400, hash: 'B'},
-        {width: 20, height: 20, hash: 'B-20'}
+        {width: 200, height: 400, hash: 'B', format: 'bar'},
+        {width: 20, height: 20, hash: 'B-20', format: 'bar'}
       ]}
     ]),
     pull.asyncMap( ({id, entries}, cb)=>{
@@ -45,12 +45,16 @@ test('add some hashes', t=>{
 })
 
 test('get back hashes', t=>{
-  db.getHashForId('a', 100, 200, (err, hash) =>{
+  db.getHashAndFormatForId('a', 100, 200, (err, result) =>{
     t.error(err)
+    const [hash, format] = result
     t.equal(hash, 'A', 'found A')
-    db.getHashForId('a', 20, 20, (err, hash) =>{
+    t.equal(format, 'foo', 'correct format')
+    db.getHashAndFormatForId('a', 20, 20, (err, result) =>{
       t.error(err)
+      const [hash, format] = result
       t.equal(hash, 'A-20', 'found A-20')
+      t.equal(format, 'foo', 'correct format')
       t.end()
     })
   })

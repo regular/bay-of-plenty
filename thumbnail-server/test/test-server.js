@@ -6,16 +6,23 @@ const toPull = require('stream-to-pull-stream')
 const detect = require('tre-image-size')
 const pull = require('pull-stream')
 
-function fetch(url) {
-  return toPull.source(hyperquest(url))
-}
-
 const dir = `/tmp/test-${Date.now()}`
 console.log('db dir is ', dir)
 mkdirp.sync(dir)
 
 test('server', t=>{
-  t.plan(8)
+  t.plan(9)
+
+  function fetch(url) {
+    const req = hyperquest(url)
+    req.on('response', res => {
+      const ct = res.headers['content-type']
+      console.log('Content-Type:', ct)
+      t.equal(ct, 'image/jpeg', 'correct content-tupe header')
+    })
+    return toPull.source(req)
+  }
+
   const server = Server(dir, {
     sizes: [100]
   })
@@ -23,7 +30,7 @@ test('server', t=>{
     t.error(err)
     server.addImageURL('https://live.staticflickr.com/7029/6545648743_c0780f9a34_n.jpg', (err, result) =>{
       t.error(err)
-      console.dir(result)
+      console.log('addImageURL result: %o', result)
       t.ok(result['100x100'], 'has requested thumbnail size')
       pull(
         fetch(result['100x100']),

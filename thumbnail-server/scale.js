@@ -18,10 +18,10 @@ module.exports = function(source, createSink, sizes, cb) {
       if (!meta) return cb(new Error('Unable to detect image format'))
       const result = {}
       debug('format: %s, width: %d, height: %d', meta.format, meta.width, meta.height)
-      result[`${meta.width}x${meta.height}`] = hash
+      result[`${meta.width}x${meta.height}`] = hash + '|' + meta.format
       if (meta.format == 'svg+xml') {
         return cb(null, sizes.reduce( (acc, s)=>{
-          acc[`${s}x${s}`] = hash
+          acc[`${s}x${s}`] = hash + '|' + meta.format
           return acc
         }, result))
       }
@@ -56,7 +56,7 @@ module.exports = function(source, createSink, sizes, cb) {
         pull.collect( (err, thumbs)=>{
           if (err) return cb(err)
           cb(null, thumbs.reduce( (acc, {size, hash})=>{
-            acc[`${size}x${size}`] = hash
+            acc[`${size}x${size}`] = hash + '|' + meta.format
             return acc
           }, result))
         })

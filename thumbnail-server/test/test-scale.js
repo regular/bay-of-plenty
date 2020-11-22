@@ -27,9 +27,9 @@ test('svg', t=>{
     (err, result)=>{
       t.error(err)
       t.deepEqual(result, {
-        '512x512': 'HASH-0-svg+xml-512x512',
-        '128x128': 'HASH-0-svg+xml-512x512',
-        '64x64': 'HASH-0-svg+xml-512x512'
+        '512x512': 'HASH-0-svg+xml-512x512|svg+xml',
+        '128x128': 'HASH-0-svg+xml-512x512|svg+xml',
+        '64x64': 'HASH-0-svg+xml-512x512|svg+xml'
       })
       t.end()
     }
@@ -44,9 +44,9 @@ test('jpeg', t=>{
     (err, result)=>{
       t.error(err)
       t.deepEqual(result, {
-        '320x247': 'HASH-1-jpeg-320x247',
-        '128x128': 'HASH-2-jpeg-128x128',
-        '64x64': 'HASH-3-jpeg-64x64'
+        '320x247': 'HASH-1-jpeg-320x247|jpeg',
+        '128x128': 'HASH-2-jpeg-128x128|jpeg',
+        '64x64': 'HASH-3-jpeg-64x64|jpeg'
       })
       t.end()
     }
