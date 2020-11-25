@@ -9,6 +9,8 @@ const pull = require('pull-stream')
 const {isFeedId} = require('ssb-ref')
 const raf = require('raf')
 
+const AvatarUpdate = require('./avatar-updates')
+
 const bricons = require('bricons')
 const svgSymbol = require('./svg-symbol')
 const avatarPlaceholder = svgSymbol(
@@ -21,6 +23,7 @@ const addSymbol = svgSymbol(
 const SIZE = 128
 
 module.exports = function(ssb) {
+  const getAvatarUpdates = AvatarUpdate(ssb)
   return function renderIdsOfNetwork(netkey) {
     const pubKeys = getIdentities(netkey)
     const selected = Value(localStorage[`id-${netkey}`])
@@ -38,6 +41,7 @@ module.exports = function(ssb) {
       }, 100)
 
       function scrollTo(v, duration) {
+        if (!v) return
         v = safeId(v)
         const ulbr = ul.getBoundingClientRect()
         const li = ul.querySelector(`[data-id="${v}"]`)
@@ -123,21 +127,6 @@ module.exports = function(ssb) {
     }
   }
 
-  function getAvatarUpdates(netkey, id) {
-    const avatar = Value()
-    if (ssb.bayofplenty && ssb.bayofplenty.avatarUpdates) {
-      pull(
-        ssb.bayofplenty.avatarUpdates(netkey, id),
-        pull.drain(newAvatar =>{
-          debug('new avatar %o', newAvatar)
-          avatar.set(newAvatar)
-        }, err => {
-          console.error(`avatarUpdates failed: ${err.message}`)
-        })
-      )
-    }
-    return avatar
-  }
 
   function getIdentities(netkey) {
     const pubKeys = MutantArray()

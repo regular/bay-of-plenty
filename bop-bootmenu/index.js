@@ -9,7 +9,8 @@ const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
 const IdentitySelector = require('./identity-selector')
-const renderApps = require('./render-apps')
+const RenderApps = require('./render-apps')
+const RenderNetworks = require('./render-networks')
 const {makePane, makeDivider, makeSplitPane} = require('tre-split-pane')
 
 const getVersions = require('./get-versions')
@@ -37,13 +38,15 @@ client( (err, ssb, config) =>{
   ssb.bayofplenty.avatarUpdates = (n, i) => reconnectStream( ()=>avatarUpdates(n, i) )
 
   const renderIdentities = IdentitySelector(ssb)
+  const renderApps = RenderApps(ssb)
+  const renderNetworks = RenderNetworks(ssb)
 
   let main, sidebar
   document.body.appendChild(h('.bop-bootmenu', [
     makeSplitPane({horiz: true}, [
-      makePane('33%',
+      makePane('45%',
         sidebar = h('.sidebar', [
-          renderNetworkList(networks),
+          renderNetworks(networks, selectedNetwork),
           renderAddApp()
         ])
       ),
@@ -123,7 +126,7 @@ client( (err, ssb, config) =>{
         return parsed.network == netkey
       })
     })
-    return renderApps(my_entries, launchApp, appLoading)
+    return renderApps(netkey, my_entries, launchApp, appLoading)
   }
 
   function makeInviteForm() {
@@ -186,17 +189,6 @@ client( (err, ssb, config) =>{
 })
 
 // -- util
-
-function renderNetworkList(networks) {
-  return h('ul.networks', MutantMap(networks, netkey => {
-    return h('li', {
-      classList: computed(selectedNetwork, sel => netkey == sel ? ['selected'] : []),
-      'ev-click': ev =>{
-        selectedNetwork.set(netkey)
-      }
-    }, netkey)
-  }))
-}
 
 function preventDblClickSelection() {
   document.addEventListener('mousedown', function (event) {
@@ -279,7 +271,7 @@ styles(`
     background-color: #22222d;
     height:  100%;
     width: 100%;
-    overflow: hidden;
+    overflow-y: scroll;
   }
   .loading .sidebar,
   .loading .identities-container {
@@ -287,22 +279,6 @@ styles(`
     transition-property: opacity;
     transition-duration: 1s;
     transition-delay: .5s;
-  }
-  .bop-bootmenu .sidebar ul.networks {
-    padding: 0;
-    list-style: none;
-    width: 100%;
-    font-size: 24pt;
-  }
-  .bop-bootmenu .sidebar ul.networks li {
-    width: calc(100% - 20px);
-    overflow: hidden;
-    user-select: all;
-    text-overflow: ellipsis;
-    font-family: monospace;
-  }
-  .bop-bootmenu .sidebar ul.networks li.selected {
-    background: green;
   }
   .bop-bootmenu .main {
     overflow-x: visible;

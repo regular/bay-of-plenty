@@ -4,7 +4,7 @@ const pull = require('pull-stream')
 const pl = require('pull-level')
 
 module.exports = function(dir) {
-  const db = Level(join(dir, 'thumbnails'), {
+  const db = Level(join(dir, 'leveldb'), {
     keyEncoding: 'utf8',
     valueEncoding: 'utf8'
   })

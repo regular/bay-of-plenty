@@ -55,8 +55,7 @@ module.exports = function(argv) {
           })
         }
 
-        updateAvatars(ssb, config.network, keys.id, 'name')
-        updateAvatars(ssb, config.network, keys.id, 'image')
+        gatherMeta(ssb, config, keys)
 
         // TODO: only if canned
         debug('adding blobs ...')
@@ -69,6 +68,28 @@ module.exports = function(argv) {
     })
   }
 }
+
+function gatherMeta(ssb, config, keys) {
+  updateAvatars(ssb, config.network, keys.id, 'name')
+  updateAvatars(ssb, config.network, keys.id, 'image')
+
+  const ext = keys.id.split('.').slice(-1)[0]
+  const sigil = keys.id[0]
+  const netId = `${sigil}${config.caps.shs}.${ext}`
+  debug('requesting social calues for %s', netId)
+
+  updateAvatars(ssb, config.network, netId, 'name')
+  updateAvatars(ssb, config.network, netId, 'image')
+  updateAvatars(ssb, config.network, netId, 'description')
+
+  if (config.boot) {
+    debug('requesting app icon for %s', config.boot)
+    updateAvatars(ssb, config.network, config.boot, 'name')
+    updateAvatars(ssb, config.network, config.boot, 'image')
+    updateAvatars(ssb, config.network, config.boot, 'description')
+  }
+}
+
 
 function updateAvatars(ssb, network, id, key) {
   const origin = ssb.ws.getAddress().match(/ws:([^~]*)/)[1]

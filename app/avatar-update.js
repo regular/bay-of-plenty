@@ -14,7 +14,7 @@ const cold = loadColdStorage()
 const entries = {}
 
 const server = Server(join(networkDir, '..', 'thumbnails'), {
-  sizes: [16, 32, 128],
+  sizes: [16, 32, 96, 128],
   idFromURL
   // TODO: use port allocator
 })
@@ -78,7 +78,6 @@ function avatarUpdate(network, id, key, value) {
   debug(`Updating avatar ${key} to ${value}, ${network} ${id}`)
 
   const isURL = typeof value == 'string' && parse(value).protocol
-
   if (!isURL) return setValue(value)
 
   server.addImageURL(value, (err, result) => {

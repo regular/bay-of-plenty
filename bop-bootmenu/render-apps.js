@@ -3,6 +3,8 @@ const h = require('mutant/html-element')
 const MutantMap = require('mutant/map')
 const computed = require('mutant/computed')
 
+const AvatarUpdate = require('./avatar-updates')
+
 const SIZE = 96;
 
 const bricons = require('bricons')
@@ -12,37 +14,60 @@ const iconPlaceholder = svgSymbol(
 )
 /* flower card hammer grid */
 
-module.exports = function renderApps(entries, launchApp, appLoading) {
-  return h('ul.apps', MutantMap(entries, e=>{
-    const {webapp, invite} = e
-    const {repositoryBranch} = webapp.value.content
-    return h('li', {
-      title: formatDesciption(webapp),
-      classList: computed(appLoading, loading =>{
-        return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
-      }),
-      'ev-click': ev=>{
-        launchApp(invite)
-      }
-    }, [ 
-      h('.icon', [
-        iconPlaceholder(),
-        repositoryBranch !== 'master' ?  h('.branch', repositoryBranch) : []
-      ]),
-      h('.name', formatName(webapp))
-    ])
-  }))
+module.exports = function(ssb) {
+  const getAvatarUpdates = AvatarUpdate(ssb)
+
+  return function renderApps(netkey, entries, launchApp, appLoading) {
+    return h('ul.apps', MutantMap(entries, e=>{
+      const {webapp, invite} = e
+      const {repositoryBranch} = webapp.value.content
+      const revRoot = revisionRoot(webapp)
+      const avatar = getAvatarUpdates(netkey, revRoot)
+      return computed(avatar, avatar => {
+        const thumbnailUrl = avatar && avatar.image && avatar.image[`${SIZE}x${SIZE}`]
+        const name = avatar && avatar.name 
+        const description = avatar && avatar.description 
+
+        return h('li', {
+          'data-id': revRoot,
+          title: formatDesciption(webapp, description),
+          classList: computed(appLoading, loading =>{
+            return invite == loading ? ['loading'] : (loading ? ['hide'] : [])
+          }),
+          'ev-click': ev=>{
+            launchApp(invite)
+          }
+        }, [ 
+          h('.icon', {
+            style: {
+              width: `${SIZE}px`,
+              height: `${SIZE}px`
+            }
+          }, [
+            thumbnailUrl ?
+            h('div', {
+              style: {
+                'background-image': `url(${thumbnailUrl})`
+              }
+            }) : iconPlaceholder(),
+            repositoryBranch !== 'master' ?  h('.branch', repositoryBranch) : []
+          ]),
+          h('.name', formatName(webapp, name))
+        ])
+      })
+    }))
+  }
 }
 
-function formatName(webapp) {
+function formatName(webapp, override) {
   let {name} = webapp.value.content
   name = name.replace(/\s\[[^\]]+\]/,'') 
-  return name
+  return override || name
 }
 
-function formatDesciption(webapp) {
+function formatDesciption(webapp, override) {
   let {description} = webapp.value.content
-  return description
+  return override || description
 }
 
 styles(`
@@ -87,6 +112,11 @@ styles(`
     fill: #333;
     overflow: hidden;
   }
+  .bop-bootmenu ul.apps > li .icon > div {
+    background-size: cover;
+    width: 100%;
+    height: 100%;
+  }
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
@@ -125,3 +155,8 @@ styles(`
     text-shadow: 1px 1px 1px  rgba(0,0,0,.4);
   }
 `)
+
+function revisionRoot(kv) {
+  return kv.value.content.revisionRoot || kv.key
+}
+
