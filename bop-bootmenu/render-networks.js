@@ -97,12 +97,12 @@ styles(`
     position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
-    border-radius: 15px;
+    border-radius: 5px;
     background: #555;
     fill: #333;
     grid-row: 1/4;
     grid-column: 1/2;
-    border: 5px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.2);
     margin: 3px 3px;
   }
   .bop-bootmenu ul.networks > li .icon > div {
@@ -121,11 +121,11 @@ styles(`
     background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
     width: 100%;
     height: 60%;
-    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
-    border-top-right-radius: 30px;
-    border-top-left-radius: 30px;
-    border-bottom-right-radius: 100px 40px;
-    border-bottom-left-radius: 100px 40px;
+    //box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
+    //border-top-right-radius: 30px;
+    //border-top-left-radius: 30px;
+    border-bottom-right-radius: 50% 20px;
+    border-bottom-left-radius: 50% 20px;
   }
   .bop-bootmenu ul.networks > li .meta {
     grid-row: 1/2;

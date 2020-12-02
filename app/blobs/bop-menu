@@ -19,10 +19,10 @@
 <meta name="generator" content="tre-compile 2.0.3">
 <meta name="tre:repository-url" content="git@github.com:regular/bay-of-plenty.git">
 <meta name="tre:repository-branch" content="master">
-<meta name="tre:commit" content="v1.12.0-72-g8c471ae-dirty">
+<meta name="tre:commit" content="v1.12.0-74-g330d4b2-dirty">
 <meta name="tre:main" content="index.js">
 <meta name="keywords" content="bay of plenty,tre">
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-YIQo4m4NxuA7UhejyiwJvAX7AEb1468FocZufeVBi4Q=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-dxH6y208t4ERUeCOsDrCSszOu2U6LnFf28sZ329mJ2c=';">
 </head>
 <body></body>
 <script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -376,7 +376,11 @@ preventDblClickSelection()
 const versions = Value()
 const entries = MutantArray()
 const appLoading = Value()
-const selectedNetwork = Value()
+const selectedNetwork = Value(localStorage.selectedNetwork)
+
+selectedNetwork(netkey =>{
+  localStorage.selectedNetwork = netkey
+})
 
 loadEntries(entries)
 
@@ -51583,7 +51587,7 @@ const SIZE = 96;
 
 const svgSymbol = require('./svg-symbol')
 const iconPlaceholder = svgSymbol(
-  "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ionicon\" viewBox=\"0 0 512 512\"><title>Infinite</title><path d=\"M256 256s-48-96-126-96c-54.12 0-98 43-98 96s43.88 96 98 96c30 0 56.45-13.18 78-32M256 256s48 96 126 96c54.12 0 98-43 98-96s-43.88-96-98-96c-29.37 0-56.66 13.75-78 32\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-miterlimit=\"10\" stroke-width=\"48\"/></svg>"
+  "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"ionicon\" viewBox=\"0 0 512 512\"><title>Snow</title><path d=\"M461 349l-34-19.64a89.53 89.53 0 0120.94-16 22 22 0 00-21.28-38.51 133.62 133.62 0 00-38.55 32.1L300 256l88.09-50.86a133.46 133.46 0 0038.55 32.1 22 22 0 1021.28-38.51 89.74 89.74 0 01-20.94-16l34-19.64A22 22 0 10439 125l-34 19.63a89.74 89.74 0 01-3.42-26.15A22 22 0 00380 96h-.41a22 22 0 00-22 21.59 133.61 133.61 0 008.5 49.41L278 217.89V116.18a133.5 133.5 0 0047.07-17.33 22 22 0 00-22.71-37.69A89.56 89.56 0 01278 71.27V38a22 22 0 00-44 0v33.27a89.56 89.56 0 01-24.36-10.11 22 22 0 10-22.71 37.69A133.5 133.5 0 00234 116.18v101.71L145.91 167a133.61 133.61 0 008.52-49.43 22 22 0 00-22-21.59H132a22 22 0 00-21.59 22.41 89.74 89.74 0 01-3.41 26.19L73 125a22 22 0 10-22 38.1l34 19.64a89.74 89.74 0 01-20.94 16 22 22 0 1021.28 38.51 133.62 133.62 0 0038.55-32.1L212 256l-88.09 50.86a133.62 133.62 0 00-38.55-32.1 22 22 0 10-21.28 38.51 89.74 89.74 0 0120.94 16L51 349a22 22 0 1022 38.1l34-19.63a89.74 89.74 0 013.42 26.15A22 22 0 00132 416h.41a22 22 0 0022-21.59 133.61 133.61 0 00-8.5-49.41L234 294.11v101.71a133.5 133.5 0 00-47.07 17.33 22 22 0 1022.71 37.69A89.56 89.56 0 01234 440.73V474a22 22 0 0044 0v-33.27a89.56 89.56 0 0124.36 10.11 22 22 0 0022.71-37.69A133.5 133.5 0 00278 395.82V294.11L366.09 345a133.61 133.61 0 00-8.52 49.43 22 22 0 0022 21.59h.43a22 22 0 0021.59-22.41 89.74 89.74 0 013.41-26.19l34 19.63A22 22 0 10461 349z\"/></svg>"
 )
 /* flower card hammer grid */
 /* medical infinite snow cog */
@@ -51667,17 +51671,38 @@ styles(`
     background: #322E4C;
   }
   .bop-bootmenu ul.networks > li .icon {
+    position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
+    border-radius: 15px;
     background: #555;
     fill: #333;
-    grid-rows: 1/4;
-    grid-columns: 1/2;
+    grid-row: 1/4;
+    grid-column: 1/2;
+    border: 5px solid rgba(255,255,255,0.2);
+    margin: 3px 3px;
   }
   .bop-bootmenu ul.networks > li .icon > div {
     background-size: cover;
     width: 100%;
     height: 100%;
+  }
+  .bop-bootmenu ul.networks > li .icon:after {
+    content: '';
+    opacity: 0.6;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
+    width: 100%;
+    height: 60%;
+    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
+    border-top-right-radius: 30px;
+    border-top-left-radius: 30px;
+    border-bottom-right-radius: 100px 40px;
+    border-bottom-left-radius: 100px 40px;
   }
   .bop-bootmenu ul.networks > li .meta {
     grid-row: 1/2;
@@ -51685,13 +51710,14 @@ styles(`
     overflow: hidden;
   }
   .bop-bootmenu ul.networks > li .name {
+    padding-top: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .bop-bootmenu ul.networks > li .description {
     opacity: 0.5;
-    font-size: 20pt;
+    font-size: 18pt;
   }
   .bop-bootmenu ul.networks > li .netkey  {
     overflow: hidden;
