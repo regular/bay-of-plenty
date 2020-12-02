@@ -21,7 +21,11 @@ preventDblClickSelection()
 const versions = Value()
 const entries = MutantArray()
 const appLoading = Value()
-const selectedNetwork = Value()
+const selectedNetwork = Value(localStorage.selectedNetwork)
+
+selectedNetwork(netkey =>{
+  localStorage.selectedNetwork = netkey
+})
 
 loadEntries(entries)
 

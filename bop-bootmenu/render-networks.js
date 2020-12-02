@@ -10,7 +10,7 @@ const SIZE = 96;
 const bricons = require('bricons')
 const svgSymbol = require('./svg-symbol')
 const iconPlaceholder = svgSymbol(
-  bricons.svg('ionicons/infinite')
+  bricons.svg('ionicons/snow')
 )
 /* flower card hammer grid */
 /* medical infinite snow cog */
@@ -94,17 +94,38 @@ styles(`
     background: #322E4C;
   }
   .bop-bootmenu ul.networks > li .icon {
+    position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
+    border-radius: 15px;
     background: #555;
     fill: #333;
-    grid-rows: 1/4;
-    grid-columns: 1/2;
+    grid-row: 1/4;
+    grid-column: 1/2;
+    border: 5px solid rgba(255,255,255,0.2);
+    margin: 3px 3px;
   }
   .bop-bootmenu ul.networks > li .icon > div {
     background-size: cover;
     width: 100%;
     height: 100%;
+  }
+  .bop-bootmenu ul.networks > li .icon:after {
+    content: '';
+    opacity: 0.6;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
+    width: 100%;
+    height: 60%;
+    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
+    border-top-right-radius: 30px;
+    border-top-left-radius: 30px;
+    border-bottom-right-radius: 100px 40px;
+    border-bottom-left-radius: 100px 40px;
   }
   .bop-bootmenu ul.networks > li .meta {
     grid-row: 1/2;
@@ -112,13 +133,14 @@ styles(`
     overflow: hidden;
   }
   .bop-bootmenu ul.networks > li .name {
+    padding-top: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .bop-bootmenu ul.networks > li .description {
     opacity: 0.5;
-    font-size: 20pt;
+    font-size: 18pt;
   }
   .bop-bootmenu ul.networks > li .netkey  {
     overflow: hidden;
