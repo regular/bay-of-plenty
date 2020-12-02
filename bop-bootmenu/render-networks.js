@@ -124,8 +124,8 @@ styles(`
     //box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
     //border-top-right-radius: 30px;
     //border-top-left-radius: 30px;
-    border-bottom-right-radius: 50% 20px;
-    border-bottom-left-radius: 50% 20px;
+    border-bottom-right-radius: 30% 10px;
+    border-bottom-left-radius: 30% 10px;
   }
   .bop-bootmenu ul.networks > li .meta {
     grid-row: 1/2;

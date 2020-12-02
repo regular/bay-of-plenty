@@ -117,6 +117,23 @@ styles(`
     width: 100%;
     height: 100%;
   }
+  .bop-bootmenu ul.apps > li .icon:after {
+    content: '';
+    opacity: 0.7;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
+    width: 100%;
+    height: 60%;
+    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
+    border-top-right-radius: 20%;
+    border-top-left-radius: 20%;
+    border-bottom-right-radius: 50% 20px;
+    border-bottom-left-radius: 50% 20px;
+  }
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
@@ -128,6 +145,7 @@ styles(`
     opacity: 0;
     transition-property: opacity transform;
     transition-duration: .75s;
+    position: relative;
   }
   .bop-bootmenu ul.apps > li .icon .branch {
     width: 100%;
