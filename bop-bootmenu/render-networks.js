@@ -121,9 +121,6 @@ styles(`
     background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
     width: 100%;
     height: 60%;
-    //box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
-    //border-top-right-radius: 30px;
-    //border-top-left-radius: 30px;
     border-bottom-right-radius: 30% 10px;
     border-bottom-left-radius: 30% 10px;
   }

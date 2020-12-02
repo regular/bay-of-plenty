@@ -138,7 +138,7 @@ styles(`
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
   }
-  .bop-bootmenu ul.apps > li.loading .icon {
+  .bop-bootmenu ul.apps > li.loading {
     z-index: 1;
     transform-origin: 50% 50%;
     transform: scale(2.5);
@@ -157,7 +157,6 @@ styles(`
     color: black;
     opacity: 0.4;
     transform-origin: 50% -100%;
-    //transform: rotate(-45deg);
     text-transform: uppercase;
     font-size: 13px;
     font-weight: bolder;
