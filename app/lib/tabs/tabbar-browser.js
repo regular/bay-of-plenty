@@ -47,7 +47,7 @@ function renderTab(tab) {
     'ev-click': e=>send('activate-tab', {id:tab.id})
   }, [
     h('.title', computed(tab, tab => tab.title)),
-    h('.alert', alertCircle({title: 'an error occured'})),
+    h('.alert', alertCircle({title: (tab.tagValues.alert && tab.tagValues.alert.text) || 'an error occured'})),
     h('.spinner', spinner()),
     h('.close', {
       'ev-click': e=> send('close-tab', {id:tab.id})
@@ -105,11 +105,20 @@ window.addEventListener('on-tab-title-changed', e=>{
   tabs.put(i, Object.assign(x, {title}))
 })
 window.addEventListener('on-tab-add-tag', e=>{
-  const {id, tag} = e.detail
+  const {id, tag, value} = e.detail
   const x = tabs.find( x=>x.id==id )
   if (x === undefined) return console.error('on tab add tag: tab not found', id)
+  
+  const tagValues = x.tagValues || {}
+  if (tag == 'alert' && tagValues.alert) {
+    // do not overwrite previous error message
+    // we always dislay the first error that occured
+  } else {
+    Object.assign(tagValues, {[tag]: value})
+  }
+
   const i = tabs.indexOf(x)
-  tabs.put(i, Object.assign(x, {tags: x.tags.concat([tag])}))
+  tabs.put(i, Object.assign(x, {tagValues, tags: x.tags.concat([tag])}))
 })
 window.addEventListener('on-tab-remove-tag', e=>{
   const {id, tag} = e.detail

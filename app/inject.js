@@ -137,7 +137,7 @@ module.exports = function inject(electron, Sbot, argv) {
       })
 
       function setAlert(text) {
-        tabs.addTag(view.id, 'alert')
+        tabs.addTag(view.id, 'alert', {text})
         console.log(
           `setting alert in tab ${view.id} because console.error was called with "${text}"`
         )

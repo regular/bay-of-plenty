@@ -50,8 +50,8 @@ module.exports = function(page) {
   function onTabTitleChanged(id, title) {
     sendMessage('on-tab-title-changed', {id, title})
   }
-  function onTabAddTag(id, tag) {
-    sendMessage('on-tab-add-tag', {id, tag})
+  function onTabAddTag(id, tag, value) {
+    sendMessage('on-tab-add-tag', {id, tag, value})
   }
   function onTabRemoveTag(id, tag) {
     sendMessage('on-tab-remove-tag', {id, tag})

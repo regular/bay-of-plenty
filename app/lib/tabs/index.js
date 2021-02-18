@@ -46,8 +46,8 @@ module.exports = async function initTabs(win, mainPage, opts) {
     tabs.closeTab(e.id)
   })
   return Object.assign({}, tabs, {
-    addTag: function(viewId, tag) {
-      tabbar.onTabAddTag(viewId, tag)
+    addTag: function(viewId, tag, value) {
+      tabbar.onTabAddTag(viewId, tag, value)
     },
     removeTag: function(viewId, tag) {
       tabbar.onTabRemoveTag(viewId, tag)

@@ -19,10 +19,10 @@
 <meta name="generator" content="tre-compile 2.0.3">
 <meta name="tre:repository-url" content="git@github.com:regular/bay-of-plenty.git">
 <meta name="tre:repository-branch" content="master">
-<meta name="tre:commit" content="v1.12.0-74-g330d4b2-dirty">
+<meta name="tre:commit" content="v1.12.0-77-g228bd98-dirty">
 <meta name="tre:main" content="index.js">
 <meta name="keywords" content="bay of plenty,tre">
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-dxH6y208t4ERUeCOsDrCSszOu2U6LnFf28sZ329mJ2c=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-vEj+gifmzUy00+aNFGqK/7cBe7lcrHlXZj180C+77Ds=';">
 </head>
 <body></body>
 <script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -51530,17 +51530,35 @@ styles(`
     width: 100%;
     height: 100%;
   }
+  .bop-bootmenu ul.apps > li .icon:after {
+    content: '';
+    opacity: 0.7;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
+    width: 100%;
+    height: 60%;
+    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
+    border-top-right-radius: 20%;
+    border-top-left-radius: 20%;
+    border-bottom-right-radius: 50% 20px;
+    border-bottom-left-radius: 50% 20px;
+  }
   .bop-bootmenu ul.apps > li:hover .icon,
   .bop-bootmenu ul.apps > li.loading .icon {
     border-color: #888;
   }
-  .bop-bootmenu ul.apps > li.loading .icon {
+  .bop-bootmenu ul.apps > li.loading {
     z-index: 1;
     transform-origin: 50% 50%;
     transform: scale(2.5);
     opacity: 0;
     transition-property: opacity transform;
     transition-duration: .75s;
+    position: relative;
   }
   .bop-bootmenu ul.apps > li .icon .branch {
     width: 100%;
@@ -51552,7 +51570,6 @@ styles(`
     color: black;
     opacity: 0.4;
     transform-origin: 50% -100%;
-    //transform: rotate(-45deg);
     text-transform: uppercase;
     font-size: 13px;
     font-weight: bolder;
@@ -51674,12 +51691,12 @@ styles(`
     position: relative;
     width: ${SIZE}px;
     height: ${SIZE}px;
-    border-radius: 15px;
+    border-radius: 5px;
     background: #555;
     fill: #333;
     grid-row: 1/4;
     grid-column: 1/2;
-    border: 5px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(255,255,255,0.2);
     margin: 3px 3px;
   }
   .bop-bootmenu ul.networks > li .icon > div {
@@ -51698,11 +51715,8 @@ styles(`
     background: -webkit-linear-gradient(top, rgba(255,255,255,0.7) 0%,rgba(255,255,255,0.1) 100%);
     width: 100%;
     height: 60%;
-    box-shadow: inset 0px 2px 1px rgba(255, 255, 255, 0.7);
-    border-top-right-radius: 30px;
-    border-top-left-radius: 30px;
-    border-bottom-right-radius: 100px 40px;
-    border-bottom-left-radius: 100px 40px;
+    border-bottom-right-radius: 30% 10px;
+    border-bottom-left-radius: 30% 10px;
   }
   .bop-bootmenu ul.networks > li .meta {
     grid-row: 1/2;
