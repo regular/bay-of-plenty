@@ -103,6 +103,14 @@ module.exports = function inject(electron, Sbot, argv) {
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
     const mainPage = await Page(win.webContents)
 
+    Logging(mainPage, {
+      tabid: '[tabbar]',
+      setAlert: text => {
+        console.error(`FATAL: error in tabbar: ${text}`)
+        process.exit(1)
+      }
+    })
+
     function makeView() {
       return new BrowserView({webPreferences})
     }

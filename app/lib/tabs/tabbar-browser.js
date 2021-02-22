@@ -78,7 +78,7 @@ function setTitle(title) {
 
 window.addEventListener('on-new-tab', e=>{
   const {id, title} = e.detail
-  tabs.push({title, id, tags: []})
+  tabs.push({title, id, tags: [], tagValues: {} })
   active.set(id)
 })
 

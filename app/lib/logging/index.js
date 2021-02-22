@@ -49,7 +49,7 @@ module.exports = async function initLogging(page, opts) {
       }
       reflection.push(message)
     }, err=>{
-      if (err) console.error(`detectErrors stream endedn: ${err.message}`)
+      if (err) console.error(`detectErrors stream ended: ${err.message}`)
     })
   )
 
