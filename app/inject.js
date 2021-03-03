@@ -12,12 +12,6 @@ const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const OpenApp = require('./open-app')
 
-const webPreferences = {
-  enableRemoteModule: false,
-  nodeIntegration: false,
-  contextIsolation: true,
-  worldSafeExecuteJavaScript: true
-}
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
@@ -25,6 +19,14 @@ const DEBUG_TABS = process.env.DEBUG_TABS
 
 module.exports = function inject(electron, Sbot, argv) {
   debug('argv: %o', argv)
+
+  const webPreferences = {
+    enableRemoteModule: false,
+    nodeIntegration: false,
+    contextIsolation: true,
+    worldSafeExecuteJavaScript: true,
+    partition: argv['clean-session'] ? 'foo' : undefined
+  }
 
   const {app, BrowserWindow, BrowserView, Menu, session} = electron
   const pool = Pool(Sbot)
@@ -149,6 +151,10 @@ module.exports = function inject(electron, Sbot, argv) {
         console.log(
           `setting alert in tab ${view.id} because console.error was called with "${text}"`
         )
+        if (argv['fail-on-error']) {
+          console.error('exiting because --fail-on-error is set')
+          process.exit(1)
+        }
       }
 
       Logging(page, {
