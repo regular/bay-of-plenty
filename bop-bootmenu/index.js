@@ -157,6 +157,7 @@ client( (err, ssb, config) =>{
         }),
         h('.bbuton-container', [
           button = h('button', {
+            disabled: true,
             'ev-click': ev=>{
               setTimeout( ()=>{
                 button.disabled = true
