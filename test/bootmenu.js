@@ -147,6 +147,14 @@ test('connect to sbot', t=>{
 */
 
 async function fillInvite(menu, longInvite) {
+  const form = await menu.waitForSelector('form[action="/add-network"]', {visible: false})
+  console.log('found form, open details')
+  await form.evaluate(form=>{
+    const details = form.parentElement.parentElement
+    console.log('details', details)
+    details.open = true
+  })
+  console.log('details open')
   const textarea = await menu.waitForSelector('form[action="/add-network"] textarea[name=code]', {visible: true})
   await textarea.type(longInvite)
 }
@@ -181,12 +189,12 @@ test('try to re-use invite code', t=>{
 
     const menuTarget = await browserUtil.waitForNewTarget('index.js')
     const menuPage = await menuTarget.page()
-    const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
 
     await fillInvite(menuPage, longInvite)
 
+    const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
     await button.click()
-    await wait(20000)
+    await wait(2000)
     
     t.end()
   })()
@@ -211,8 +219,13 @@ test('close bootmaneu tab', t=>{
   })
 
   ;(async function() {
-    await wait(1000)
-    await clickClose()
+    try {
+      await wait(1000)
+      await clickClose()
+    } catch(e) {
+      t.fail(e.message)
+      bop.kill() // this will trigger the handler above and t.end() the test
+    }
   })()
 })
 

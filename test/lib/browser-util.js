@@ -9,9 +9,9 @@ module.exports = function(browser) {
   }
 
   async function waitForNewTarget(url) {
-    const target = await browser.waitForTarget(t=>t.url().includes(url) && !knownTargets.includes(t.targetID) )
-    console.log(`new known target: ${target.targetID}`)
-    knownTargets.push(target.targetID)
+    const target = await browser.waitForTarget(t=>t.url().includes(url) && !knownTargets.includes(t.id) )
+    console.log(`new known target: ${target.id}`)
+    knownTargets.push(target.id)
     return target
   }
 
