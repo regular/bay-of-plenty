@@ -4,22 +4,34 @@ const fs = require('fs')
 const {join} = require('path')
 const crypto = require('crypto')
 const test = require('tape')
-const spawn_bop = require('./lib/spawn-bop-with-puppeteer')
-const wait = require('./lib/wait')
 const mkdirp = require('mkdirp').sync
 const ssbKeys = require('ssb-keys')
 const client = require('ssb-zero-conf-client')
-const Pub = require('./lib/pub')
 const inviteCodes = require('tre-invite-code')
-const uploadApp = require('./lib/upload-app')
 
+const spawn_bop = require('./lib/spawn-bop-with-puppeteer')
+const Pub = require('./lib/pub')
+const wait = require('./lib/wait')
+const uploadApp = require('./lib/upload-app')
+const rc = require('rc')
+
+const QUIET = 0
 const DEBUG = 'bop:browser-console,multiserver:net ssb-zero-conf-client'
 const dir = `/tmp/${Date.now()}`
 const configPath = join(dir, 'config')
 const appkey = crypto.randomBytes(32).toString('base64')
 const keypair = ssbKeys.generate()
 const port = 60999
-let bop, browser, pub, appMessage, longInvite
+let bop, browser, browserUtil, pub, appMessage, longInvite
+
+test('make sure we control the config', t=>{
+  const config = rc('tre')
+  if ( (config.configs || []).length !== 0) {
+    console.error('foreign files mixed into config:', config.configs)
+    process.exit(1)
+  }
+  t.end() 
+})
 
 test('start a pub', t => {
   const path = `${dir}-pub`
@@ -86,14 +98,17 @@ test('launch bootmenu', t=>{
     `--config=${configPath}`,
     `--authorize=${keypair.id}`,
     '--fail-on-error',
-    '--clean-session'
+    '--clean-session',
+    '--launch-local-in-all-tabs'
   ], {
     env: Object.assign({}, process.env, {
       DEBUG,
-      DEBUG_COLORS: 1
+      DEBUG_COLORS: 1,
+      DEBUG_LOG: 1
     })
   }, (err, _browser) =>{
     browser = _browser
+    browserUtil = require('./lib/browser-util')(browser)
     t.error(err, 'puppeteer connected')
     ;(async function() {
       const appTarget = await browser.waitForTarget(t=>t.url().includes('index.js'))
@@ -102,18 +117,22 @@ test('launch bootmenu', t=>{
     })()
   })
 
-  // if bop exits with a falta error, this
-  // test suit fails
+  // if bop exits with a fatal error, this
+  // test fails
   bop.on('exit', code =>{
     if (code) process.exit(code)
   })
 
   bop.stdout.on('data', data =>{
-    process.stdout.write(data)
+    if (!QUIET) {
+      process.stdout.write(data)
+    }
   })
 
   bop.stderr.on('data', data =>{
-    process.stdout.write(data)
+    if (!QUIET) {
+      process.stdout.write(data)
+    }
   })
 })
 
@@ -127,36 +146,51 @@ test('connect to sbot', t=>{
 })
 */
 
+async function fillInvite(menu, longInvite) {
+  const textarea = await menu.waitForSelector('form[action="/add-network"] textarea[name=code]', {visible: true})
+  await textarea.type(longInvite)
+}
+
+
 test('fill in invite code', t=>{
-
-  async function fill() {
-    const menuTarget = await browser.waitForTarget(t=>t.url().includes('index.js'))
-    t.ok(menuTarget, 'menu target found')
-    const menu = await menuTarget.page()
-    t.ok(menu, 'bootmenu page found')
-
-    const button = await menu.waitForSelector('form[action="/add-network"] button', {visible: true})
-    t.ok(button, '"add netork button" found')
-    t.ok(await button.evaluate(el=>el.disabled), 'button is disabled')
-
-    const textarea = await menu.waitForSelector('form[action="/add-network"] textarea[name=code]', {visible: true})
-    t.ok(textarea, 'textarea found')
-    await textarea.type(longInvite)
-
-    t.notOk(await button.evaluate(el=>el.disabled), 'button is enabled')
-    await button.click()
-
-    const helloWorldTarget = await browser.waitForTarget(t=>t.url().includes('blobs/get/'+ encodeURIComponent(appMessage.value.content.codeBlob) ))
-    t.ok(helloWorldTarget, 'hello world app opened')
-    t.end()
-  }
 
   ;(async function() {
     await wait(2000)
-    await fill()
+
+    const menuTarget = await browserUtil.waitForNewTarget('index.js')
+    const menuPage = await menuTarget.page()
+    const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
+    t.ok(await button.evaluate(el=>el.disabled), 'button is disabled')
+
+    await fillInvite(menuPage, longInvite)
+
+    t.notOk(await button.evaluate(el=>el.disabled), 'button is enabled')
+    await button.click()
+    
+    const helloWorldTarget = await browser.waitForTarget(t=>t.url().includes('blobs/get/'+ encodeURIComponent(appMessage.value.content.codeBlob) ))
+    t.ok(helloWorldTarget, 'hello world app opened')
+    t.end()
   })()
 })
 
+test('try to re-use invite code', t=>{
+
+  ;(async function() {
+    await wait(2000)
+    await browserUtil.addTab()
+
+    const menuTarget = await browserUtil.waitForNewTarget('index.js')
+    const menuPage = await menuTarget.page()
+    const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
+
+    await fillInvite(menuPage, longInvite)
+
+    await button.click()
+    await wait(20000)
+    
+    t.end()
+  })()
+})
 test('close bootmaneu tab', t=>{
 
   async function clickClose() {

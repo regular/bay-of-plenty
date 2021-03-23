@@ -24,10 +24,6 @@ module.exports = function(tabid) {
   return function ({type, text, location}) {
     let loc = ''
     const {lineNumber, url} = location
-    if (url !== currUrl) {
-      debug('In', url)
-      currUrl = url
-    }
     if (lineNumber !== undefined) {
       loc = `:${lineNumber} `
     }
@@ -35,6 +31,10 @@ module.exports = function(tabid) {
       let prefix = '', postfix = ''
       if (colorWraps[type]) {
         [prefix, postfix] = colorWraps[type]
+      }
+      if (url !== currUrl) {
+        console.error(`${sym} In ${url}:`)
+        currUrl = url
       }
       console.error(`${sym} ${levelSymbols[type]||' '} ${loc} ${prefix} ${text} ${postfix}`)
     }

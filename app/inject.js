@@ -178,10 +178,13 @@ module.exports = function inject(electron, Sbot, argv) {
         onTitleChanged
       }, argv)
       
+      const launchLocalInAllTabs = argv['launch-local-in-all-tabs'] ?
+        {launchLocal: filename} : {}
+
       openApp(null, null, Object.assign({
         viewId: view.id,
         page
-      }, newTabOpts), (err, result) =>{
+      }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)
           throw err
