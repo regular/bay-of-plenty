@@ -16,8 +16,6 @@ module.exports = function OpenApp(pool, conf, argv) {
     const {page, viewId} = opts
     if (!page) return cb(new Error(`page not specified`))
     if (viewId == undefined) return cb(new Error(`viewId not specified viewId`))
-    debug(`onLoading ${viewId} true`)
-    onLoading(true, opts)
     let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
@@ -48,9 +46,13 @@ module.exports = function OpenApp(pool, conf, argv) {
       debug('launchLocal is not set')
     }
 
+    debug(`onLoading ${viewId} true`)
+    onLoading(true, opts)
+
     const {unref, promise} = pool.get({conf, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
+      onLoading(false, opts)
       return cb(err)
     }).then( ({ssb, config, myid}) => {
       const browserKeys = ssbKeys.generate()
@@ -93,28 +95,37 @@ module.exports = function OpenApp(pool, conf, argv) {
         })
       }
 
-      if (opts.launchLocal) {
-        debug(`launch local: ${opts.launchLocal}`)
-        onTitleChanged('local / debug', opts)
-        setupEventHandlers()
-        const url = `http://127.0.0.1:${config.ws.port}/launch/`
-        cb(null, {url})
-        return
-      }
-
-      const bootKey = (conf && conf.boot) || config.boot
-      debug(`bootKey: ${bootKey}`)
-      ssb.treBoot.getWebApp(bootKey, (err, result) =>{
+      ssb.autoinvite.useInviteCode( err=>{
         if (err) {
-          debug(err.message)
+          onLoading(false, opts)
           return cb(err)
         }
-        const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
-        debug('webapp: %O', result.kv.value.content)
-        const title = result.kv.value.content.name
-        onTitleChanged(title, opts)
-        setupEventHandlers()
-        cb(null, {webapp: result.kv, url})
+
+        if (opts.launchLocal) {
+          debug(`launch local: ${opts.launchLocal}`)
+          onTitleChanged('local / debug', opts)
+          setupEventHandlers()
+          const url = `http://127.0.0.1:${config.ws.port}/launch/`
+          cb(null, {url})
+          return
+        }
+      
+        const bootKey = (conf && conf.boot) || config.boot
+        debug(`bootKey: ${bootKey}`)
+        ssb.treBoot.getWebApp(bootKey, (err, result) =>{
+          if (err) {
+            onLoading(false, opts)
+            debug(err.message)
+            return cb(err)
+          }
+          const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
+          debug('webapp: %O', result.kv.value.content)
+          const title = result.kv.value.content.name
+          onTitleChanged(title, opts)
+          setupEventHandlers()
+          cb(null, {webapp: result.kv, url})
+        })
+
       })
 
     })

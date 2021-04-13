@@ -31,6 +31,7 @@
     "tre-fonts": "^1.6.1",
     "tre-images": "^1.13.1",
     "tre-invite-code": "^1.1.1",
+    "tre-modal-dialog": "^1.0.0",
     "tre-split-pane": "^1.0.1",
     "tre-stylesheets": "^1.3.3"
   },

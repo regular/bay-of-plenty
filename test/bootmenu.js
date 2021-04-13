@@ -180,8 +180,13 @@ test('use invalid invite code', t=>{
 
     const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
     await button.click()
-    await wait(200000)
-    
+    await wait(1000)
+
+    const modalTextEl = await menuPage.waitForSelector('.tre-modal-dialog-dimmer .text', {visible: true})
+    const modalText = await modalTextEl.evaluate(el=>el.innerText)
+    t.ok(/failed to parse/.test(modalText), 'error message is displayed')
+
+    await wait(2000)
     t.end()
   })()
 })
@@ -224,6 +229,10 @@ test('try to re-use invite code', t=>{
     const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
     await button.click()
     await wait(2000)
+
+    const modalTextEl = await menuPage.waitForSelector('.tre-modal-dialog-dimmer .text', {visible: true})
+    const modalText = await modalTextEl.evaluate(el=>el.innerText)
+    t.ok(/not accepted/.test(modalText), 'error message is displayed')
     
     t.end()
   })()
@@ -250,6 +259,10 @@ test('close bootmaneu tab', t=>{
 
   ;(async function() {
     try {
+      await wait(1000)
+      await clickClose()
+      await wait(1000)
+      await clickClose()
       await wait(1000)
       await clickClose()
     } catch(e) {

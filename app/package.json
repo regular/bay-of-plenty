@@ -35,7 +35,7 @@
     "query-string": "^6.13.5",
     "range-parser": "^1.2.1",
     "ssb-autofollow": "^1.1.0",
-    "ssb-autoinvite": "^1.2.0",
+    "ssb-autoinvite": "^1.2.1",
     "ssb-autoname": "^1.2.1",
     "ssb-backlinks": "^2.1.1",
     "ssb-caps": "^1.1.0",

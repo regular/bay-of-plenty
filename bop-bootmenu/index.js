@@ -8,6 +8,7 @@ const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
+const dialog = require('tre-modal-dialog')
 const IdentitySelector = require('./identity-selector')
 const RenderApps = require('./render-apps')
 const RenderNetworks = require('./render-networks')
@@ -102,6 +103,13 @@ client( (err, ssb, config) =>{
     ])
   }
 
+  function showError(err) {
+    if (!err) return
+    dialog(err.message, (err, key) => {
+      if (err) console.error(err.message)
+    })
+  }
+
   function launchApp(invite) {
     if (appLoading()) return
     document.body.classList.add('loading')
@@ -113,8 +121,8 @@ client( (err, ssb, config) =>{
     ssb.bayofplenty.openApp(invite, id, (err, result)=>{
       if (err) {
         appLoading.set(null)
-        console.error(err.message)
-        return
+        //console.error(err.message)
+        return showError(err)
       }
       const {url} = result
       document.location.href = url
@@ -164,19 +172,19 @@ client( (err, ssb, config) =>{
               }, 1)
               const code = textarea.value
               console.log('invite code', code)
+              ev.preventDefault()
               if (appLoading()) return
               appLoading.set(code)
-              ev.preventDefault()
               const parsed = parse(code)
               if (!parsed) throw new Error('invite parse error')
               ssb.bayofplenty.addIdentity(parsed.network, (err, id) => {
-                if (err) return console.error(err.message)
+                if (err) return showErrorr(err)
                 ssb.bayofplenty.openApp(code, id, (err, result)=>{
                   if (err) {
                     appLoading.set(null)
-                    console.error(`openApp failed: ${err.message}`)
+                    //console.error(`openApp failed: ${err.message}`)
                     button.disabled = false
-                    return
+                    return showError(err)
                   }
                   const {webapp, url} = result
                   console.log(`WEBAPP: ${webapp.value.content.name}`)
@@ -332,6 +340,10 @@ styles(`
   }
   button {
     font-size: 16pt;
+  }
+  .tre-modal-dialog-dimmer section.text {
+    color: black;
+    word-break: break-all;
   }
 `)
 
