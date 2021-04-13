@@ -103,8 +103,12 @@ module.exports = function OpenApp(pool, conf, argv) {
       }
 
       const bootKey = (conf && conf.boot) || config.boot
+      debug(`bootKey: ${bootKey}`)
       ssb.treBoot.getWebApp(bootKey, (err, result) =>{
-        if (err) return cb(err)
+        if (err) {
+          debug(err.message)
+          return cb(err)
+        }
         const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
         debug('webapp: %O', result.kv.value.content)
         const title = result.kv.value.content.name
