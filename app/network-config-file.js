@@ -59,7 +59,9 @@ function configurePorts(config, cb) {
     if (!config.autoinvite) {
       config.port = Math.floor(50000 + 15000 * Math.random())
     } else {
-      config.port = Number(config.autoinvite.split(':')[1])
+      const code = typeof config.autoinvite == 'string' ? config.autoinvite : config.autoinvite.code
+      config.port = Number(code.split(':')[1])
+      if (!config.port) return cb(new Error(`No port found in config.autoinvite: ${code}`))
     }
   }
   allocPort(privateIP, config.port, (err, port) => {

@@ -124,5 +124,11 @@ module.exports = function OpenApp(pool, conf, argv) {
 function confFromInvite(invite) {
   invite = invite.replace(/\s*/g,'')
   const conf = invites.parse(invite)
-  return conf ? conf : null
+  if (!conf) return null
+
+  if (conf.autoinvite && typeof conf.autoinvite == "string") {
+    const code = conf.autoinvite
+    conf.autoinvite = {code, auto: false}
+  }
+  return conf
 }
