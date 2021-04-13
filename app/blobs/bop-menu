@@ -19,10 +19,10 @@
 <meta name="generator" content="tre-compile 2.0.3">
 <meta name="tre:repository-url" content="git@github.com:regular/bay-of-plenty.git">
 <meta name="tre:repository-branch" content="master">
-<meta name="tre:commit" content="v1.12.0-77-g228bd98-dirty">
+<meta name="tre:commit" content="v1.12.0-89-g59abba5-dirty">
 <meta name="tre:main" content="index.js">
 <meta name="keywords" content="bay of plenty,tre">
-<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-vEj+gifmzUy00+aNFGqK/7cBe7lcrHlXZj180C+77Ds=';">
+<meta http-equiv="Content-Security-Policy" content="script-src 'sha256-mlMhm94j1NsT+yQkXndUxzvcHfOa8AIfi325FwG5UmE=';">
 </head>
 <body></body>
 <script>(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
@@ -352,7 +352,7 @@ function Animator(setter) {
 }
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"./avatar-updates":1,"./svg-symbol":445,"buffer":72,"debug":92,"module-styles":174,"mutant/array":188,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200,"mutant/value":204,"pull-stream":299,"raf":343,"ssb-ref":388}],4:[function(require,module,exports){
+},{"./avatar-updates":1,"./svg-symbol":446,"buffer":72,"debug":92,"module-styles":174,"mutant/array":188,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200,"mutant/value":204,"pull-stream":299,"raf":343,"ssb-ref":388}],4:[function(require,module,exports){
 const {client} = require('tre-client')
 const styles = require('module-styles')('bop-bootmenu')
 const h = require('mutant/html-element')
@@ -363,6 +363,7 @@ const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
 const {parse} = require('tre-invite-code')
+const dialog = require('tre-modal-dialog')
 const IdentitySelector = require('./identity-selector')
 const RenderApps = require('./render-apps')
 const RenderNetworks = require('./render-networks')
@@ -457,6 +458,13 @@ client( (err, ssb, config) =>{
     ])
   }
 
+  function showError(err) {
+    if (!err) return
+    dialog(err.message, (err, key) => {
+      if (err) console.error(err.message)
+    })
+  }
+
   function launchApp(invite) {
     if (appLoading()) return
     document.body.classList.add('loading')
@@ -468,8 +476,8 @@ client( (err, ssb, config) =>{
     ssb.bayofplenty.openApp(invite, id, (err, result)=>{
       if (err) {
         appLoading.set(null)
-        console.error(err.message)
-        return
+        //console.error(err.message)
+        return showError(err)
       }
       const {url} = result
       document.location.href = url
@@ -512,25 +520,26 @@ client( (err, ssb, config) =>{
         }),
         h('.bbuton-container', [
           button = h('button', {
+            disabled: true,
             'ev-click': ev=>{
               setTimeout( ()=>{
                 button.disabled = true
               }, 1)
               const code = textarea.value
               console.log('invite code', code)
+              ev.preventDefault()
               if (appLoading()) return
               appLoading.set(code)
-              ev.preventDefault()
               const parsed = parse(code)
               if (!parsed) throw new Error('invite parse error')
               ssb.bayofplenty.addIdentity(parsed.network, (err, id) => {
-                if (err) return console.error(err.message)
+                if (err) return showErrorr(err)
                 ssb.bayofplenty.openApp(code, id, (err, result)=>{
                   if (err) {
                     appLoading.set(null)
-                    console.error(`openApp failed: ${err.message}`)
+                    //console.error(`openApp failed: ${err.message}`)
                     button.disabled = false
-                    return
+                    return showError(err)
                   }
                   const {webapp, url} = result
                   console.log(`WEBAPP: ${webapp.value.content.name}`)
@@ -687,10 +696,14 @@ styles(`
   button {
     font-size: 16pt;
   }
+  .tre-modal-dialog-dimmer section.text {
+    color: black;
+    word-break: break-all;
+  }
 `)
 
 
-},{"./get-versions":2,"./identity-selector":3,"./reconnect-stream":440,"./render-apps":443,"./render-networks":444,"debug":92,"module-styles":174,"mutant/array":188,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200,"mutant/value":204,"pull-stream":299,"tre-client":429,"tre-invite-code":431,"tre-split-pane":432}],5:[function(require,module,exports){
+},{"./get-versions":2,"./identity-selector":3,"./reconnect-stream":441,"./render-apps":444,"./render-networks":445,"debug":92,"module-styles":174,"mutant/array":188,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200,"mutant/value":204,"pull-stream":299,"tre-client":429,"tre-invite-code":431,"tre-modal-dialog":432,"tre-split-pane":433}],5:[function(require,module,exports){
 'use strict';
 
 const asn1 = exports;
@@ -15101,7 +15114,7 @@ Writable.prototype._destroy = function (err, cb) {
   cb(err);
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../errors":56,"./_stream_duplex":57,"./internal/streams/destroy":64,"./internal/streams/state":68,"./internal/streams/stream":69,"_process":242,"buffer":72,"inherits":160,"util-deprecate":437}],62:[function(require,module,exports){
+},{"../errors":56,"./_stream_duplex":57,"./internal/streams/destroy":64,"./internal/streams/state":68,"./internal/streams/stream":69,"_process":242,"buffer":72,"inherits":160,"util-deprecate":438}],62:[function(require,module,exports){
 (function (process){(function (){
 'use strict';
 
@@ -20929,7 +20942,7 @@ arguments[4][19][0].apply(exports,arguments)
 
 }));
 
-},{"tweetnacl/nacl-fast":434}],107:[function(require,module,exports){
+},{"tweetnacl/nacl-fast":435}],107:[function(require,module,exports){
 'use strict';
 
 var elliptic = exports;
@@ -25573,7 +25586,7 @@ arguments[4][59][0].apply(exports,arguments)
 arguments[4][60][0].apply(exports,arguments)
 },{"../errors":128,"./_stream_duplex":129,"dup":60,"inherits":160}],133:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"../errors":128,"./_stream_duplex":129,"./internal/streams/destroy":136,"./internal/streams/state":140,"./internal/streams/stream":141,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":437}],134:[function(require,module,exports){
+},{"../errors":128,"./_stream_duplex":129,"./internal/streams/destroy":136,"./internal/streams/state":140,"./internal/streams/stream":141,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":438}],134:[function(require,module,exports){
 arguments[4][62][0].apply(exports,arguments)
 },{"./end-of-stream":137,"_process":242,"dup":62}],135:[function(require,module,exports){
 arguments[4][63][0].apply(exports,arguments)
@@ -26971,7 +26984,7 @@ function validateParams (params) {
   return params
 }
 
-},{"http":404,"url":435}],157:[function(require,module,exports){
+},{"http":404,"url":436}],157:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -31660,7 +31673,7 @@ module.exports = function (opts = {}) {
 
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":72,"debug":92,"fs":71,"http":404,"https":156,"multiserver-scopes":179,"pull-stream/pull":300,"pull-stream/throughs/map":322,"pull-ws":333,"url":435}],188:[function(require,module,exports){
+},{"buffer":72,"debug":92,"fs":71,"http":404,"https":156,"multiserver-scopes":179,"pull-stream/pull":300,"pull-stream/throughs/map":322,"pull-ws":333,"url":436}],188:[function(require,module,exports){
 var Value = require('./value')
 var LazyWatcher = require('./lib/lazy-watcher')
 var isSame = require('./lib/is-same')
@@ -40394,7 +40407,7 @@ module.exports = function (url, location, protocolMap, defaultProtocol) {
 
 
 
-},{"url":435}],348:[function(require,module,exports){
+},{"url":436}],348:[function(require,module,exports){
 'use strict'
 var Buffer = require('buffer').Buffer
 var inherits = require('inherits')
@@ -42102,7 +42115,7 @@ exports.randombytes = function (buf) {
 
 
 }).call(this)}).call(this,require("buffer").Buffer)
-},{"buffer":72,"ed2curve":106,"sha.js/sha256":367,"tweetnacl-auth":433,"tweetnacl/nacl-fast":368}],366:[function(require,module,exports){
+},{"buffer":72,"ed2curve":106,"sha.js/sha256":367,"tweetnacl-auth":434,"tweetnacl/nacl-fast":368}],366:[function(require,module,exports){
 arguments[4][83][0].apply(exports,arguments)
 },{"dup":83,"safe-buffer":349}],367:[function(require,module,exports){
 arguments[4][88][0].apply(exports,arguments)
@@ -45998,7 +46011,7 @@ arguments[4][59][0].apply(exports,arguments)
 arguments[4][60][0].apply(exports,arguments)
 },{"../errors":390,"./_stream_duplex":391,"dup":60,"inherits":160}],395:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"../errors":390,"./_stream_duplex":391,"./internal/streams/destroy":398,"./internal/streams/state":402,"./internal/streams/stream":403,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":437}],396:[function(require,module,exports){
+},{"../errors":390,"./_stream_duplex":391,"./internal/streams/destroy":398,"./internal/streams/state":402,"./internal/streams/stream":403,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":438}],396:[function(require,module,exports){
 arguments[4][62][0].apply(exports,arguments)
 },{"./end-of-stream":399,"_process":242,"dup":62}],397:[function(require,module,exports){
 arguments[4][63][0].apply(exports,arguments)
@@ -46102,7 +46115,7 @@ http.METHODS = [
 	'UNSUBSCRIBE'
 ]
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/request":406,"./lib/response":407,"builtin-status-codes":74,"url":435,"xtend":439}],405:[function(require,module,exports){
+},{"./lib/request":406,"./lib/response":407,"builtin-status-codes":74,"url":436,"xtend":440}],405:[function(require,module,exports){
 (function (global){(function (){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
 
@@ -46706,7 +46719,7 @@ arguments[4][59][0].apply(exports,arguments)
 arguments[4][60][0].apply(exports,arguments)
 },{"../errors":408,"./_stream_duplex":409,"dup":60,"inherits":160}],413:[function(require,module,exports){
 arguments[4][61][0].apply(exports,arguments)
-},{"../errors":408,"./_stream_duplex":409,"./internal/streams/destroy":416,"./internal/streams/state":420,"./internal/streams/stream":421,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":437}],414:[function(require,module,exports){
+},{"../errors":408,"./_stream_duplex":409,"./internal/streams/destroy":416,"./internal/streams/state":420,"./internal/streams/stream":421,"_process":242,"buffer":72,"dup":61,"inherits":160,"util-deprecate":438}],414:[function(require,module,exports){
 arguments[4][62][0].apply(exports,arguments)
 },{"./end-of-stream":417,"_process":242,"dup":62}],415:[function(require,module,exports){
 arguments[4][63][0].apply(exports,arguments)
@@ -47852,7 +47865,7 @@ function loadKeys(name) {
 }
 
 
-},{"./worth-a-retry":430,"debug":92,"multicb":176,"pull-catch":252,"pull-reconnect":298,"pull-stream":299,"ssb-client":372,"traverse":428,"wrap-muxrpc-api":438}],430:[function(require,module,exports){
+},{"./worth-a-retry":430,"debug":92,"multicb":176,"pull-catch":252,"pull-reconnect":298,"pull-stream":299,"ssb-client":372,"traverse":428,"wrap-muxrpc-api":439}],430:[function(require,module,exports){
 module.exports = function(err) {
   if (!err) return
   const {message} = err
@@ -47902,6 +47915,7 @@ function flatten(a) {
 }
 
 function unarr(arr) {
+  if (arr == undefined) return undefined
   return arr.length == 1 ? arr[0] : arr
 }
 
@@ -47909,6 +47923,74 @@ module.exports = {parse, stringify}
 
 }).call(this)}).call(this,require("buffer").Buffer)
 },{"buffer":72}],432:[function(require,module,exports){
+const h = require('mutant/html-element')
+const styles = require('module-styles')('tre-modal-dialog')
+
+module.exports = function(msg, opts, cb) {
+  if (typeof opts == 'function') {cb = opts; opts = {}}
+  const buttons = opts.buttons || {ok: 'Okay'}
+
+  const el = h('.tre-modal-dialog-dimmer', [
+    h('section.box', [
+      h('section.text', msg),
+      h('section.actions', Object.entries(buttons).map( ([key, name])=>{
+        return h('button', {
+          'data-key': key,
+          'ev-click': ev=>{
+            quit(null, key)
+          }
+        }, name)
+      }))
+    ])
+  ])
+
+  document.body.appendChild(el)
+
+  function quit(err, key) {
+    document.body.removeChild(el)
+    cb(err, key)
+  }
+
+}
+
+styles(`
+.tre-modal-dialog-dimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: grid;
+  grid-template-columns: 1fr minmax(20%,auto) 1fr;
+  grid-template-rows: 1fr minmax(25%,auto) 1fr;
+}
+
+.tre-modal-dialog-dimmer section.box {
+  font-size: 140%;
+  border: 1px solid black;
+  grid-row: 2/3;
+  grid-column: 2/3;
+  padding: 1em;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+  border-radius: 8px;
+  background-color: beige;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.tre-modal-dialog-dimmer section.actions {
+  display: grid;
+  grid-auto-flow: column;
+  place-content: end end;
+  place-items: end end;
+}
+
+.tre-modal-dialog-dimmer button {
+}
+`)
+
+},{"module-styles":174,"mutant/html-element":191}],433:[function(require,module,exports){
 const h = require('mutant/html-element')
 const setStyles = require('module-styles')('spit-pane')
 
@@ -48045,7 +48127,7 @@ function makePane(flexBasis, children) {
   }, children)
 }
 
-},{"module-styles":174,"mutant/html-element":191}],433:[function(require,module,exports){
+},{"module-styles":174,"mutant/html-element":191}],434:[function(require,module,exports){
 (function(root, f) {
   'use strict';
   if (typeof module !== 'undefined' && module.exports) module.exports = f(require('tweetnacl'));
@@ -48094,7 +48176,7 @@ function makePane(flexBasis, children) {
 
 }));
 
-},{"tweetnacl":434}],434:[function(require,module,exports){
+},{"tweetnacl":435}],435:[function(require,module,exports){
 (function(nacl) {
 'use strict';
 
@@ -50484,7 +50566,7 @@ nacl.setPRNG = function(fn) {
 
 })(typeof module !== 'undefined' && module.exports ? module.exports : (self.nacl = self.nacl || {}));
 
-},{"crypto":27}],435:[function(require,module,exports){
+},{"crypto":27}],436:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -51218,7 +51300,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":436,"punycode":339,"querystring":342}],436:[function(require,module,exports){
+},{"./util":437,"punycode":339,"querystring":342}],437:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -51236,7 +51318,7 @@ module.exports = {
   }
 };
 
-},{}],437:[function(require,module,exports){
+},{}],438:[function(require,module,exports){
 (function (global){(function (){
 
 /**
@@ -51307,7 +51389,7 @@ function config (name) {
 }
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],438:[function(require,module,exports){
+},{}],439:[function(require,module,exports){
 const traverse = require('traverse')
 const validTypes = ['sync', 'async', 'source', 'sink', 'duplex']
 
@@ -51323,7 +51405,7 @@ module.exports = function(api, manifest, wrap) {
   })
 }
 
-},{"traverse":428}],439:[function(require,module,exports){
+},{"traverse":428}],440:[function(require,module,exports){
 module.exports = extend
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -51344,7 +51426,7 @@ function extend() {
     return target
 }
 
-},{}],440:[function(require,module,exports){
+},{}],441:[function(require,module,exports){
 const pull =require('pull-stream')
 const filterError = require('pull-catch')
 const next = require('pull-next')
@@ -51369,9 +51451,9 @@ module.exports = function(src) {
   })
 }
 
-},{"pull-catch":441,"pull-next":442,"pull-stream":299}],441:[function(require,module,exports){
+},{"pull-catch":442,"pull-next":443,"pull-stream":299}],442:[function(require,module,exports){
 arguments[4][252][0].apply(exports,arguments)
-},{"dup":252}],442:[function(require,module,exports){
+},{"dup":252}],443:[function(require,module,exports){
 (function (global){(function (){
 var noop = function () {}
 
@@ -51410,7 +51492,7 @@ module.exports = function (next) {
 
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],443:[function(require,module,exports){
+},{}],444:[function(require,module,exports){
 const styles = require('module-styles')('bop-bootmenu-render-apps')
 const h = require('mutant/html-element')
 const MutantMap = require('mutant/map')
@@ -51591,7 +51673,7 @@ function revisionRoot(kv) {
 }
 
 
-},{"./avatar-updates":1,"./svg-symbol":445,"module-styles":174,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200}],444:[function(require,module,exports){
+},{"./avatar-updates":1,"./svg-symbol":446,"module-styles":174,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200}],445:[function(require,module,exports){
 const styles = require('module-styles')('bop-bootmenu:render-networks')
 const h = require('mutant/html-element')
 const MutantMap = require('mutant/map')
@@ -51745,7 +51827,7 @@ styles(`
   }
 `)
 
-},{"./avatar-updates":1,"./svg-symbol":445,"module-styles":174,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200}],445:[function(require,module,exports){
+},{"./avatar-updates":1,"./svg-symbol":446,"module-styles":174,"mutant/computed":189,"mutant/html-element":191,"mutant/map":200}],446:[function(require,module,exports){
 const crypto = require('crypto')
 
 module.exports = function addSymbol(src, opts) {
