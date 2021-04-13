@@ -16,13 +16,13 @@ const uploadApp = require('./lib/upload-app')
 const rc = require('rc')
 
 const QUIET = 0
-const DEBUG = 'bop:browser-console,multiserver:net ssb-zero-conf-client'
+const DEBUG = 'tre-boot,bop:open-app,bop:browser-console,multiserver:net ssb-zero-conf-client'
 const dir = `/tmp/${Date.now()}`
 const configPath = join(dir, 'config')
 const appkey = crypto.randomBytes(32).toString('base64')
 const keypair = ssbKeys.generate()
 const port = 60999
-let bop, browser, browserUtil, pub, appMessage, longInvite
+let bop, browser, browserUtil, pub, appMessage, longInvite, invalidInvite
 
 test('make sure we control the config', t=>{
   const config = rc('tre')
@@ -39,6 +39,7 @@ test('start a pub', t => {
   mkdirp(path)
   const shs = appkey
   const config = {
+    allowPrivate: true,
     path,
     port: port + 2,
     caps: {shs}
@@ -81,6 +82,14 @@ test('make invite code', t=>{
     })
     t.ok(longInvite)
     console.log(`long invite: ${longInvite}`)
+
+    invalidInvite = inviteCodes.stringify({
+      network: `*${appkey}.random`,
+      autoinvite: invite.replace(/~./,'~xx'),
+      autoname: 'alice',
+      autofollow: pub.id,
+      boot: appMessage.key
+    })
     t.end()
   })
 })
@@ -159,11 +168,31 @@ async function fillInvite(menu, longInvite) {
   await textarea.type(longInvite)
 }
 
+test('use invalid invite code', t=>{
+
+  ;(async function() {
+    await wait(2000)
+
+    const menuTarget = await browserUtil.waitForNewTarget('index.js')
+    const menuPage = await menuTarget.page()
+
+    await fillInvite(menuPage, invalidInvite)
+
+    const button = await menuPage.waitForSelector('form[action="/add-network"] button', {visible: true})
+    await button.click()
+    await wait(200000)
+    
+    t.end()
+  })()
+})
+
 
 test('fill in invite code', t=>{
 
   ;(async function() {
     await wait(2000)
+
+    await browserUtil.addTab()
 
     const menuTarget = await browserUtil.waitForNewTarget('index.js')
     const menuPage = await menuTarget.page()
@@ -199,6 +228,7 @@ test('try to re-use invite code', t=>{
     t.end()
   })()
 })
+
 test('close bootmaneu tab', t=>{
 
   async function clickClose() {
