@@ -15,7 +15,7 @@ module.exports = function OpenApp(pool, conf, argv) {
     debug('openApp called')
     const {page, viewId} = opts
     if (!page) return cb(new Error(`page not specified`))
-    if (viewId == undefined) return cb(new Error(`viewId not specified viewId`))
+    if (viewId == undefined) return cb(new Error(`viewId not specified.`))
     let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
