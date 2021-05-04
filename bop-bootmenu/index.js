@@ -7,7 +7,7 @@ const computed = require('mutant/computed')
 const Value = require('mutant/value')
 const debug = require('debug')('bop-bootmenu')
 const pull = require('pull-stream')
-const {parse} = require('tre-invite-code')
+const inviteCodes = require('tre-invite-code')
 const dialog = require('tre-modal-dialog')
 const IdentitySelector = require('./identity-selector')
 const RenderApps = require('./render-apps')
@@ -159,7 +159,7 @@ client( (err, ssb, config) =>{
           wrap: "hard",
           placeholder: "Your invite code goes here",
           'ev-input': ev => {
-            const ok = Boolean(parse(textarea.value.replace(/\s/g,'')))
+            const ok = Boolean(parse(textarea.value))
             button.disabled = !ok
           }
         }),
@@ -202,6 +202,10 @@ client( (err, ssb, config) =>{
 })
 
 // -- util
+
+function parse(x) {
+  return inviteCodes.parse(x.replace(/\s/g,''))
+}
 
 function preventDblClickSelection() {
   document.addEventListener('mousedown', function (event) {
