@@ -15,7 +15,7 @@ const RenderNetworks = require('./render-networks')
 const {makePane, makeDivider, makeSplitPane} = require('tre-split-pane')
 
 const getVersions = require('./get-versions')
-const reconnectStream = require('./reconnect-stream')
+const reconnectStream = require('tre-reconnect-stream')
 
 preventDblClickSelection()
 
