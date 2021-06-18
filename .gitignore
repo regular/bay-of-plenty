@@ -4,3 +4,6 @@ dist/
 *-invite
 *.invite
 app/.tre
+package-lock.json
+app/package-lock.json
+thumbnail-server/package-lock.json
