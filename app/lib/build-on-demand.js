@@ -4,10 +4,14 @@ const crypto = require('crypto')
 const debug = require('debug')('bop:build-on-demand')
 const compile = require('tre-compile/compile')
 
+const hyperstream = require('hyperstream')
+const BufferList = require('bl')
+
 module.exports = async function(ssb, page, filename, opts) {
   opts = opts || {}
   const random = basename(filename) + crypto.randomBytes(32).toString('hex')
   const origin = opts.origin || 'http://localhost/'
+  const base = opts.base || `${origin}blobs/get/`
 
   ssb.ws.use(function(req, res, next) {
     const u = parse('http://makeurlparseright.com'+req.url)
@@ -29,7 +33,13 @@ module.exports = async function(ssb, page, filename, opts) {
       )
       res.setHeader('x-bay-of-plenty-script-loader', filename)
       res.setHeader('content-type', 'text/html')
-      res.end(result.body)
+
+      const body = BufferList()
+      body.append(result.body)
+      const hs = hyperstream({head: {_appendHtml: `<base href="${base}">`}})
+      hs.pipe(res)
+      body.pipe(hs)
+      //res.end(result.body)
     })
   })
   debug('navigating')
