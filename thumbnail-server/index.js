@@ -29,11 +29,16 @@ module.exports = function(dir, config) {
   return {
     listen,
     close: server.close.bind(server),
-    addImageURL
+    addImageURL,
+    getPrefix
   }
 
   function listen(cb) {
     server.listen(port, host, cb)
+  }
+
+  function getPrefix() {
+    return `http://${origin}/thumbnails/get/`
   }
 
   function addImageURL(url, cb) {
@@ -43,7 +48,7 @@ module.exports = function(dir, config) {
       if (err) return cb(err)
       cb(null, Object.fromEntries(Object.entries(result).map( ([size, hashAndFormat])=>{
         const [hash, format] = hashAndFormat.split('|')
-        return [size, `http://${origin}/thumbnails/get/${encodeURIComponent(hash)}?contentType=${encodeURIComponent('image/'+format)}`]
+        return [size, `${getPrefix()}${encodeURIComponent(hash)}?contentType=${encodeURIComponent('image/'+format)}`]
       })))
     })
   }

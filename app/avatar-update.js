@@ -111,5 +111,8 @@ function getUpdates(network, id) {
 
 module.exports = {
   avatarUpdate,
-  getUpdates
+  getUpdates,
+  getPrefix: function() {
+    return server.getPrefix()
+  }
 }

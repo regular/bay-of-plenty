@@ -156,9 +156,19 @@ exports.init = function (ssb, config) {
       }
       debug('requested blob is webapp with script hash %s', scriptHash)
 
+      const csp = 
+          `default-src 'self'; ` +
+          `img-src 'self' data: blob: ${avatarUpdate.getPrefix()}; ` +
+          `style-src 'self' 'unsafe-inline'; ` +
+          `font-src 'self' blob:; ` +
+          `script-src 'sha256-${scriptHash}'; ` +
+          `connect-src 'self' ws://localhost:${config.ws.port}; ` +
+          `worker-src 'self' blob:`
+
+      debug(`csp: ${csp}`)
+
       res.setHeader(
-        'Content-Security-Policy', 
-        `script-src 'sha256-${scriptHash}';`
+        'Content-Security-Policy', csp
       )
       return next()
     })
@@ -368,7 +378,7 @@ function sendLaunchPage(res, opts) {
         .update(bl_hash.slice())
         .digest('base64')
 
-      console.log('sha', sha)
+      //console.log('sha', sha)
       
       res.setHeader(
         'Content-Security-Policy', 
