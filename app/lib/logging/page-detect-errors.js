@@ -26,7 +26,7 @@ module.exports = function(page) {
     }
   })
   page.on('requestfailed', request => {
-    const errorText = request.failure().errorText
+    const errorText = request.failure() && request.failure().errorText
     const type = request.resourceType()
     const method = request.method()
     const url = request.url()
