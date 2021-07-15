@@ -16,7 +16,7 @@ module.exports = function(argv) {
     loadOrCreateConfigFile(config, (err, config) => {
       if (err) return cb(err)
       debug('Creating sbot with config' + JSON.stringify(config, null, 2))
-      const createSbot = require('tre-bot')()
+      let createSbot = require('tre-bot')()
         .use(require('./plugin'))
         .use(authorize)
         .use({
@@ -34,6 +34,28 @@ module.exports = function(argv) {
           type: 'about',
           destField: 'about'
         }))
+
+      if (config.canned) {
+        debug('default/canned network, adding appPermissions API')
+        createSbot = createSbot
+        .use(require('ssb-social-index')({
+          namespace: 'appPermissions',
+          type: 'app-permissions',
+          destField: 'app',
+          getSocialValue: (socialValues, yourId, authorId) => {
+            if (socialValues[yourId]) {
+              // you assigned a value, use this!
+              return socialValues[yourId]
+            } else if (socialValues[authorId]) {
+              // they assigned a value, use this!
+              return socialValues[authorId]
+            } else {
+              // choose a value from selection based on most common
+              return highestRank(socialValues)
+            }
+          }
+        }))
+      }
 
       const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
       createSbot(config, keys, (err, ssb) => {
@@ -57,26 +79,33 @@ module.exports = function(argv) {
 
         gatherMeta(ssb, config, keys)
 
-        // TODO: only if canned
-        debug('adding blobs ...')
-        addBlobs(ssb, join(__dirname, 'blobs'), err =>{
-          if (err) return cb(err)
-          debug('done adding blobs.')
-          cb(null, ssb, config, keys.id/*,browserKeys*/)
-        })
+        if (config.canned) {
+          debug('adding blobs ...')
+          addBlobs(ssb, join(__dirname, 'blobs'), err =>{
+            if (err) return cb(err)
+            debug('done adding blobs.')
+            cb(null, ssb, config, keys.id/*,browserKeys*/)
+          })
+        }
+
       })
     })
   }
+}
+
+function getNetId(ssb, config) {
+  const ext = ssb.id.split('.').slice(-1)[0]
+  const sigil = ssb.id[0]
+  const netId = `${sigil}${config.caps.shs}.${ext}`
+  return netId
 }
 
 function gatherMeta(ssb, config, keys) {
   updateAvatars(ssb, config.network, keys.id, 'name')
   updateAvatars(ssb, config.network, keys.id, 'image')
 
-  const ext = keys.id.split('.').slice(-1)[0]
-  const sigil = keys.id[0]
-  const netId = `${sigil}${config.caps.shs}.${ext}`
-  debug('requesting social calues for %s', netId)
+  const netId = getNetId(ssb, config)
+  debug('requesting social values for %s', netId)
 
   updateAvatars(ssb, config.network, netId, 'name')
   updateAvatars(ssb, config.network, netId, 'image')

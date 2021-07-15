@@ -42,7 +42,7 @@
     "ssb-config": "^3.4.5",
     "ssb-keys": "^7.2.2",
     "ssb-sandboxed-views": "^2.0.2",
-    "ssb-social-index": "^1.0.0",
+    "ssb-social-index": "^1.2.0",
     "stream-to-pull-stream": "^1.7.3",
     "thumbnail-server": "file:../thumbnail-server",
     "tre-activity-indicator": "^1.0.0",

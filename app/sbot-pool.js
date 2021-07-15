@@ -29,10 +29,19 @@ module.exports = function Pool(Sbot) {
   }
   function makePromise({conf, id}) {
     return new Promise( (resolve, reject) => {
-      if (!conf) conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
+      if (!conf) {
+        try {
+          conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
+          conf.canned = true
+        } catch(e) {
+          return reject(e)
+        }
+      }
       conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf)
       
-      if (!conf.network) return reject(new Error('No network specified'))
+      if (!conf.network) {
+        return reject(new Error('No network specified'))
+      }
       
       function makeSbot(conf) {
         Sbot(conf, (err, ssb, config, myid, browserKeys) => {
