@@ -11,6 +11,12 @@ const rc = require('rc')
 module.exports = function OpenApp(pool, conf, argv) {
   const {onLoading, onTitleChanged} = conf
 
+  const appByView = []
+
+  function getAppByViewId(id) {
+    return appByView[id]
+  }
+
   return function openApp(invite, id, opts, cb) {
     const {page, viewId} = opts
     if (!page) return cb(new Error(`page not specified`))
@@ -50,7 +56,7 @@ module.exports = function OpenApp(pool, conf, argv) {
     //debug(`onLoading ${viewId} true`)
     onLoading(true, opts)
 
-    const bop = {openApp}
+    const bop = {openApp, getAppByViewId}
     const {unref, promise} = pool.get({conf, bop, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
@@ -72,18 +78,21 @@ module.exports = function OpenApp(pool, conf, argv) {
 
       page.once('close', e=>{
         debug(`tab ${viewId} closed -- unref sbot`)
+        delete appByView[viewId]
         unref()
       })
 
-      function setupEventHandlers() {
+      function setupEventHandlers(appKv) {
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
+          appByView[viewId] = null
           ssb.bayofplenty.addTab(page, viewId, browserKeys)
 
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
             debug(`onLoading ${viewId} false`)
+            appByView[viewId] = appKv
             onLoading(false, opts)
           })
 
@@ -130,7 +139,7 @@ module.exports = function OpenApp(pool, conf, argv) {
           debug('webapp: %O', result.kv.value.content)
           const title = result.kv.value.content.name
           onTitleChanged(title, opts)
-          setupEventHandlers()
+          setupEventHandlers(result.kv)
           cb(null, {webapp: result.kv, url})
         })
 

@@ -64,7 +64,7 @@ module.exports = function(bop) {
           // not from within BoP
           return fn.apply(this, args)
         }
-        const revRoot = revisionRoot(tab.app) 
+        const revRoot = revisionRoot(bop.getAppByViewId(tab.viewId)) 
         console.log('Called auth for app %s', revRoot)
         return cb(null, {allow: null, deny: null})
         //cb(null, ok ? {allow: null, deny: null} : null)
