@@ -84,8 +84,10 @@ module.exports = function(argv) {
           addBlobs(ssb, join(__dirname, 'blobs'), err =>{
             if (err) return cb(err)
             debug('done adding blobs.')
-            cb(null, ssb, config, keys.id/*,browserKeys*/)
+            cb(null, ssb, config, keys.id)
           })
+        } else {
+          cb(null, ssb, config, keys.id)
         }
 
       })

@@ -123,6 +123,22 @@ module.exports = function inject(electron, Sbot, argv) {
       DEBUG_TABS
     })
 
+    function onLoading(loading, opts) {
+      const {viewId} = opts
+      console.log(`on loading ${loading} ${viewId}`)
+      tabs[loading ? 'addTag' : 'removeTag'](viewId, 'loading')
+    }
+
+    function onTitleChanged(title, opts) {
+      const {viewId} = opts
+      tabs.setTitle(viewId, title)
+    }
+
+    const openApp = OpenApp(pool, {
+      onLoading,
+      onTitleChanged
+    }, argv)
+    
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
 
     tabs.newTab({
@@ -162,24 +178,13 @@ module.exports = function inject(electron, Sbot, argv) {
         setAlert
       })
 
-      function onLoading(loading, opts) {
-        const {viewId} = opts
-        console.log(`on loading ${loading} ${viewId}`)
-        tabs[loading ? 'addTag' : 'removeTag'](viewId, 'loading')
-      }
-
-      function onTitleChanged(title, opts) {
-        const {viewId} = opts
-        tabs.setTitle(viewId, title)
-      }
-
-      const openApp = OpenApp(pool, {
-        onLoading,
-        onTitleChanged
-      }, argv)
-      
       const launchLocalInAllTabs = argv['launch-local-in-all-tabs'] ?
         {launchLocal: filename} : {}
+
+      // TODO:- load canned config here
+      //      - load secret here
+      //      - put uploadBlobDir: true, appPermissions: tre
+      //        into canned config
 
       openApp(null, null, Object.assign({
         viewId: view.id,

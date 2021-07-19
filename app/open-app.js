@@ -12,10 +12,11 @@ module.exports = function OpenApp(pool, conf, argv) {
   const {onLoading, onTitleChanged} = conf
 
   return function openApp(invite, id, opts, cb) {
-    debug('openApp called')
     const {page, viewId} = opts
     if (!page) return cb(new Error(`page not specified`))
     if (viewId == undefined) return cb(new Error(`viewId not specified.`))
+    debug(`openApp called in tab ${viewId}`)
+
     let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
       const err = new Error('invite parse error')
@@ -24,7 +25,7 @@ module.exports = function OpenApp(pool, conf, argv) {
     }
     if (!invite && (opts.launchLocal || argv.config)) {
       conf = rc('tre', {}, argv)
-      console.log('read local config:  %o', conf)
+      debug('read local config:  %o', conf)
         //const trePath = locateTrerc(resolve('.'))
         //debug('reading local .trerc at %s', trePath)
         //conf = JSON.parse(fs.readFileSync('.trerc'))
@@ -46,7 +47,7 @@ module.exports = function OpenApp(pool, conf, argv) {
       debug('launchLocal is not set')
     }
 
-    debug(`onLoading ${viewId} true`)
+    //debug(`onLoading ${viewId} true`)
     onLoading(true, opts)
 
     const {unref, promise} = pool.get({conf, id})
@@ -55,9 +56,13 @@ module.exports = function OpenApp(pool, conf, argv) {
       onLoading(false, opts)
       return cb(err)
     }).then( ({ssb, config, myid}) => {
+      debug('got sbot')
       const browserKeys = ssbKeys.generate()
       debug(`browser public key: ${browserKeys.id}`)
       // only when sbot uses canned config
+      // TODO: should be controlled by appPermissions
+      // (put the plugin in all sbots, then restrict via auth
+  
       if (!invite && !id) {
         ssb.bayofplenty.setOpenAppCallback(openApp)
       }
