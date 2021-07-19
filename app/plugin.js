@@ -37,298 +37,310 @@ function makeIndex() {
   })
 }
 
-exports.name = 'bayofplenty'
-exports.version = require('./package.json').version
-exports.manifest = {
-  openApp: 'async',
-  versions: 'sync',
-  listPublicKeys: 'source',
-  addIdentity: 'async',
-  avatarUpdates: 'source',
-  logStream: 'source'
-}
+module.exports = function(bop) {
+  return {
+    name: 'bayofplenty',
+    version: require('./package.json').version,
+    manifest: {
+      openApp: 'async',
+      versions: 'sync',
+      listPublicKeys: 'source',
+      addIdentity: 'async',
+      avatarUpdates: 'source',
+      logStream: 'source'
+    },
 
-exports.init = function (ssb, config) {
-  debug('init')
+    init: function (ssb, config) {
+      debug('init')
 
-  let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
-  // taken from ssb-master
-  ssb.auth.hook(function (fn, args) {
-    const id = args[0]
-    const cb = args[1]
-    debug('auth called for %s', id)
-    const ok = tabs[id] !== undefined
-    if (ok) return cb(null, {allow: null, deny: null})
-    fn.apply(this, args)
-    //cb(null, ok ? {allow: null, deny: null} : null)
-  })
-
-  let windows = []
-  const queue = []
-  const logger = logging(ssb)
-
-  logger.subscribe(ssb.id, LOG_LEVEL, log)
-
-  const sv = ssb._flumeUse('WebappIndex', makeIndex())
-  
-  function getScriptHashForBlob(blobHash, cb) {
-    const o = {
-      gt: [blobHash, null],
-      lt: [blobHash, undefined]
-    }
-    pull(
-      sv.read(o),
-      pull.collect( (err, results)=>{
-        if (err) return cb(err)
-        if (results.length == 0) return cb(
-          new Error('script hash for webapp blob not found ' + blobHash)
-        )
-        if (results.length > 1) return cb(
-          new Error('multiple script hashes for webapp blob found ' + blobHash)
-        )
-        cb(null, results[0].key[1])
+      let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
+      // taken from ssb-master
+      ssb.auth.hook(function (fn, args) {
+        const id = args[0]
+        const cb = args[1]
+        debug('auth called for %s', id)
+        const tab = tabs[id]
+        if (tab == undefined) {
+          // not from within BoP
+          return fn.apply(this, args)
+        }
+        const revRoot = revisionRoot(tab.app) 
+        console.log('Called auth for app %s', revRoot)
+        return cb(null, {allow: null, deny: null})
+        //cb(null, ok ? {allow: null, deny: null} : null)
       })
-    )
-  }
 
-  ssb.ws.use(function (req, res, next) {
-    const u = parse('http://makeurlparseright.com'+req.url)
-    debug('%s request for path', req.method, u.pathname)
-    if(req.method === 'POST' && u.pathname == '/blobs/add') {
-      debug('adding blob ...')
-      pull(
-        toPull.source(req),
-        ssb.blobs.add(function (err, hash) {
-          debug('blob upload done: %o %s', err, hash)
-          res.end(JSON.stringify({
-            hash,
-            url: `/blobs/get/${encodeURIComponent(hash)}`
-          }))
-        })
-      )
-      return
-    }
-    if (req.method !== "GET" && req.method !== 'HEAD') return next()
+      let windows = []
+      const queue = []
+      const logger = logging(ssb)
 
-    const launchLocal = config.bayOfPlenty && config.bayOfPlenty.launchLocal
-    if (launchLocal) {
-      const ws_address = JSON.stringify(ssb.ws.getAddress())
-      if (u.pathname == '/.trerc') {
-        res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify({
-          caps: config.caps, // TODO: this leaks appKey to the public 
-          tre: config.tre
-        }, null, 2))
-        return
+      logger.subscribe(ssb.id, LOG_LEVEL, log)
+
+      const sv = ssb._flumeUse('WebappIndex', makeIndex())
+      
+      function getScriptHashForBlob(blobHash, cb) {
+        const o = {
+          gt: [blobHash, null],
+          lt: [blobHash, undefined]
+        }
+        pull(
+          sv.read(o),
+          pull.collect( (err, results)=>{
+            if (err) return cb(err)
+            if (results.length == 0) return cb(
+              new Error('script hash for webapp blob not found ' + blobHash)
+            )
+            if (results.length > 1) return cb(
+              new Error('multiple script hashes for webapp blob found ' + blobHash)
+            )
+            cb(null, results[0].key[1])
+          })
+        )
       }
-      if (u.pathname == '/.tre/ws-address') {
-        res.setHeader('Content-Type', 'application/json')
-        res.end(ws_address)
-        return
-      }
-    }
 
-    if (u.pathname.startsWith('/launch/')) {
-      if (launchLocal) {
-        debug(`request for launch page with local file: ${launchLocal}`)
-      } else {
-        const bootKey = decodeURIComponent(u.pathname.split('/')[2])
-        debug(`request for launch page with bootKey: ${bootKey}`)
-      }
-      res.statusCode = 200
-      res.setHeader('Content-Type', 'text/html')
-      return sendLaunchPage(res, {launchLocal})
-    }
+      ssb.ws.use(function (req, res, next) {
+        const u = parse('http://makeurlparseright.com'+req.url)
+        debug('%s request for path', req.method, u.pathname)
+        if(req.method === 'POST' && u.pathname == '/blobs/add') {
+          debug('adding blob ...')
+          pull(
+            toPull.source(req),
+            ssb.blobs.add(function (err, hash) {
+              debug('blob upload done: %o %s', err, hash)
+              res.end(JSON.stringify({
+                hash,
+                url: `/blobs/get/${encodeURIComponent(hash)}`
+              }))
+            })
+          )
+          return
+        }
+        if (req.method !== "GET" && req.method !== 'HEAD') return next()
 
-    if (!u.pathname.startsWith('/blobs/get/')) return next()
-
-    const blob = decodeURIComponent(u.pathname.slice(11))
-    if (req.method == 'HEAD') {
-      debug('request for blob HEAD %s', blob)
-      return next()
-    }
-    debug('request for blob %s', blob)
-    getScriptHashForBlob(blob, (err, scriptHash) => {
-      if (err) {
-        debug('Failed to get script hash for blob', err.message)
-        //return res.end(503, `Failed to get script hash: ${err.message}`)
-        return next()
-      }
-      debug('requested blob is webapp with script hash %s', scriptHash)
-
-      const csp = 
-          `default-src 'self'; ` +
-          `img-src 'self' data: blob: ${avatarUpdate.getPrefix()}; ` +
-          `style-src 'self' 'unsafe-inline'; ` +
-          `font-src 'self' blob:; ` +
-          `script-src 'sha256-${scriptHash}'; ` +
-          `connect-src 'self' ws://localhost:${config.ws.port}; ` +
-          `worker-src 'self' blob:`
-
-      debug(`csp: ${csp}`)
-
-      res.setHeader(
-        'Content-Security-Policy', csp
-      )
-      return next()
-    })
-  })
-
-  ssb.close.hook( function(fn, args) {
-    debug('close')
-    logger.unsubscribe(LOG_LEVEL, log)
-    windows = []
-    tabs = {}
-    deallocPort(config.host, config.port)
-    deallocPort('127.0.0.1', config.ws.port)
-    deallocPort('localhost', config.ws.port)
-    fn.apply(this, args)
-  })
-
-  function addTab(page, viewId, browserKeys) {
-    const id = browserKeys.id
-  
-    // did a page change its identity?
-    const removes = []
-    for(let i in tabs) {
-      if (tabs[i].page == page) {
-        debug('tab %d has changed its browser id', tabs[i].viewId)
-        removes.push(i)
-      }
-    }
-    removes.forEach(i=>delete tabs[i])
-
-    debug('add tab %d, browser id %s', viewId, id)
-    tabs[id] = {page, viewId}
-    page.once('close', ()=>{
-      debug('tab %d closed', viewId)
-      delete tabs[id]
-    })
-    // TODO
-    //windows.push(view)
-    emptyQueue()
-  }
-
-  function emptyQueue() {
-    // make sure first window receives all messages
-    if (!windows.length) return
-    function exec(code, rm) {
-      return function(win) {
-        debug('exec JS 2')
-        win.webContents.executeJavaScript(code)
-        .catch( err  => {
-          debug('err exec JS 2')
-          debug('executeJavaScript throws %s', err.message)
-          debug('remuoving window from list')
-          rm.push(win)
-          return console.log(err.message)
-        })
-        .then( v => {
-          debug('done exec JS 2', v)
-          if (v == false) {
-            debug('returned false remuoving from list')
-            rm.push(win)
+        const launchLocal = config.bayOfPlenty && config.bayOfPlenty.launchLocal
+        if (launchLocal) {
+          const ws_address = JSON.stringify(ssb.ws.getAddress())
+          if (u.pathname == '/.trerc') {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({
+              caps: config.caps, // TODO: this leaks appKey to the public 
+              tre: config.tre
+            }, null, 2))
+            return
           }
+          if (u.pathname == '/.tre/ws-address') {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(ws_address)
+            return
+          }
+        }
+
+        if (u.pathname.startsWith('/launch/')) {
+          if (launchLocal) {
+            debug(`request for launch page with local file: ${launchLocal}`)
+          } else {
+            const bootKey = decodeURIComponent(u.pathname.split('/')[2])
+            debug(`request for launch page with bootKey: ${bootKey}`)
+          }
+          res.statusCode = 200
+          res.setHeader('Content-Type', 'text/html')
+          return sendLaunchPage(res, {launchLocal})
+        }
+
+        if (!u.pathname.startsWith('/blobs/get/')) return next()
+
+        const blob = decodeURIComponent(u.pathname.slice(11))
+        if (req.method == 'HEAD') {
+          debug('request for blob HEAD %s', blob)
+          return next()
+        }
+        debug('request for blob %s', blob)
+        getScriptHashForBlob(blob, (err, scriptHash) => {
+          if (err) {
+            debug('Failed to get script hash for blob', err.message)
+            //return res.end(503, `Failed to get script hash: ${err.message}`)
+            return next()
+          }
+          debug('requested blob is webapp with script hash %s', scriptHash)
+
+          const csp = 
+              `default-src 'self'; ` +
+              `img-src 'self' data: blob: ${avatarUpdate.getPrefix()}; ` +
+              `style-src 'self' 'unsafe-inline'; ` +
+              `font-src 'self' blob:; ` +
+              `script-src 'sha256-${scriptHash}'; ` +
+              `connect-src 'self' ws://localhost:${config.ws.port}; ` +
+              `worker-src 'self' blob:`
+
+          debug(`csp: ${csp}`)
+
+          res.setHeader(
+            'Content-Security-Policy', csp
+          )
+          return next()
+        })
+      })
+
+      ssb.close.hook( function(fn, args) {
+        debug('close')
+        logger.unsubscribe(LOG_LEVEL, log)
+        windows = []
+        tabs = {}
+        deallocPort(config.host, config.port)
+        deallocPort('127.0.0.1', config.ws.port)
+        deallocPort('localhost', config.ws.port)
+        fn.apply(this, args)
+      })
+
+      function addTab(page, viewId, browserKeys) {
+        const id = browserKeys.id
+      
+        // did a page change its identity?
+        const removes = []
+        for(let i in tabs) {
+          if (tabs[i].page == page) {
+            debug('tab %d has changed its browser id', tabs[i].viewId)
+            removes.push(i)
+          }
+        }
+        removes.forEach(i=>delete tabs[i])
+
+        debug('add tab %d, browser id %s', viewId, id)
+        tabs[id] = {page, viewId}
+        page.once('close', ()=>{
+          debug('tab %d closed', viewId)
+          delete tabs[id]
+        })
+        // TODO
+        //windows.push(view)
+        emptyQueue()
+      }
+
+      function emptyQueue() {
+        // make sure first window receives all messages
+        if (!windows.length) return
+        function exec(code, rm) {
+          return function(win) {
+            debug('exec JS 2')
+            win.webContents.executeJavaScript(code)
+            .catch( err  => {
+              debug('err exec JS 2')
+              debug('executeJavaScript throws %s', err.message)
+              debug('remuoving window from list')
+              rm.push(win)
+              return console.log(err.message)
+            })
+            .then( v => {
+              debug('done exec JS 2', v)
+              if (v == false) {
+                debug('returned false remuoving from list')
+                rm.push(win)
+              }
+            })
+          }
+        }
+        let rm = []
+        while(queue.length) {
+          const msg = queue.shift()
+          const b64 = btoa(JSON.stringify(msg))
+          const code = `
+            new Promise( (resolve, reject) => {
+              const msg = JSON.parse(atob('${b64}'));
+              resolve((${client_log.toString()})(msg));
+            });
+          `
+          windows.forEach(exec(code, rm))
+          // jshint -W083
+          windows = windows.filter(x=>!rm.includes(x))
+          if (!windows.length) {
+            debug('no windows left')
+          }
+          rm = []
+        }
+      }
+
+      function log(msg) {
+        queue.push(msg)
+        emptyQueue()
+      }
+
+      sv.addTab = addTab
+      sv.log = log
+
+      /*
+      let openAppCallback = null
+      sv.setOpenAppCallback = function(cb) {
+        openAppCallback = cb
+      }
+      */
+      
+      sv.openApp = function(invite, id, opts, cb) {
+        if (typeof opts == 'function') {
+          cb = opts
+          opts = undefined
+        }
+        opts = opts || {}
+        //if (!openAppCallback) return cb(new Error('No openAppCallback set'))
+        debug('openApp called via rpc by %s', this.id)
+        const tab = tabs[this.id]
+        if (tab == undefined) {
+          debug('No page found for %s', this.id)
+          return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
+        }
+        debug('openApp in tab %s', tab.viewId)
+        bop.openApp(invite, id, Object.assign({}, opts, tab), (err, kvm)=>{
+          if (err) return cb(err)
+          debug('openApp %O', kvm)
+          tab.app = kvm
+          cb(null, kvm)
         })
       }
-    }
-    let rm = []
-    while(queue.length) {
-      const msg = queue.shift()
-      const b64 = btoa(JSON.stringify(msg))
-      const code = `
-        new Promise( (resolve, reject) => {
-          const msg = JSON.parse(atob('${b64}'));
-          resolve((${client_log.toString()})(msg));
-        });
-      `
-      windows.forEach(exec(code, rm))
-      // jshint -W083
-      windows = windows.filter(x=>!rm.includes(x))
-      if (!windows.length) {
-        debug('no windows left')
+
+      sv.versions = function() {
+        return Object.assign(
+          {},
+          process.versions,
+          {'bay-of-plenty': pkg.version}
+        )
       }
-      rm = []
+
+      sv.listPublicKeys = function(network) {
+        return pull(
+          listPublicKeys(network),
+          pull.map( ({id})=>id)
+        )
+      }
+
+      sv.addIdentity = function(network, cb) {
+        const pair = generate()
+        const datapath = getDatapath(network, pair.id)
+        mkdirp.sync(datapath)
+        fs.writeFileSync(join(datapath, 'secret'), JSON.stringify(pair), 'utf8')
+        cb(null, pair.id)
+      }
+
+      sv.avatarUpdates = function(network, id) {
+        return avatarUpdate.getUpdates(network, id)
+      }
+
+      sv.logStream = function(level) {
+        const p = Pushable(true, onDone)
+        logger.subscribe(ssb.id, level, onLog)
+
+        function onDone() {
+          logger.unsubscribe(level, onLog)
+        }
+
+        function onLog(msg) {
+          p.push(msg)
+        }
+
+        return p.source
+      }
+
+      return sv
     }
   }
-
-  function log(msg) {
-    queue.push(msg)
-    emptyQueue()
-  }
-
-  sv.addTab = addTab
-  sv.log = log
-
-  let openAppCallback = null
-  sv.setOpenAppCallback = function(cb) {
-    openAppCallback = cb
-  }
-  
-  sv.openApp = function(invite, id, opts, cb) {
-    if (typeof opts == 'function') {
-      cb = opts
-      opts = undefined
-    }
-    opts = opts || {}
-    if (!openAppCallback) return cb(new Error('No openAppCallback set'))
-    debug('openApp called via rpc by %s', this.id)
-    const tab = tabs[this.id]
-    if (tab == undefined) {
-      debug('No page found for %s', this.id)
-      return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
-    }
-    debug('openApp in tab %s', tab.viewId)
-    openAppCallback(invite, id, Object.assign({}, opts, tab), (err, kvm)=>{
-      if (err) return cb(err)
-      debug('openApp %O', kvm)
-      cb(null, kvm)
-    })
-  }
-
-  sv.versions = function() {
-    return Object.assign(
-      {},
-      process.versions,
-      {'bay-of-plenty': pkg.version}
-    )
-  }
-
-  sv.listPublicKeys = function(network) {
-    return pull(
-      listPublicKeys(network),
-      pull.map( ({id})=>id)
-    )
-  }
-
-  sv.addIdentity = function(network, cb) {
-    const pair = generate()
-    const datapath = getDatapath(network, pair.id)
-    mkdirp.sync(datapath)
-    fs.writeFileSync(join(datapath, 'secret'), JSON.stringify(pair), 'utf8')
-    cb(null, pair.id)
-  }
-
-  sv.avatarUpdates = function(network, id) {
-    return avatarUpdate.getUpdates(network, id)
-  }
-
-  sv.logStream = function(level) {
-    const p = Pushable(true, onDone)
-    logger.subscribe(ssb.id, level, onLog)
-
-    function onDone() {
-      logger.unsubscribe(level, onLog)
-    }
-
-    function onLog(msg) {
-      p.push(msg)
-    }
-
-    return p.source
-  }
-
-  return sv
 }
 
 // evaluated in browser context
@@ -429,4 +441,9 @@ function logging(server) {
     subscribe,
     unsubscribe
   }
+}
+
+function revisionRoot(kv) {
+  if (!kv) return null
+  return kv.value.content.revisionRoot || kv.key
 }

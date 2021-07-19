@@ -50,7 +50,8 @@ module.exports = function OpenApp(pool, conf, argv) {
     //debug(`onLoading ${viewId} true`)
     onLoading(true, opts)
 
-    const {unref, promise} = pool.get({conf, id})
+    const bop = {openApp}
+    const {unref, promise} = pool.get({conf, bop, id})
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
       onLoading(false, opts)
@@ -63,9 +64,11 @@ module.exports = function OpenApp(pool, conf, argv) {
       // TODO: should be controlled by appPermissions
       // (put the plugin in all sbots, then restrict via auth
   
+      /*
       if (!invite && !id) {
         ssb.bayofplenty.setOpenAppCallback(openApp)
       }
+      */
 
       page.once('close', e=>{
         debug(`tab ${viewId} closed -- unref sbot`)

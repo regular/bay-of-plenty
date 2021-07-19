@@ -27,7 +27,7 @@ module.exports = function Pool(Sbot) {
       })
     })
   }
-  function makePromise({conf, id}) {
+  function makePromise({conf, id, bop}) {
     return new Promise( (resolve, reject) => {
       if (!conf) {
         try {
@@ -43,8 +43,8 @@ module.exports = function Pool(Sbot) {
         return reject(new Error('No network specified'))
       }
       
-      function makeSbot(conf) {
-        Sbot(conf, (err, ssb, config, myid, browserKeys) => {
+      function makeSbot() {
+        Sbot(conf, bop, (err, ssb, config, myid, browserKeys) => {
           if (err) {
             console.error(`Error starting sbot ${err.message}`)
             return reject(error)
@@ -57,7 +57,7 @@ module.exports = function Pool(Sbot) {
       }
 
       if (conf.path) {
-        return makeSbot(conf)
+        return makeSbot()
       }
 
       debug(`find datapath for network=${conf.network} id=${id}`)
@@ -66,7 +66,7 @@ module.exports = function Pool(Sbot) {
       .then(datapath => {
         debug(`datapath is ${datapath}`)
         conf.path = datapath
-        makeSbot(conf)
+        makeSbot()
       })
     })
   }
@@ -88,13 +88,3 @@ function findDataPath(network, id) {
     )
   })
 }
-
-
-/*
-// TODO: ask for invite
-if (!/ENOENT/.test(err.message)) {
-  debug('(no config specified and did not find canned .trerc file')
-  return cb(err)
-}
-cb(new Error('ask for invite not implemented.'))
-*/

@@ -12,12 +12,12 @@ const Authorize = require('./plugins/authorize')
 
 module.exports = function(argv) {
   const authorize = Authorize(argv)
-  return function(config, cb) {
+  return function(config, bop, cb) {
     loadOrCreateConfigFile(config, (err, config) => {
       if (err) return cb(err)
       debug('Creating sbot with config' + JSON.stringify(config, null, 2))
       let createSbot = require('tre-bot')()
-        .use(require('./plugin'))
+        .use(require('./plugin')(bop))
         .use(authorize)
         .use({
           manifest: {getAddress: "sync"},
