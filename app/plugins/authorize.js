@@ -27,9 +27,9 @@ module.exports = function(argv) {
     ssb.auth.hook(function (fn, args) {
       const id = args[0]
       const cb = args[1]
-      debug('auth called for %s', id)
       const ok = authorized.includes(id)
-      if (ok) return cb(null, {allow: null, deny: null})
+      debug('auth called for %s, authorized=%s', id, ok)
+      if (ok) return cb(null, {allow: null, deny: null}) // allow everything
       fn.apply(this, args)
     })
   }
