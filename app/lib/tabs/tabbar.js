@@ -2,6 +2,9 @@ const debug = require('debug')('bop:tabbar')
 const {EventEmitter} = require('events')
 const {parse} = require('url')
 
+// Forwards events back and forth between the electron context
+// and the tabbar-browser webapp running in the min window
+
 module.exports = function(page) {
   const emitter = new EventEmitter()
 
