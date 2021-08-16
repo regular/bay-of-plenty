@@ -8,14 +8,12 @@ const ssbKeys = require('ssb-keys')
 const buildOnDemand = require('./lib/build-on-demand')
 const rc = require('rc')
 
-module.exports = function OpenApp(pool, conf, argv) {
-  const {onLoading, onTitleChanged} = conf
-
-  const appByView = []
-
-  function getAppByViewId(id) {
-    return appByView[id]
-  }
+module.exports = function OpenApp(
+  getSbot,
+  tabs,
+  appByView,
+  argv
+) {
 
   return function openApp(invite, id, opts, cb) {
     const {page, viewId} = opts
@@ -53,14 +51,12 @@ module.exports = function OpenApp(pool, conf, argv) {
       debug('launchLocal is not set')
     }
 
-    //debug(`onLoading ${viewId} true`)
-    onLoading(true, opts)
+    tabs.addTag(viewId, 'loading')
 
-    const bop = {openApp, getAppByViewId}
-    const {unref, promise} = pool.get({conf, bop, id})
+    const {unref, promise} = getSbot(conf, id)
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
-      onLoading(false, opts)
+      tabs.removeTag(viewId, 'loading')
       return cb(err)
     }).then( ({ssb, config, myid}) => {
       debug('got sbot')
@@ -91,9 +87,8 @@ module.exports = function OpenApp(pool, conf, argv) {
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
-            debug(`onLoading ${viewId} false`)
             appByView[viewId] = appKv
-            onLoading(false, opts)
+            tabs.removeTag(viewId, 'loading')
           })
 
           debug('setting browser keypair')
@@ -103,9 +98,21 @@ module.exports = function OpenApp(pool, conf, argv) {
             console.log('%c done setting keys', 'color: yellow;');
           }, browserKeys)
 
+          function onMeta(meta) {
+            console.dir(meta)
+            tabs.setTabTitle(viewId, meta.name || 'debug / local')
+            appKv = {
+              key: opts.launchLocal,
+              value: {
+                content: meta
+              }
+            }
+          }
+
           if (opts.launchLocal) {
             buildOnDemand(ssb, page, opts.launchLocal, {
-              origin: `http://127.0.0.1:${config.ws.port}/`
+              origin: `http://127.0.0.1:${config.ws.port}/`,
+              onMeta
             })
           }
 
@@ -114,13 +121,13 @@ module.exports = function OpenApp(pool, conf, argv) {
 
       ssb.autoinvite.useInviteCode( err=>{
         if (err) {
-          onLoading(false, opts)
+          tabs.removeTag(viewId, 'loading')
           return cb(err)
         }
 
         if (opts.launchLocal) {
           debug(`launch local: ${opts.launchLocal}`)
-          onTitleChanged('local / debug', opts)
+          tabs.setTabTitle(viewId, 'compiling ...')
           setupEventHandlers()
           const url = `http://127.0.0.1:${config.ws.port}/launch/`
           cb(null, {url})
@@ -131,14 +138,14 @@ module.exports = function OpenApp(pool, conf, argv) {
         debug(`bootKey: ${bootKey}`)
         ssb.treBoot.getWebApp(bootKey, (err, result) =>{
           if (err) {
-            onLoading(false, opts)
+            tabs.removeTag(viewId, 'loading')
             debug(err.message)
             return cb(err)
           }
           const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
           debug('webapp: %O', result.kv.value.content)
           const title = result.kv.value.content.name
-          onTitleChanged(title, opts)
+          tabs.setTabTitle(viewId, title)
           setupEventHandlers(result.kv)
           cb(null, {webapp: result.kv, url})
         })

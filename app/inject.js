@@ -66,10 +66,13 @@ module.exports = function inject(electron, Sbot, argv) {
     app.quit()
   })
 
+  let unrefMainSbot
+
   function shutdown(e) {
     debug('shutdown called')
     e.preventDefault()
     debug('waiting for all sbots to close')
+    if (unrefMainSbot) unrefMainSbot()
     pool.allDone().then(()=>{
       debug('All sbots are closed')
       // give it a second to finish log output
@@ -105,6 +108,17 @@ module.exports = function inject(electron, Sbot, argv) {
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
     const mainPage = await Page(win.webContents)
 
+    function setWindowTitle(title) {
+      const {prefix} = title
+      if (prefix || prefix == false) {
+        title = title.title
+      }
+      if (prefix !== false) {
+        title = `${prefix || 'Bay of Plenty'} — ${title}`
+      }
+      win.setTitle(title)
+    }
+
     Logging(mainPage, {
       tabid: '[tabbar]',
       setAlert: text => {
@@ -120,25 +134,36 @@ module.exports = function inject(electron, Sbot, argv) {
     const tabs = await makeTabs(win, mainPage, {
       makeView,
       initTabView,
+      setWindowTitle,
       DEBUG_TABS
     })
 
-    function onLoading(loading, opts) {
-      const {viewId} = opts
-      console.log(`on loading ${loading} ${viewId}`)
-      tabs[loading ? 'addTag' : 'removeTag'](viewId, 'loading')
+    function setTabTitle(viewId, title) {
+      tabs.setTabTitle(viewId, title)
     }
 
-    function onTitleChanged(title, opts) {
-      const {viewId} = opts
-      tabs.setTitle(viewId, title)
-    }
+    let bop // private API for private sbot plugin
 
-    const openApp = OpenApp(pool, {
-      onLoading,
-      onTitleChanged
-    }, argv)
+    const appByView = []
+    function getAppByViewId(id) {
+      return appByView[id]
+    }
     
+    function getSbot(conf, id) {
+      return pool.get({conf, bop, id})
+    }
+
+    const openApp = OpenApp(
+      getSbot,
+      tabs,
+      appByView,
+      argv
+    )
+
+    bop = {getAppByViewId, setTabTitle, openApp} 
+
+    // ---
+
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
 
     tabs.newTab({
@@ -200,6 +225,7 @@ module.exports = function inject(electron, Sbot, argv) {
   }
 }
 
+// -- util
 
 async function loadURL(page, url) {
   debug(`loading ${url} ...`)

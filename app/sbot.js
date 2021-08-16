@@ -36,6 +36,7 @@ module.exports = function(argv) {
         }))
 
       if (config.canned) {
+        const netId = getNetId(config)
         debug('default/canned network, adding appPermissions API')
         createSbot = createSbot
         .use(require('ssb-social-index')({
@@ -46,13 +47,12 @@ module.exports = function(argv) {
             if (socialValues[yourId]) {
               // you assigned a value, use this!
               return socialValues[yourId]
-            } else if (socialValues[authorId]) {
-              // they assigned a value, use this!
-              return socialValues[authorId]
-            } else {
-              // choose a value from selection based on most common
-              return highestRank(socialValues)
             }
+            if (socialValues[netId]) {
+              // they assigned a value, use this!
+              return socialValues[netId]
+            }
+            return null
           }
         }))
       }
@@ -95,9 +95,9 @@ module.exports = function(argv) {
   }
 }
 
-function getNetId(ssb, config) {
-  const ext = ssb.id.split('.').slice(-1)[0]
-  const sigil = ssb.id[0]
+function getNetId(config) {
+  const ext = "ed25519"
+  const sigil = '@'
   const netId = `${sigil}${config.caps.shs}.${ext}`
   return netId
 }
@@ -106,7 +106,7 @@ function gatherMeta(ssb, config, keys) {
   updateAvatars(ssb, config.network, keys.id, 'name')
   updateAvatars(ssb, config.network, keys.id, 'image')
 
-  const netId = getNetId(ssb, config)
+  const netId = getNetId(config)
   debug('requesting social values for %s', netId)
 
   updateAvatars(ssb, config.network, netId, 'name')

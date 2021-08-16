@@ -3,6 +3,7 @@ const {parse} = require('url')
 const {join} = require('path')
 const mkdirp = require('mkdirp')
 const debug = require('debug')('bop:plugin')
+const debug_auth = require('debug')('bop:auth')
 const Browserify = require('browserify')
 const indexhtmlify = require('indexhtmlify')
 const BufferList = require('bl')
@@ -47,7 +48,8 @@ module.exports = function(bop) {
       listPublicKeys: 'source',
       addIdentity: 'async',
       avatarUpdates: 'source',
-      logStream: 'source'
+      logStream: 'source',
+      setTitle: 'async'
     },
 
     init: function (ssb, config) {
@@ -55,19 +57,38 @@ module.exports = function(bop) {
 
       let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
       // taken from ssb-master
-      ssb.auth.hook(function (fn, args) {
+      ssb.auth.hook(function (auth, args) {
         const id = args[0]
         const cb = args[1]
-        debug('auth called for %s', id)
+        debug_auth('auth called for %s', id)
         const tab = tabs[id]
         if (tab == undefined) {
-          // not from within BoP
-          return fn.apply(this, args)
+          debug_auth('not from within BoP')
+          console.log(auth.toString())
+          return auth(id, (err, perms) => {
+            if (err) {
+              debug_auth('auth failed: %s', err.message)
+            } else {
+              debug_auth('auth succeeded perms = %o', perms)
+              console.dir(perms)
+            }
+            cb(err, perms)
+          })
         }
         const revRoot = revisionRoot(bop.getAppByViewId(tab.viewId)) 
-        console.log('Called auth for app %s', revRoot)
-        return cb(null, {allow: null, deny: null})
-        //cb(null, ok ? {allow: null, deny: null} : null)
+        debug_auth('Called auth for app %s', revRoot)
+        //return cb(null, {allow: null, deny: null})
+
+        function test(name, args) {
+          debug_auth('test %s, atgs = %o', name, args)
+        }
+        const perms = {
+          pre: test,
+          test,
+          post: ()=>true
+        }
+
+        cb(null, perms)
       })
 
       let windows = []
@@ -273,6 +294,20 @@ module.exports = function(bop) {
         openAppCallback = cb
       }
       */
+
+      sv.setTitle = function(title, cb) {
+        const tab = tabs[this.id]
+        if (tab == undefined) {
+          return cb(new Error('Could not identify tab'))
+        }
+        const {viewId} = tab
+        const app = revisionRoot(bop.getAppByViewId(viewId)) 
+        if (!app) {
+          return cb(new Error('Could not identify calling webapp'))
+        }
+        bop.setTabTitle(viewId, {title, prefix: false})
+        cb(null)
+      }
       
       sv.openApp = function(invite, id, opts, cb) {
         if (typeof opts == 'function') {
@@ -280,7 +315,6 @@ module.exports = function(bop) {
           opts = undefined
         }
         opts = opts || {}
-        //if (!openAppCallback) return cb(new Error('No openAppCallback set'))
         debug('openApp called via rpc by %s', this.id)
         const tab = tabs[this.id]
         if (tab == undefined) {
