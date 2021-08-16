@@ -17,6 +17,7 @@ process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
 const DEBUG_TABS = process.env.DEBUG_TABS
 
+
 module.exports = function inject(electron, Sbot, argv) {
   debug('argv: %o', argv)
 
@@ -30,7 +31,12 @@ module.exports = function inject(electron, Sbot, argv) {
 
   const {app, BrowserWindow, BrowserView, Menu, session} = electron
   const pool = Pool(Sbot)
-  
+
+  const appByView = []
+  function getAppByViewId(id) {
+    return appByView[id]
+  }
+    
   let [filename] = argv._
   if (filename) {
     if (!fs.existsSync(filename)) {
@@ -144,14 +150,18 @@ module.exports = function inject(electron, Sbot, argv) {
 
     let bop // private API for private sbot plugin
 
-    const appByView = []
-    function getAppByViewId(id) {
-      return appByView[id]
-    }
-    
     function getSbot(conf, id) {
       return pool.get({conf, bop, id})
     }
+    
+    function getMainSbot() {
+      console.log('Starting main sbot ..')
+      const {unref, promise} = getSbot(null, null)
+      unrefMainSbot = unref
+      return promise
+    }
+    const mainSbot = await getMainSbot()
+    console.log('Done starting main sbot.')
 
     const openApp = OpenApp(
       getSbot,
