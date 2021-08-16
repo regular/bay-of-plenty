@@ -72,10 +72,6 @@ async function send(name, data) {
   return response.json()
 }
 
-function setTitle(title) {
-  document.title = `Bay of Plenty — ${title}`
-}
-
 window.addEventListener('on-new-tab', e=>{
   const {id, title} = e.detail
   tabs.push({title, id, tags: [], tagValues: {} })
@@ -92,13 +88,10 @@ window.addEventListener('on-tab-closed', e=>{
 window.addEventListener('on-tab-activated', e=>{
   const {id} = e.detail
   active.set(id)
-  const tab = tabs.find( x=>x.id==id )
-  setTitle(tab.title)
 })
 
 window.addEventListener('on-tab-title-changed', e=>{
   const {id, title} = e.detail
-  if (active() == id) setTitle(title)
   const x = tabs.find( x=>x.id==id )
   if (x === undefined) return console.error('on tab tilte changed: tab not found', id)
   const i = tabs.indexOf(x)

@@ -5,7 +5,9 @@ const Tabbar = require('./tabbar')
 const loadScript = require('../script-loader')
 
 module.exports = async function initTabs(win, mainPage, opts) {
-  const {makeView, initTabView, DEBUG_TABS} = opts
+  const {makeView, initTabView, setWindowTitle, DEBUG_TABS} = opts
+  const tabTitles = {}
+  let activeTab = -1
 
   await loadScript(mainPage, join(__dirname, 'tabbar-browser.js'), {
     keepIntercepting: true
@@ -15,8 +17,13 @@ module.exports = async function initTabs(win, mainPage, opts) {
 
   async function initNewTab(view, newTabOpts) {
     // keep tabbar in sync
+    activeTab = view.id
     tabbar.onNewTab(view.id, `⌘${view.id} — loading`)
     view.on('activate-tab', ()=>{
+      activeTab = view.id
+      const title = tabTitles[view.id]
+      setWindowTitle(title)
+      console.log('XXX activeTab %d "%s"', activeTab, title)
       tabbar.onTabActivated(view.id)
     })
     view.on('close', ()=>{
@@ -52,8 +59,18 @@ module.exports = async function initTabs(win, mainPage, opts) {
     removeTag: function(viewId, tag) {
       tabbar.onTabRemoveTag(viewId, tag)
     },
-    setTitle: function(viewId, title) {
-      tabbar.onTabTitleChanged(viewId, title)
+    setTabTitle: function(viewId, title) {
+      tabTitles[viewId] = title
+      console.log('XXX setTabTitle of tab %d (%d is active): "%s"', viewId, activeTab, title)
+      if (viewId == activeTab) {
+        setWindowTitle(title)
+      }
+      tabbar.onTabTitleChanged(viewId, makeString(title))
     }
   })
+}
+
+function makeString(o) {
+  if (typeof o == 'string') return o
+  return o.title
 }
