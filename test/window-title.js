@@ -25,7 +25,7 @@ test('window title', t=>{
     `--config=${configPath}`
   ], {
     env: Object.assign({}, process.env, {
-      DEBUG: 'bop:browser-console',
+      DEBUG: 'bop:sbot,bop:appperms,bop:browser-console',
       DEBUG_LOG: 1,
       DEBUG_COLORS: 1
     })

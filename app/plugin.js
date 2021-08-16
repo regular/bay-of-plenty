@@ -305,8 +305,11 @@ module.exports = function(bop) {
         if (!app) {
           return cb(new Error('Could not identify calling webapp'))
         }
-        bop.setTabTitle(viewId, {title, prefix: false})
-        cb(null)
+        bop.queryAppPermission(app, 'setTitle', (err, isAllowed) =>{
+          if (err) return cb(err)
+          bop.setTabTitle(viewId, {title, prefix: false})
+          cb(null)
+        })
       }
       
       sv.openApp = function(invite, id, opts, cb) {

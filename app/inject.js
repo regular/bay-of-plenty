@@ -1,6 +1,7 @@
 const fs = require('fs')
 const {resolve} = require('path')
 const debug = require('debug')('bop:main')
+const debug_perms = require('debug')('bop:appperms')
 
 const Page = require('./page')
 const Logging = require('./lib/logging')
@@ -155,13 +156,24 @@ module.exports = function inject(electron, Sbot, argv) {
     }
     
     function getMainSbot() {
-      console.log('Starting main sbot ..')
       const {unref, promise} = getSbot(null, null)
       unrefMainSbot = unref
       return promise
     }
-    const mainSbot = await getMainSbot()
-    console.log('Done starting main sbot.')
+    const mainSbotPromise = getMainSbot()
+    function queryAppPermission(app, perm, cb) {
+      debug_perms('query permission "%s" for app %s', perm, app)
+      mainSbotPromise.then( ({ssb})=> {
+        ssb.appPermissions.socialValue({ key: perm, dest: app }, (err, value) => {
+          if (err) {
+            debug_perms('faild: %s', err.message)
+          } else {
+            debug_perms('permission "%s" for app %s is %s', perm, app, value)
+          }
+          cb(err, value)
+        })
+      }).catch( cb )
+    }
 
     const openApp = OpenApp(
       getSbot,
@@ -170,7 +182,7 @@ module.exports = function inject(electron, Sbot, argv) {
       argv
     )
 
-    bop = {getAppByViewId, setTabTitle, openApp} 
+    bop = {getAppByViewId, setTabTitle, openApp, queryAppPermission} 
 
     // ---
 
