@@ -17,6 +17,10 @@ module.exports = async function initLogging(page, opts) {
       if (type == 'error') {
         if (text.startsWith("error loading sodium bindings")) return
         if (text.startsWith("falling back to javascript")) return
+        if (text.startsWith("The source list for Content Security Policy directive") && text.endsWith("''wasm-eval''. It will be ignored.")) {
+          console.log('Browser does not supprt CSP keyword "wasm-eval"')
+          return
+        }
 
         const csp_violation = text.match(/violates the following Content Security Policy directive: "([^"]+)".*a hash \('([^']+)'\)/) 
 
