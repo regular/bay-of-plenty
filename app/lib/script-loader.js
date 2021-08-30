@@ -18,7 +18,7 @@ module.exports = async function(page, filename, opts) {
       return req.continue()
     }
     try {
-      debug('compile')
+      debug('compile %s', filename)
       result = await new Promise( (resolve, reject) => {
         compile(filename, (err, result) => {
           if (err) return reject(err)
