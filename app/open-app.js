@@ -66,11 +66,22 @@ module.exports = function OpenApp(
       }
       */
 
-      page.once('close', e=>{
-        debug(`tab ${viewId} closed -- unref sbot`)
+
+      function releaseSbot() {
+        debug(`unref sbot for view ${viewId}`)
         delete appByView[viewId]
         unref()
-      })
+        page.off('close', releaseSbot)
+        // NOTE: intentionally not using a closure for tab
+        // to not hold a reference to it
+        //const tab = tabs.getTabByViewId(viewId)
+        //tab.off('app-opened', releaseSbot)
+      }
+
+      //const tab = tabs.getTabByViewId(viewId)
+      //tab.once('app-opened', releaseSbot)
+      page.once('close', releaseSbot)
+      
 
       function setupEventHandlers(appKv) {
         page.once('domcontentloaded', async ()  =>{
@@ -83,6 +94,8 @@ module.exports = function OpenApp(
             debug('removing loading tag')
             appByView[viewId] = appKv
             tabs.removeTag(viewId, 'loading')
+            //const tab = tabs.getTabByViewId(viewId)
+            //tab.emit('app-opened')
           })
 
           debug('setting browser keypair')

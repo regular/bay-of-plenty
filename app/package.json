@@ -31,7 +31,7 @@
     "pkg-up": "^3.1.0",
     "pull-glob": "^1.0.7",
     "pull-notify": "^0.1.1",
-    "puppeteer-core": "^10.2.0",
+    "puppeteer-core": "^9.1.1",
     "puppeteer-log": "^1.0.0",
     "query-string": "^7.0.1",
     "range-parser": "^1.2.1",

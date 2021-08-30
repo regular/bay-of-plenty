@@ -5,7 +5,7 @@ const Tabbar = require('./tabbar')
 const loadScript = require('../script-loader')
 
 module.exports = async function initTabs(win, mainPage, opts) {
-  const {makeView, initTabView, setWindowTitle, DEBUG_TABS} = opts
+  const {makeView, initTabView, setWindowTitle, DEBUG_TABS, viewById} = opts
   const tabTitles = {}
   let activeTab = -1
 
@@ -32,7 +32,7 @@ module.exports = async function initTabs(win, mainPage, opts) {
     await initTabView(view, newTabOpts)
   }
 
-  const tabs = Tabs(win, makeView, initNewTab, {
+  const tabs = Tabs(win, makeView, initNewTab, viewById, {
     topMargin: 32,
     bottomMargin: DEBUG_TABS ? 250 : 0
   })
@@ -58,6 +58,9 @@ module.exports = async function initTabs(win, mainPage, opts) {
     },
     removeTag: function(viewId, tag) {
       tabbar.onTabRemoveTag(viewId, tag)
+    },
+    getTabByViewId: function(id) {
+      return viewById[id]
     },
     setTabTitle: function(viewId, title) {
       tabTitles[viewId] = title

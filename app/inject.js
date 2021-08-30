@@ -33,7 +33,9 @@ module.exports = function inject(electron, Sbot, argv) {
   const {app, BrowserWindow, BrowserView, Menu, session} = electron
   const pool = Pool(Sbot)
 
-  const appByView = []
+  const appByView = {}
+  const viewById = {}
+
   function getAppByViewId(id) {
     return appByView[id]
   }
@@ -79,7 +81,10 @@ module.exports = function inject(electron, Sbot, argv) {
     debug('shutdown called')
     e.preventDefault()
     debug('waiting for all sbots to close')
-    if (unrefMainSbot) unrefMainSbot()
+    if (unrefMainSbot) {
+      debug('unref main sbot')
+      unrefMainSbot()
+    }
     pool.allDone().then(()=>{
       debug('All sbots are closed')
       // give it a second to finish log output
@@ -142,6 +147,7 @@ module.exports = function inject(electron, Sbot, argv) {
       makeView,
       initTabView,
       setWindowTitle,
+      viewById,
       DEBUG_TABS
     })
 
@@ -149,8 +155,12 @@ module.exports = function inject(electron, Sbot, argv) {
       tabs.setTabTitle(viewId, title)
     }
 
+    function getViewById(id) {
+      return viewById[id]
+    }
+
     // private API for private sbot plugin
-    const bop = {getAppByViewId, setTabTitle, queryAppPermission} 
+    const bop = {getAppByViewId, setTabTitle, queryAppPermission, getViewById} 
 
     function getSbot(conf, id) {
       return pool.get({conf, bop, id})
@@ -199,6 +209,8 @@ module.exports = function inject(electron, Sbot, argv) {
       updateMenu(electron, win, view, tabs)
 
       view.on('close', ({last})=>{
+        view.webContents.destroy()
+
         debug('view closed, was last:', last)
         if (last && win && !win.isDestroyed()) {
           setTimeout( ()=> win.close(), 80)

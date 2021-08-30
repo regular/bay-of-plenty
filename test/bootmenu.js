@@ -16,7 +16,7 @@ const uploadApp = require('./lib/upload-app')
 const rc = require('rc')
 
 const QUIET = 0
-const DEBUG = 'tre-boot,bop:open-app,bop:browser-console,multiserver:net ssb-zero-conf-client'
+const DEBUG = 'tre-boot,bop:open-app,bop:browser-console,multiserver:net ssb-zero-conf-client,bop:shared-pool'
 const dir = `/tmp/${Date.now()}`
 const configPath = join(dir, 'config')
 const appkey = crypto.randomBytes(32).toString('base64')

@@ -1,10 +1,10 @@
 const {EventEmitter} = require('events')
 const debug = require('debug')('bop:tabs')
 
-module.exports = function(win, makeView, init, opts) {
+module.exports = function(win, makeView, init, views, opts) {
   opts = opts || {}
-  const views = Object.fromEntries(Array.from(win.getBrowserViews()).map(view=>[view.id, view]))
-  let currId = Object.keys(views).sort()[0]
+  let currId
+  let nextId = 0
 
   function makeSoleChild(view) {
     debug(`makeSoleChild view #${view.id}`)
@@ -35,6 +35,7 @@ module.exports = function(win, makeView, init, opts) {
   function newTab(newTabOpts) {
     debug('new tab called with options: %O', newTabOpts)
     const view = makeView()
+    view.id = nextId++
     view.emitter = new EventEmitter()
     makeSoleChild(view)
     const size = win.getContentSize()
@@ -56,7 +57,7 @@ module.exports = function(win, makeView, init, opts) {
       }
       view.emitter.emit('close', {last: Object.keys(views).length == 0})
       view.emitter.removeAllListeners()
-      view.destroy()
+      //view.destroy()
     }
 
     win.on('closed', onWinClosed)
@@ -94,8 +95,8 @@ module.exports = function(win, makeView, init, opts) {
     view.emitter.emit('deactivate-tab')
     view.emitter.emit('close', {last: Object.keys(views).length == 0})
     view.emitter.removeAllListeners()
-    debug('destroy view')
-    setTimeout( ()=> view.destroy(), 80)
+    //debug('destroy view')
+    //setTimeout( ()=> view.webContents.destroy(), 80)
   }
 
   function gotoTab(offset) {

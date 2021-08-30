@@ -33,7 +33,7 @@ module.exports = function({getKey, makePromise, release}) {
     }
 
     function unref() {
-      debug(`unref called for key ${k}`)
+      debug(`unref called for key ${k}, ref count will be ${entry.ref_count-1}`)
       if (--entry.ref_count == 0) {
         debug('ref_count reached zero')
         const {released} = entry

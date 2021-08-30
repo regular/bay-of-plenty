@@ -44,6 +44,7 @@ test('window title', t=>{
     t.ok(tabbarTarget, 'tabbar found')
     const tabbar = await tabbarTarget.page()
     const closeButtons = await tabbar.$$('.tab .close', {visible: true})
+    console.log(`Found ${closeButtons.length} close buttons`)
     console.log(`Clicking close button ${n}`)
     await closeButtons[n].click()
   }
@@ -74,7 +75,9 @@ test('window title', t=>{
       if (++count < 3) {
         clickAdd()
       } else {
-        closeAll()
+        setTimeout( ()=> {
+          closeAll()
+        }, 1000)
       }
     }
   })
