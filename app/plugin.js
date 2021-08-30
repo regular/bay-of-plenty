@@ -20,6 +20,7 @@ const listPublicKeys = require('./lib/list-public-keys')
 const getDatapath = require('./lib/get-data-path')
 const {deallocPort} = require('./port-allocator')
 const avatarUpdate = require('./avatar-update')
+const makeCSP = require('./lib/csp')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -184,16 +185,7 @@ module.exports = function(bop) {
           }
           debug('requested blob is webapp with script hash %s', scriptHash)
 
-          const csp = 
-              `default-src 'self'; ` +
-              `img-src 'self' data: blob: ${avatarUpdate.getPrefix()}; ` +
-              `style-src 'self' 'unsafe-inline'; ` +
-              `font-src 'self' blob:; ` +
-              `script-src 'sha256-${scriptHash}'; ` +
-              `connect-src 'self' ws://localhost:${config.ws.port}; ` +
-              `worker-src 'self' blob:`
-
-          debug(`csp: ${csp}`)
+          const csp = makeCSP(config, scriptHash)
 
           res.setHeader(
             'Content-Security-Policy', csp
