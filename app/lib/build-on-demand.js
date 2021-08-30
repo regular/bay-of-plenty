@@ -2,12 +2,16 @@ const fs = require('fs')
 const {parse} = require('url')
 const {dirname, basename} = require('path')
 const crypto = require('crypto')
+const pull = require('pull-stream')
 const debug = require('debug')('bop:build-on-demand')
 const compile = require('tre-compile/compile')
+const addMeta = require('tre-compile/add-meta')
 const pkgUp = require('pkg-up')
 
 const hyperstream = require('hyperstream')
 const BufferList = require('bl')
+
+const makeCSP = require('./csp')
 
 module.exports = async function(ssb, page, filename, opts) {
   opts = opts || {}
@@ -42,18 +46,31 @@ module.exports = async function(ssb, page, filename, opts) {
       meta.sha = result.sha
       onMeta(meta)
       debug('sending response')
-      res.setHeader(
-        'Content-Security-Policy', `script-src 'sha256-${result.sha}';`
-      )
-      res.setHeader('x-bay-of-plenty-script-loader', filename)
-      res.setHeader('content-type', 'text/html')
+ 
+      pull(
+        addMeta(result.body, result.sha, Object.assign({base}, meta)),
+        pull.collect((err, result)=>{
+          if (err) {
+            console.error('addMeta failed: %s', err.message)
+            res.setHeader('content-type', 'text/plain')
+            return res.end(503, err.message)
+          }
+          res.setHeader(
+            'Content-Security-Policy', makeCSP(ssb.config, meta.sha)
+          )
+          res.setHeader('x-bay-of-plenty-script-loader', filename)
+          res.setHeader('content-type', 'text/html')
 
-      const body = BufferList()
-      body.append(result.body)
-      const hs = hyperstream({head: {_appendHtml: `<base href="${base}">`}})
-      hs.pipe(res)
-      body.pipe(hs)
-      //res.end(result.body)
+          const body = BufferList()
+          body.append(result)
+          /*
+          const hs = hyperstream({head: {_appendHtml: `<base href="${base}">`}})
+          hs.pipe(res)
+          body.pipe(hs)
+          */
+          body.pipe(res)
+        })
+      )
     })
   })
   debug('navigating')
