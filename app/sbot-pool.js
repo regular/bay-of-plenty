@@ -30,12 +30,7 @@ module.exports = function Pool(Sbot) {
   function makePromise({conf, id, bop}) {
     return new Promise( (resolve, reject) => {
       if (!conf) {
-        try {
-          conf = JSON.parse(fs.readFileSync(join(__dirname, '.trerc')))
-          conf.canned = true
-        } catch(e) {
-          return reject(e)
-        }
+        return reject(new Error('conf is required'))
       }
       conf = merge({}, JSON.parse(fs.readFileSync(join(__dirname, 'default-config.json'))), conf)
       
