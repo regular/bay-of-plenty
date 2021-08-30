@@ -51,7 +51,7 @@
     "tre-boot": "^1.9.1",
     "tre-bot": "^2.4.2",
     "tre-client": "^4.1.0",
-    "tre-compile": "^2.2.0",
+    "tre-compile": "^2.3.0",
     "tre-invite-code": "^1.1.1",
     "zerr": "^1.0.4"
   },
