@@ -8,6 +8,8 @@ const ssbKeys = require('ssb-keys')
 const buildOnDemand = require('./lib/build-on-demand')
 const rc = require('rc')
 
+const localConfig = require('./lib/local-config')
+
 module.exports = function OpenApp(
   getSbot,
   tabs,
@@ -27,22 +29,14 @@ module.exports = function OpenApp(
       debug(err.message)
       return cb(err)
     }
-    if (!invite && (opts.launchLocal || argv.config)) {
-      conf = rc('tre', {}, argv)
-      debug('read local config:  %o', conf)
-        //const trePath = locateTrerc(resolve('.'))
-        //debug('reading local .trerc at %s', trePath)
-        //conf = JSON.parse(fs.readFileSync('.trerc'))
-  
-      if (!conf.config) {
-        const msg = `Error loading local .trerc for launcing ${opts.launchLocal}`
-        return cb(new Error(msg))
+    if (!invite) {
+      if (opts.launchLocal || argv.config) {
+        conf = localConfig(argv, opts)
+        debug('conf is %O', conf)
+      } else {
+        conf = localConfig(argv, Object.assign({canned: true}, opts))
+        debug('read canned conf')
       }
-      if (conf.launchLocal) opts.launchLocal = conf.launchLocal
-      conf.path = conf.path || join(dirname(conf.config), '.tre')
-      conf.bayOfPlenty = conf.bayOfPlenty || {}
-      conf.bayOfPlenty.launchLocal = opts.launchLocal
-      debug('conf is %O', conf)
     }
 
     if (opts.launchLocal) {

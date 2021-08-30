@@ -1,5 +1,5 @@
 const fs = require('fs')
-const {resolve} = require('path')
+const {join, resolve} = require('path')
 const debug = require('debug')('bop:main')
 const debug_perms = require('debug')('bop:appperms')
 
@@ -12,7 +12,7 @@ const menuTemplate = require('./menu')
 const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const OpenApp = require('./open-app')
-
+const localConfig = require('./lib/local-config')
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
@@ -149,14 +149,16 @@ module.exports = function inject(electron, Sbot, argv) {
       tabs.setTabTitle(viewId, title)
     }
 
-    let bop // private API for private sbot plugin
+    // private API for private sbot plugin
+    const bop = {getAppByViewId, setTabTitle, queryAppPermission} 
 
     function getSbot(conf, id) {
       return pool.get({conf, bop, id})
     }
     
     function getMainSbot() {
-      const {unref, promise} = getSbot(null, null)
+      const conf = localConfig(argv, {launchLocal: filename, canned: true})
+      const {unref, promise} = getSbot(conf, null)
       unrefMainSbot = unref
       return promise
     }
@@ -181,8 +183,8 @@ module.exports = function inject(electron, Sbot, argv) {
       appByView,
       argv
     )
+    bop.openApp = openApp
 
-    bop = {getAppByViewId, setTabTitle, openApp, queryAppPermission} 
 
     // ---
 
