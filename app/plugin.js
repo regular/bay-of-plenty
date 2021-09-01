@@ -309,7 +309,7 @@ module.exports = function(bop) {
           return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
         }
         debug('openApp in tab %s', tab.id)
-        bop.openApp(invite, id, Object.assign({}, opts, {tab}), (err, kvm)=>{
+        bop.openApp(tab, invite, id, opts, (err, kvm)=>{
           if (err) return cb(err)
           debug('openApp %O', kvm)
           cb(null, kvm)

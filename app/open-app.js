@@ -11,11 +11,9 @@ module.exports = function OpenApp(
   argv
 ) {
 
-  return function openApp(invite, id, opts, cb) {
-    const {tab} = opts
+  return function openApp(tab, invite, id, opts, cb) {
+    if (!tab) return cb(new Error(`tab not specified.`))
     const page = tab.page
-    const tabId = tab.id
-    if (tab == undefined) return cb(new Error(`tab not specified.`))
     if (!page) return cb(new Error(`tab has no page property`))
     debug(`openApp called in tab ${tab.id}`)
 
@@ -62,11 +60,11 @@ module.exports = function OpenApp(
         page.off('close', releaseSbot)
         // NOTE: intentionally not using a closure for tab
         // to not hold a reference to it
-        //const tab = tabs.getTabByViewId(tabId)
+        //const tab = tabs.getTabByViewId(tab.id)
         //tab.off('app-opened', releaseSbot)
       }
 
-      //const tab = tabs.getTabByViewId(tabId)
+      //const tab = tabs.getTabByViewId(tab.id)
       //tab.once('app-opened', releaseSbot)
       page.once('close', releaseSbot)
       
@@ -81,7 +79,7 @@ module.exports = function OpenApp(
             debug('removing loading tag')
             tab.app = appKv
             tabs.removeTag(tab.id, 'loading')
-            //const tab = tabs.getTabByViewId(tabId)
+            //const tab = tabs.getTabByViewId(tab.id)
             //tab.emit('app-opened')
           })
 

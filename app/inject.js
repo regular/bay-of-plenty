@@ -241,9 +241,9 @@ module.exports = function inject(electron, Sbot, argv) {
       //      - put uploadBlobDir: true, appPermissions: tre
       //        into canned config
 
-      openApp(null, null, Object.assign({
-        tab
-      }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
+      openApp(tab, null, null, Object.assign(
+        {}, launchLocalInAllTabs, newTabOpts
+      ), (err, result) =>{
         if (err) {
           console.error(err.message)
           throw err
