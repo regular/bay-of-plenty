@@ -6,9 +6,7 @@ const debug_perms = require('debug')('bop:appperms')
 const Page = require('./page')
 const Logging = require('./lib/logging')
 const makeTabs = require('./lib/tabs')
-
 const Menu = require('./menu')
-
 const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const OpenApp = require('./open-app')
@@ -17,7 +15,6 @@ const localConfig = require('./lib/local-config')
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
 const DEBUG_TABS = process.env.DEBUG_TABS
-
 
 module.exports = function inject(electron, Sbot, argv) {
   debug('argv: %o', argv)
@@ -35,7 +32,6 @@ module.exports = function inject(electron, Sbot, argv) {
   const pool = Pool(Sbot)
 
   const appByView = {}
-  const viewById = {}
 
   function getAppByViewId(id) {
     return appByView[id]
@@ -151,16 +147,14 @@ module.exports = function inject(electron, Sbot, argv) {
       DEBUG_TABS
     })
 
-    function setTabTitle(viewId, title) {
-      tabs.setTabTitle(viewId, title)
-    }
-
-    function getTabById(id) {
-      return tabs.getTabById(id)
-    }
 
     // private API for private sbot plugin
-    const bop = {getAppByViewId, setTabTitle, queryAppPermission, getTabById} 
+    const bop = {
+      getAppByViewId,
+      queryAppPermission,
+      setTabTitle: tabs.setTabTitle,
+      getTabById: tabs.getTabById
+    } 
 
     function getSbot(conf, id) {
       return pool.get({conf, bop, id})
@@ -172,6 +166,7 @@ module.exports = function inject(electron, Sbot, argv) {
       unrefMainSbot = unref
       return promise
     }
+
     const mainSbotPromise = getMainSbot()
     function queryAppPermission(app, perm, cb) {
       debug_perms('query permission "%s" for app %s', perm, app)
