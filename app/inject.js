@@ -224,12 +224,6 @@ module.exports = function inject(electron, Sbot, argv) {
           setTimeout( ()=> win.close(), 80)
         }
       })
-      const page = await Page(tab.view.webContents)
-      debug('Page initialized')
-
-      page.once('close', ()=>{
-        debug('page close event')
-      })
 
       function setAlert(text) {
         tabs.addTag(tab.id, 'alert', {text})
@@ -242,7 +236,7 @@ module.exports = function inject(electron, Sbot, argv) {
         }
       }
 
-      Logging(page, {
+      Logging(tab.page, {
         tabid: tab.id,
         setAlert
       })
@@ -257,13 +251,13 @@ module.exports = function inject(electron, Sbot, argv) {
 
       openApp(null, null, Object.assign({
         tabId: tab.id,
-        page
+        page: tab.page
       }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)
           throw err
         }
-        loadURL(page, result.url).catch(err =>{
+        loadURL(tab.page, result.url).catch(err =>{
           console.error('Unable to load new tab content', err.message)
         })
       })

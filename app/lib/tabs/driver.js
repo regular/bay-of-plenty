@@ -1,4 +1,5 @@
 const debug = require('debug')('bop:tab-driver')
+const Page = require('../../page')
 
 module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
   return {
@@ -46,9 +47,14 @@ module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
       win.off('closed', onWinClosed)
     })
 
-    view.webContents.once('dom-ready', e => {
+    view.webContents.once('dom-ready', async e => {
       debug('dom ready on new tab %d', tab.id)
-      //view.webContents.executeJavaScript(`document.write('<h2>Index: ${tab.id}</h2>')`)
+      tab.page = await Page(view.webContents)
+      debug('Page initialized')
+
+      tab.page.once('close', ()=>{
+        debug('page close event')
+      })
       initNewTab(tab, newTabOpts)
     })
     view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E').catch(err=>{
