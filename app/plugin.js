@@ -56,13 +56,13 @@ module.exports = function(bop) {
     init: function (ssb, config) {
       debug('init')
 
-      let tabs = {} // map browser ssb id to puppeteer page (tab content) and tabId (tab index)
+      let tabByBrowserKey = {} // map browser ssb id to puppeteer page (tab content) and tabId (tab index)
       // taken from ssb-master
       ssb.auth.hook(function (auth, args) {
         const id = args[0]
         const cb = args[1]
         debug_auth('auth called for %s', id)
-        const tab = tabs[id]
+        const tab = tabByBrowserKey[id]
         if (tab == undefined) {
           debug_auth('not from within BoP')
           console.log(auth.toString())
@@ -76,7 +76,7 @@ module.exports = function(bop) {
             cb(err, perms)
           })
         }
-        const revRoot = revisionRoot(bop.getAppByViewId(tab.tabId)) 
+        const revRoot = revisionRoot(tab.app) 
         debug_auth('Called auth for app %s', revRoot)
         //return cb(null, {allow: null, deny: null})
 
@@ -198,32 +198,31 @@ module.exports = function(bop) {
         debug('close')
         logger.unsubscribe(LOG_LEVEL, log)
         windows = []
-        tabs = {}
+        tabByBrowserKey = {}
         deallocPort(config.host, config.port)
         deallocPort('127.0.0.1', config.ws.port)
         deallocPort('localhost', config.ws.port)
         fn.apply(this, args)
       })
 
-      function addTab(page, tabId, browserKeys) {
+      function addTab(tab, browserKeys) {
         const id = browserKeys.id
       
         // did a page change its identity?
         const removes = []
-        for(let i in tabs) {
-          if (tabs[i].page == page) {
-            debug('tab %d has changed its browser id', tabs[i].tabId)
+        for(let i in tabByBrowserKey) {
+          if (tabByBrowserKey[i].page == tab.page) {
+            debug('tab %d has changed its browser id', tabByBrowserKey[i].tabId)
             removes.push(i)
           }
         }
-        removes.forEach(i=>delete tabs[i])
+        removes.forEach(i=>delete tabByBrowserKey[i])
 
-        debug('add tab %d, browser id %s', tabId, id)
-        tabs[id] = {page, tabId}
-        const tab = bop.getTabById(tabId)
+        debug('add tab %d, browser id %s', tab.id, id)
+        tabByBrowserKey[id] = tab
         tab.once('close', ()=>{
-          debug('tab %d closed', tabId)
-          delete tabs[id]
+          debug('tab %d closed', tab.id)
+          delete tabByBrowserKey[id]
         })
         // TODO
         //windows.push(view)
@@ -281,26 +280,18 @@ module.exports = function(bop) {
       sv.addTab = addTab
       sv.log = log
 
-      /*
-      let openAppCallback = null
-      sv.setOpenAppCallback = function(cb) {
-        openAppCallback = cb
-      }
-      */
-
       sv.setTitle = function(title, cb) {
-        const tab = tabs[this.id]
+        const tab = tabByBrowserKey[this.id]
         if (tab == undefined) {
           return cb(new Error('Could not identify tab'))
         }
-        const {tabId} = tab
-        const app = revisionRoot(bop.getAppByViewId(tabId)) 
+        const app = revisionRoot(tab.app) 
         if (!app) {
           return cb(new Error('Could not identify calling webapp'))
         }
         bop.queryAppPermission(app, 'setTitle', (err, isAllowed) =>{
           if (err) return cb(err)
-          bop.setTabTitle(tabId, {title, prefix: false})
+          bop.setTabTitle(tab.id, {title, prefix: false})
           cb(null)
         })
       }
@@ -312,16 +303,15 @@ module.exports = function(bop) {
         }
         opts = opts || {}
         debug('openApp called via rpc by %s', this.id)
-        const tab = tabs[this.id]
+        const tab = tabByBrowserKey[this.id]
         if (tab == undefined) {
           debug('No page found for %s', this.id)
           return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
         }
-        debug('openApp in tab %s', tab.tabId)
-        bop.openApp(invite, id, Object.assign({}, opts, tab), (err, kvm)=>{
+        debug('openApp in tab %s', tab.id)
+        bop.openApp(invite, id, Object.assign({}, opts, {tab}), (err, kvm)=>{
           if (err) return cb(err)
           debug('openApp %O', kvm)
-          tab.app = kvm
           cb(null, kvm)
         })
       }

@@ -31,12 +31,6 @@ module.exports = function inject(electron, Sbot, argv) {
   const {app, BrowserWindow, BrowserView, session} = electron
   const pool = Pool(Sbot)
 
-  const appByView = {}
-
-  function getAppByViewId(id) {
-    return appByView[id]
-  }
-    
   let [filename] = argv._
   if (filename) {
     if (!fs.existsSync(filename)) {
@@ -150,7 +144,6 @@ module.exports = function inject(electron, Sbot, argv) {
 
     // private API for private sbot plugin
     const bop = {
-      getAppByViewId,
       queryAppPermission,
       setTabTitle: tabs.setTabTitle,
       getTabById: tabs.getTabById
@@ -185,7 +178,6 @@ module.exports = function inject(electron, Sbot, argv) {
     const openApp = OpenApp(
       getSbot,
       tabs,
-      appByView,
       argv
     )
     bop.openApp = openApp
@@ -250,8 +242,7 @@ module.exports = function inject(electron, Sbot, argv) {
       //        into canned config
 
       openApp(null, null, Object.assign({
-        tabId: tab.id,
-        page: tab.page
+        tab
       }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)

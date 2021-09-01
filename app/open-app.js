@@ -8,15 +8,16 @@ const localConfig = require('./lib/local-config')
 module.exports = function OpenApp(
   getSbot,
   tabs,
-  appByView,
   argv
 ) {
 
   return function openApp(invite, id, opts, cb) {
-    const {page, tabId} = opts
-    if (!page) return cb(new Error(`page not specified`))
-    if (tabId == undefined) return cb(new Error(`tabId not specified.`))
-    debug(`openApp called in tab ${tabId}`)
+    const {tab} = opts
+    const page = tab.page
+    const tabId = tab.id
+    if (tab == undefined) return cb(new Error(`tab not specified.`))
+    if (!page) return cb(new Error(`tab has no page property`))
+    debug(`openApp called in tab ${tab.id}`)
 
     let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
@@ -40,12 +41,12 @@ module.exports = function OpenApp(
       debug('launchLocal is not set')
     }
 
-    tabs.addTag(tabId, 'loading')
+    tabs.addTag(tab.id, 'loading')
 
     const {unref, promise} = getSbot(conf, id)
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
-      tabs.removeTag(tabId, 'loading')
+      tabs.removeTag(tab.id, 'loading')
       return cb(err)
     }).then( ({ssb, config, myid}) => {
       debug('got sbot')
@@ -56,8 +57,7 @@ module.exports = function OpenApp(
       // (put the plugin in all sbots, then restrict via auth
   
       function releaseSbot() {
-        debug(`unref sbot for view ${tabId}`)
-        delete appByView[tabId]
+        debug(`unref sbot for view ${tab.id}`)
         unref()
         page.off('close', releaseSbot)
         // NOTE: intentionally not using a closure for tab
@@ -70,18 +70,17 @@ module.exports = function OpenApp(
       //tab.once('app-opened', releaseSbot)
       page.once('close', releaseSbot)
       
-
       function setupEventHandlers(appKv) {
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
-          appByView[tabId] = null
-          ssb.bayofplenty.addTab(page, tabId, browserKeys)
+          tab.app = null
+          ssb.bayofplenty.addTab(tab, browserKeys)
 
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
-            appByView[tabId] = appKv
-            tabs.removeTag(tabId, 'loading')
+            tab.app = appKv
+            tabs.removeTag(tab.id, 'loading')
             //const tab = tabs.getTabByViewId(tabId)
             //tab.emit('app-opened')
           })
@@ -95,7 +94,7 @@ module.exports = function OpenApp(
 
           function onMeta(meta) {
             console.dir(meta)
-            tabs.setTabTitle(tabId, meta.name || 'debug / local')
+            tabs.setTabTitle(tab.id, meta.name || 'debug / local')
             appKv = {
               key: opts.launchLocal,
               value: {
@@ -116,13 +115,13 @@ module.exports = function OpenApp(
 
       ssb.autoinvite.useInviteCode( err=>{
         if (err) {
-          tabs.removeTag(tabId, 'loading')
+          tabs.removeTag(tab.id, 'loading')
           return cb(err)
         }
 
         if (opts.launchLocal) {
           debug(`launch local: ${opts.launchLocal}`)
-          tabs.setTabTitle(tabId, 'compiling ...')
+          tabs.setTabTitle(tab.id, 'compiling ...')
           setupEventHandlers()
           const url = `http://127.0.0.1:${config.ws.port}/launch/`
           cb(null, {url})
@@ -133,14 +132,14 @@ module.exports = function OpenApp(
         debug(`bootKey: ${bootKey}`)
         ssb.treBoot.getWebApp(bootKey, (err, result) =>{
           if (err) {
-            tabs.removeTag(tabId, 'loading')
+            tabs.removeTag(tab.id, 'loading')
             debug(err.message)
             return cb(err)
           }
           const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
           debug('webapp: %O', result.kv.value.content)
           const title = result.kv.value.content.name
-          tabs.setTabTitle(tabId, title)
+          tabs.setTabTitle(tab.id, title)
           setupEventHandlers(result.kv)
           cb(null, {webapp: result.kv, url})
         })
