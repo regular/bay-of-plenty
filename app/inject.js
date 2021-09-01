@@ -7,7 +7,7 @@ const Page = require('./page')
 const Logging = require('./lib/logging')
 const makeTabs = require('./lib/tabs')
 
-const menuTemplate = require('./menu')
+const Menu = require('./menu')
 
 const secure = require('./secure')
 const Pool = require('./sbot-pool')
@@ -21,6 +21,7 @@ const DEBUG_TABS = process.env.DEBUG_TABS
 
 module.exports = function inject(electron, Sbot, argv) {
   debug('argv: %o', argv)
+  const makeMenu = Menu(electron.Menu, electron.MenuItem)
 
   const webPreferences = {
     enableRemoteModule: false,
@@ -30,7 +31,7 @@ module.exports = function inject(electron, Sbot, argv) {
     partition: argv['clean-session'] ? 'foo' : undefined
   }
 
-  const {app, BrowserWindow, BrowserView, Menu, session} = electron
+  const {app, BrowserWindow, BrowserView, session} = electron
   const pool = Pool(Sbot)
 
   const appByView = {}
@@ -194,10 +195,23 @@ module.exports = function inject(electron, Sbot, argv) {
     )
     bop.openApp = openApp
 
+    // --- Menu
 
-    // ---
+    const menu = makeMenu(win, tabs)
+    menu.on('quit', ()=>app.quit())
+    menu.on('reload', ()=>tabs.currentTab().view.webContents.reload())
+    menu.on('toggle-dev-tools', ()=>{
+      tabs.currentTab().view.webContents.toggleDevTools() 
+    })
+    menu.on('new-tab', ()=>tabs.newTab())
+    menu.on('close-tab', ()=>tabs.currentTab().close())
+    menu.on('next-tab', ()=>tabs.nextTab())
+    menu.on('previous-tab', ()=>tabs.previousTab())
+    menu.on('activate-tab', ({id})=>{
+      tabs.getTabById(id).activate()
+    })
 
-    Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate(app, tabs)))
+    // --
 
     tabs.newTab({
       launchLocal: filename
@@ -205,7 +219,7 @@ module.exports = function inject(electron, Sbot, argv) {
 
     async function initTab(tab, newTabOpts) {
       debug('init tab: %O', newTabOpts)
-      updateMenu(electron, win, tab, tabs)
+      menu.keepInSync(tab)
 
       tab.on('close', ({last})=>{
         debug('tab closed, was last:', last)
@@ -275,36 +289,4 @@ async function loadURL(page, url) {
   }
 }
 
-function updateMenu(electron, win, view, tabs) {
-  const {Menu, MenuItem} = electron
-  const appMenu = Menu.getApplicationMenu()
-  const tabMenu = appMenu.getMenuItemById('tabs').submenu
-  let label = `Tab ${view.id}`
-  let accelerator = `CmdOrCtrl+${view.id}`
-  if (!tabMenu.getMenuItemById('separator')) {
-    tabMenu.append(new MenuItem({
-      id: 'separator',
-      type: 'separator'
-    }))
-  }
-  tabMenu.append(new MenuItem({
-    label,
-    accelerator,
-    type: 'radio',
-    id: label,
-    click: ()=>{
-      tabs.getTabById(view.id).activate()
-    }
-  }))
-  Menu.setApplicationMenu(appMenu)
-  Menu.getApplicationMenu().getMenuItemById(label).checked = true
-
-  view.on('activate-tab', ()=>{
-    Menu.getApplicationMenu().getMenuItemById(label).checked = true
-  })
-  view.on('close', ()=>{
-    // There is no menu.remove() ...
-    Menu.getApplicationMenu().getMenuItemById(label).visible = false
-  })
-}
 
