@@ -56,7 +56,7 @@ module.exports = function(bop) {
     init: function (ssb, config) {
       debug('init')
 
-      let tabs = {} // map browser ssb id to puppeteer page (tab content) and viewId (tab index)
+      let tabs = {} // map browser ssb id to puppeteer page (tab content) and tabId (tab index)
       // taken from ssb-master
       ssb.auth.hook(function (auth, args) {
         const id = args[0]
@@ -76,7 +76,7 @@ module.exports = function(bop) {
             cb(err, perms)
           })
         }
-        const revRoot = revisionRoot(bop.getAppByViewId(tab.viewId)) 
+        const revRoot = revisionRoot(bop.getAppByViewId(tab.tabId)) 
         debug_auth('Called auth for app %s', revRoot)
         //return cb(null, {allow: null, deny: null})
 
@@ -205,24 +205,24 @@ module.exports = function(bop) {
         fn.apply(this, args)
       })
 
-      function addTab(page, viewId, browserKeys) {
+      function addTab(page, tabId, browserKeys) {
         const id = browserKeys.id
       
         // did a page change its identity?
         const removes = []
         for(let i in tabs) {
           if (tabs[i].page == page) {
-            debug('tab %d has changed its browser id', tabs[i].viewId)
+            debug('tab %d has changed its browser id', tabs[i].tabId)
             removes.push(i)
           }
         }
         removes.forEach(i=>delete tabs[i])
 
-        debug('add tab %d, browser id %s', viewId, id)
-        tabs[id] = {page, viewId}
-        const tab = bop.getTabById(viewId)
+        debug('add tab %d, browser id %s', tabId, id)
+        tabs[id] = {page, tabId}
+        const tab = bop.getTabById(tabId)
         tab.once('close', ()=>{
-          debug('tab %d closed', viewId)
+          debug('tab %d closed', tabId)
           delete tabs[id]
         })
         // TODO
@@ -293,14 +293,14 @@ module.exports = function(bop) {
         if (tab == undefined) {
           return cb(new Error('Could not identify tab'))
         }
-        const {viewId} = tab
-        const app = revisionRoot(bop.getAppByViewId(viewId)) 
+        const {tabId} = tab
+        const app = revisionRoot(bop.getAppByViewId(tabId)) 
         if (!app) {
           return cb(new Error('Could not identify calling webapp'))
         }
         bop.queryAppPermission(app, 'setTitle', (err, isAllowed) =>{
           if (err) return cb(err)
-          bop.setTabTitle(viewId, {title, prefix: false})
+          bop.setTabTitle(tabId, {title, prefix: false})
           cb(null)
         })
       }
@@ -317,7 +317,7 @@ module.exports = function(bop) {
           debug('No page found for %s', this.id)
           return cb(new Error(`${this.id.substr(0,5)} is not authorized to open an application`))
         }
-        debug('openApp in tab %s', tab.viewId)
+        debug('openApp in tab %s', tab.tabId)
         bop.openApp(invite, id, Object.assign({}, opts, tab), (err, kvm)=>{
           if (err) return cb(err)
           debug('openApp %O', kvm)

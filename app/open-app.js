@@ -1,13 +1,8 @@
-const fs = require('fs')
-const locateTrerc = require('./lib/locate-trerc')
-const {resolve, join, dirname} = require('path')
-const invites = require('tre-invite-code')
 const debug = require('debug')('bop:open-app')
+const invites = require('tre-invite-code')
 const ssbKeys = require('ssb-keys')
-//const loadScript = require('./lib/script-loader')
-const buildOnDemand = require('./lib/build-on-demand')
-const rc = require('rc')
 
+const buildOnDemand = require('./lib/build-on-demand')
 const localConfig = require('./lib/local-config')
 
 module.exports = function OpenApp(
@@ -18,10 +13,10 @@ module.exports = function OpenApp(
 ) {
 
   return function openApp(invite, id, opts, cb) {
-    const {page, viewId} = opts
+    const {page, tabId} = opts
     if (!page) return cb(new Error(`page not specified`))
-    if (viewId == undefined) return cb(new Error(`viewId not specified.`))
-    debug(`openApp called in tab ${viewId}`)
+    if (tabId == undefined) return cb(new Error(`tabId not specified.`))
+    debug(`openApp called in tab ${tabId}`)
 
     let conf = invite ? confFromInvite(invite) : null
     if (invite && !conf) {
@@ -45,12 +40,12 @@ module.exports = function OpenApp(
       debug('launchLocal is not set')
     }
 
-    tabs.addTag(viewId, 'loading')
+    tabs.addTag(tabId, 'loading')
 
     const {unref, promise} = getSbot(conf, id)
     promise.catch(err =>{
       debug(`sbot-pool failed: ${err.message}`)
-      tabs.removeTag(viewId, 'loading')
+      tabs.removeTag(tabId, 'loading')
       return cb(err)
     }).then( ({ssb, config, myid}) => {
       debug('got sbot')
@@ -60,25 +55,18 @@ module.exports = function OpenApp(
       // TODO: should be controlled by appPermissions
       // (put the plugin in all sbots, then restrict via auth
   
-      /*
-      if (!invite && !id) {
-        ssb.bayofplenty.setOpenAppCallback(openApp)
-      }
-      */
-
-
       function releaseSbot() {
-        debug(`unref sbot for view ${viewId}`)
-        delete appByView[viewId]
+        debug(`unref sbot for view ${tabId}`)
+        delete appByView[tabId]
         unref()
         page.off('close', releaseSbot)
         // NOTE: intentionally not using a closure for tab
         // to not hold a reference to it
-        //const tab = tabs.getTabByViewId(viewId)
+        //const tab = tabs.getTabByViewId(tabId)
         //tab.off('app-opened', releaseSbot)
       }
 
-      //const tab = tabs.getTabByViewId(viewId)
+      //const tab = tabs.getTabByViewId(tabId)
       //tab.once('app-opened', releaseSbot)
       page.once('close', releaseSbot)
       
@@ -86,15 +74,15 @@ module.exports = function OpenApp(
       function setupEventHandlers(appKv) {
         page.once('domcontentloaded', async ()  =>{
           debug('domcontentloaded (launch page)')
-          appByView[viewId] = null
-          ssb.bayofplenty.addTab(page, viewId, browserKeys)
+          appByView[tabId] = null
+          ssb.bayofplenty.addTab(page, tabId, browserKeys)
 
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
             debug('removing loading tag')
-            appByView[viewId] = appKv
-            tabs.removeTag(viewId, 'loading')
-            //const tab = tabs.getTabByViewId(viewId)
+            appByView[tabId] = appKv
+            tabs.removeTag(tabId, 'loading')
+            //const tab = tabs.getTabByViewId(tabId)
             //tab.emit('app-opened')
           })
 
@@ -107,7 +95,7 @@ module.exports = function OpenApp(
 
           function onMeta(meta) {
             console.dir(meta)
-            tabs.setTabTitle(viewId, meta.name || 'debug / local')
+            tabs.setTabTitle(tabId, meta.name || 'debug / local')
             appKv = {
               key: opts.launchLocal,
               value: {
@@ -128,13 +116,13 @@ module.exports = function OpenApp(
 
       ssb.autoinvite.useInviteCode( err=>{
         if (err) {
-          tabs.removeTag(viewId, 'loading')
+          tabs.removeTag(tabId, 'loading')
           return cb(err)
         }
 
         if (opts.launchLocal) {
           debug(`launch local: ${opts.launchLocal}`)
-          tabs.setTabTitle(viewId, 'compiling ...')
+          tabs.setTabTitle(tabId, 'compiling ...')
           setupEventHandlers()
           const url = `http://127.0.0.1:${config.ws.port}/launch/`
           cb(null, {url})
@@ -145,14 +133,14 @@ module.exports = function OpenApp(
         debug(`bootKey: ${bootKey}`)
         ssb.treBoot.getWebApp(bootKey, (err, result) =>{
           if (err) {
-            tabs.removeTag(viewId, 'loading')
+            tabs.removeTag(tabId, 'loading')
             debug(err.message)
             return cb(err)
           }
           const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
           debug('webapp: %O', result.kv.value.content)
           const title = result.kv.value.content.name
-          tabs.setTabTitle(viewId, title)
+          tabs.setTabTitle(tabId, title)
           setupEventHandlers(result.kv)
           cb(null, {webapp: result.kv, url})
         })

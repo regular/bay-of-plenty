@@ -256,7 +256,7 @@ module.exports = function inject(electron, Sbot, argv) {
       //        into canned config
 
       openApp(null, null, Object.assign({
-        viewId: tab.id,
+        tabId: tab.id,
         page
       }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
         if (err) {
