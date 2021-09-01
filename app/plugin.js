@@ -220,8 +220,8 @@ module.exports = function(bop) {
 
         debug('add tab %d, browser id %s', viewId, id)
         tabs[id] = {page, viewId}
-        const view = bop.getViewById(viewId)
-        view.emitter.once('close', ()=>{
+        const tab = bop.getTabById(viewId)
+        tab.once('close', ()=>{
           debug('tab %d closed', viewId)
           delete tabs[id]
         })

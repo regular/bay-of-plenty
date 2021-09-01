@@ -145,9 +145,8 @@ module.exports = function inject(electron, Sbot, argv) {
 
     const tabs = await makeTabs(win, mainPage, {
       makeView,
-      initTabView,
+      initTab,
       setWindowTitle,
-      viewById,
       DEBUG_TABS
     })
 
@@ -155,12 +154,12 @@ module.exports = function inject(electron, Sbot, argv) {
       tabs.setTabTitle(viewId, title)
     }
 
-    function getViewById(id) {
-      return viewById[id]
+    function getTabById(id) {
+      return tabs.getTabById(id)
     }
 
     // private API for private sbot plugin
-    const bop = {getAppByViewId, setTabTitle, queryAppPermission, getViewById} 
+    const bop = {getAppByViewId, setTabTitle, queryAppPermission, getTabById} 
 
     function getSbot(conf, id) {
       return pool.get({conf, bop, id})
@@ -204,19 +203,19 @@ module.exports = function inject(electron, Sbot, argv) {
       launchLocal: filename
     })
 
-    async function initTabView(view, newTabOpts) {
+    async function initTab(tab, newTabOpts) {
       debug('init tab: %O', newTabOpts)
-      updateMenu(electron, win, view, tabs)
+      updateMenu(electron, win, tab, tabs)
 
-      view.on('close', ({last})=>{
-        view.webContents.destroy()
+      tab.on('close', ({last})=>{
+        debug('tab closed, was last:', last)
+        tab.view.webContents.destroy()
 
-        debug('view closed, was last:', last)
         if (last && win && !win.isDestroyed()) {
           setTimeout( ()=> win.close(), 80)
         }
       })
-      const page = await Page(view.webContents)
+      const page = await Page(tab.view.webContents)
       debug('Page initialized')
 
       page.once('close', ()=>{
@@ -224,9 +223,9 @@ module.exports = function inject(electron, Sbot, argv) {
       })
 
       function setAlert(text) {
-        tabs.addTag(view.id, 'alert', {text})
+        tabs.addTag(tab.id, 'alert', {text})
         console.log(
-          `setting alert in tab ${view.id} because console.error was called with "${text}"`
+          `setting alert in tab ${tab.id} because console.error was called with "${text}"`
         )
         if (argv['fail-on-error']) {
           console.error('exiting because --fail-on-error is set')
@@ -235,7 +234,7 @@ module.exports = function inject(electron, Sbot, argv) {
       }
 
       Logging(page, {
-        tabid: view.id,
+        tabid: tab.id,
         setAlert
       })
 
@@ -248,14 +247,16 @@ module.exports = function inject(electron, Sbot, argv) {
       //        into canned config
 
       openApp(null, null, Object.assign({
-        viewId: view.id,
+        viewId: tab.id,
         page
       }, launchLocalInAllTabs, newTabOpts), (err, result) =>{
         if (err) {
           console.error(err.message)
           throw err
         }
-        loadURL(page, result.url)
+        loadURL(page, result.url).catch(err =>{
+          console.error('Unable to load new tab content', err.message)
+        })
       })
     }
   }
@@ -292,7 +293,7 @@ function updateMenu(electron, win, view, tabs) {
     type: 'radio',
     id: label,
     click: ()=>{
-      tabs.activateTab(`${view.id}`)
+      tabs.getTabById(view.id).activate()
     }
   }))
   Menu.setApplicationMenu(appMenu)

@@ -1,11 +1,12 @@
 const {join} = require('path')
 const debug = require('debug')('bop:tabs:index')
-const Tabs = require('./tabs')
+const Tabs = require('./tab-class')
+const Driver = require('./driver')
 const Tabbar = require('./tabbar')
 const loadScript = require('../script-loader')
 
 module.exports = async function initTabs(win, mainPage, opts) {
-  const {makeView, initTabView, setWindowTitle, DEBUG_TABS, viewById} = opts
+  const {makeView, initTab, setWindowTitle, DEBUG_TABS} = opts
   const tabTitles = {}
   let activeTab = -1
 
@@ -15,27 +16,28 @@ module.exports = async function initTabs(win, mainPage, opts) {
 
   const tabbar = Tabbar(mainPage)
 
-  async function initNewTab(view, newTabOpts) {
+  async function initNewTab(tab, newTabOpts) {
     // keep tabbar in sync
-    activeTab = view.id
-    tabbar.onNewTab(view.id, `⌘${view.id} — loading`)
-    view.on('activate-tab', ()=>{
-      activeTab = view.id
-      const title = tabTitles[view.id]
+    activeTab = tab.id
+    tabbar.onNewTab(tab.id, `⌘${tab.id} — loading`)
+    tab.on('activate-tab', ()=>{
+      activeTab = tab.id
+      const title = tabTitles[tab.id]
       setWindowTitle(title)
       console.log('XXX activeTab %d "%s"', activeTab, title)
-      tabbar.onTabActivated(view.id)
+      tabbar.onTabActivated(tab.id)
     })
-    view.on('close', ()=>{
-      tabbar.onTabClosed(view.id)
+    tab.on('close', ()=>{
+      tabbar.onTabClosed(tab.id)
     })
-    await initTabView(view, newTabOpts)
+    await initTab(tab, newTabOpts)
   }
 
-  const tabs = Tabs(win, makeView, initNewTab, viewById, {
+  const driver = Driver( win, makeView, initNewTab, {
     topMargin: 32,
     bottomMargin: DEBUG_TABS ? 250 : 0
   })
+  const tabs = Tabs(driver)
 
   tabbar.on('new-tab', e=>{
     tabs.newTab()
@@ -47,10 +49,12 @@ module.exports = async function initTabs(win, mainPage, opts) {
     tabs.nextTab()
   })
   tabbar.on('activate-tab', e=>{
-    tabs.activateTab(e.id)
+    const tab = tabs.getTabById(e.id)
+    if (tab) tab.activate()
   })
   tabbar.on('close-tab', e=>{
-    tabs.closeTab(e.id)
+    const tab = (e.id !== undefined && tabs.getTabById(e.id)) || tabs.currentTab()
+    if (tab) tab.close()
   })
   return Object.assign({}, tabs, {
     addTag: function(viewId, tag, value) {

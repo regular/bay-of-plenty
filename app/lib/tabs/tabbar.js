@@ -7,6 +7,12 @@ const {parse} = require('url')
 
 module.exports = function(page) {
   const emitter = new EventEmitter()
+  let closed = false
+
+  page.once('close', ()=>{
+    debug('tabbar page closed')
+    closed = true
+  })
 
   page.on('request', async req =>{
     const name = parse(req.url()).path.split('/')[1]
@@ -25,6 +31,7 @@ module.exports = function(page) {
 
   function sendMessage(name, detail, cb) {
     cb = cb || (()=>{})
+    if (closed) return cb(new Error('tabbar page is closed'))
     const args = [fireEvent, name, detail]
     debug('sendMessage %s %o', name, detail)
     page.evaluate.apply(page, args)

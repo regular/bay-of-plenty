@@ -27,17 +27,17 @@ module.exports = function menuTemplate(app, tabs) {
     },
     { label: "Tools",
       submenu: [
-        { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", click: ()=> tabs.currentView().webContents.openDevTools() },
+        { label: "Toogle Developer Tools", accelerator: "CmdOrCtrl+D", click: ()=> tabs.currentTab().view.webContents.openDevTools() },
         { label: "Toggle Fullscreen", accelerator: "CmdOrCtrl+F", role: "toggleFullscreen" },
         { type: "separator" },
-        { label: "Reload", accelerator: "CmdOrCtrl+r", click: ()=>tabs.currentView().webContents.reload()}
+        { label: "Reload", accelerator: "CmdOrCtrl+r", click: ()=>tabs.currentTab().view.webContents.reload()}
       ]
     },
     { label: "Tabs",
       id: 'tabs',
       submenu: [
         { label: "New Tab", accelerator: "CmdOrCtrl+T", click: ()=> tabs.newTab() },
-        { label: "Close Tab", accelerator: "CmdOrCtrl+W", click: ()=> tabs.closeTab() },
+        { label: "Close Tab", accelerator: "CmdOrCtrl+W", click: ()=> tabs.currentTab().close() },
         { label: "Next Tab", accelerator: "Alt+CmdOrCtrl+Right", click: ()=> tabs.nextTab() },
         { label: "Previous Tab", accelerator: "Alt+CmdOrCtrl+Left", click: ()=> tabs.previousTab() }
       ]
