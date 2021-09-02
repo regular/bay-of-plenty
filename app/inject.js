@@ -1,7 +1,6 @@
 const fs = require('fs')
 const {join, resolve} = require('path')
 const debug = require('debug')('bop:main')
-const debug_perms = require('debug')('bop:appperms')
 
 const Page = require('./page')
 const Logging = require('./lib/logging')
@@ -11,6 +10,7 @@ const secure = require('./secure')
 const Pool = require('./sbot-pool')
 const OpenApp = require('./open-app')
 const localConfig = require('./lib/local-config')
+const AppPermissions = require('./app-permissions')
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
@@ -110,6 +110,8 @@ module.exports = function inject(electron, Sbot, argv) {
     }
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
     const mainPage = await Page(win.webContents)
+  
+    const getPermission = AppPermissions(electron, win)
 
     function setWindowTitle(title) {
       const {prefix} = title
@@ -162,17 +164,9 @@ module.exports = function inject(electron, Sbot, argv) {
 
     const mainSbotPromise = getMainSbot()
     function queryAppPermission(app, perm, cb) {
-      debug_perms('query permission "%s" for app %s', perm, app)
       mainSbotPromise.then( ({ssb})=> {
-        ssb.appPermissions.socialValue({ key: perm, dest: app }, (err, value) => {
-          if (err) {
-            debug_perms('faild: %s', err.message)
-          } else {
-            debug_perms('permission "%s" for app %s is %s', perm, app, value)
-          }
-          cb(err, value)
-        })
-      }).catch( cb )
+        getPermission(ssb, app, perm, cb)
+      })
     }
 
     const openApp = OpenApp(
@@ -268,5 +262,4 @@ async function loadURL(page, url) {
     throw new Error(`Server response: ${response.status()} ${response.statusText()}`)
   }
 }
-
 

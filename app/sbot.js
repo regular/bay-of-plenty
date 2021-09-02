@@ -44,6 +44,7 @@ module.exports = function(argv) {
           type: 'app-permissions',
           destField: 'app',
           getSocialValue: (socialValues, yourId, authorId) => {
+            debug('getSocialValue values:%O, yourId: %s, authorId: %s', socialValues, yourId, authorId)
             if (socialValues[yourId]) {
               // you assigned a value, use this!
               return socialValues[yourId]

@@ -285,13 +285,14 @@ module.exports = function(bop) {
         if (tab == undefined) {
           return cb(new Error('Could not identify tab'))
         }
-        const app = revisionRoot(tab.app) 
-        if (!app) {
+        if (!tab.app) {
           return cb(new Error('Could not identify calling webapp'))
         }
-        bop.queryAppPermission(app, 'setTitle', (err, isAllowed) =>{
+        bop.queryAppPermission(tab.app, 'setTitle', (err, isAllowed) =>{
           if (err) return cb(err)
-          bop.setTabTitle(tab.id, {title, prefix: false})
+          if (isAllowed) {
+            bop.setTabTitle(tab.id, {title, prefix: false})
+          }
           cb(null)
         })
       }
