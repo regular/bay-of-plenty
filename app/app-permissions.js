@@ -5,6 +5,7 @@ const {isMsgId} = require('ssb-ref')
 module.exports = function(electron, win, ssbPromise) {
   return function getPermission(appKv, perm, cb) {
     const app = getAppKey(appKv)
+    const appName = getAppName(appKv)
     debug('query permission "%s" for app %s', perm, app)
     ssbPromise.then(ssb=>{
       ssb.appPermissions.socialValue({ key: perm, dest: getAppKey(appKv)  }, (err, value) => {
@@ -14,7 +15,7 @@ module.exports = function(electron, win, ssbPromise) {
           debug('permission "%s" for app %s is %s', perm, app, value)
         }
         if (err || value !== null) return cb(err, value)
-        showPermissionDialog(app, perm, (err, {persist, value})=>{
+        showPermissionDialog(appName, app, perm, (err, {persist, value})=>{
           if (!persist) return  cb(null, value)
           ssb.publish({
             type: 'app-permissions',
@@ -29,17 +30,17 @@ module.exports = function(electron, win, ssbPromise) {
       }, cb)
     })
   }
-  function showPermissionDialog(app, perm, cb) {
+  function showPermissionDialog(appName, app, perm, cb) {
     electron.dialog.showMessageBox(win, {
       type: 'question',
       buttons: ['Yes', 'No'],
       defaultId: 1,
       cancelId: 1,
-      title: 'Application Permissions',
+      title: `"${appName}" asks for permission`,
       detail: `app-id: ${app}`,
       checkboxLabel: 'Remember my answer',
       checkboxChecked: false,
-      message: `Do qou want to allow ${perm}?`,
+      message: `Do you want to allow ${appName} to call ${perm}?`,
     }).then( ({response, checkboxChecked})=>{
       console.log('response %d, persist: %s', response, checkboxChecked)
       value = response == 0
@@ -50,6 +51,14 @@ module.exports = function(electron, win, ssbPromise) {
 }
 
 // -- util
+
+function getAppName(appKv) {
+  let name
+  if (appKv.value && appKv.value.content) {
+    name = appKv.value.content.name
+  }
+  return name || appKv.key
+}
 
 function getAppKey(appKv) {
   if (isMsgId(appKv.key)) {

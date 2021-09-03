@@ -358,10 +358,15 @@ module.exports = function(bop) {
         if (!tab.app) {
           return cb(new Error('Could not identify calling webapp'))
         }
-        bop.queryAppPermission(config.network, ssb.id, tab.app, path, cb)
+        bop.queryAppPermission(config.network, ssb.id, tab.app, path, (err, allowed) => {
+          if (err) return cb(err)
+          if (!allowed) return cb(new Error('Forbidden by user'))
+          cb(null)
+        })
       }
       const permissionWrap = PermissionWrap(isAllowed)
       sv.setTitle = permissionWrap(sv.setTitle, 'async', 'setTitle')
+      sv.openApp = permissionWrap(sv.openApp, 'async', 'openApp')
 
       return sv
     }
