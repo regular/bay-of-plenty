@@ -29,6 +29,7 @@
     "node-gyp": "^8.2.0",
     "non-private-ip": "^1.4.4",
     "pkg-up": "^3.1.0",
+    "promise-defer": "^1.0.0",
     "pull-glob": "^1.0.7",
     "pull-notify": "^0.1.1",
     "puppeteer-core": "^9.1.1",

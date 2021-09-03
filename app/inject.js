@@ -1,6 +1,7 @@
 const fs = require('fs')
 const {join, resolve} = require('path')
 const debug = require('debug')('bop:main')
+const defer = require('promise-defer')
 
 const Page = require('./page')
 const Logging = require('./lib/logging')
@@ -111,7 +112,8 @@ module.exports = function inject(electron, Sbot, argv) {
     win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
     const mainPage = await Page(win.webContents)
   
-    const getPermission = AppPermissions(electron, win)
+    const deferredMainSbot = defer()
+    const getPermission = AppPermissions(electron, win, deferredMainSbot.promise)
 
     function setWindowTitle(title) {
       const {prefix} = title
@@ -163,10 +165,10 @@ module.exports = function inject(electron, Sbot, argv) {
     }
 
     const mainSbotPromise = getMainSbot()
+    mainSbotPromise.then(({ssb})=>deferredMainSbot.resolve(ssb), err=>deferredMainSbot.reject(err))
+
     function queryAppPermission(app, perm, cb) {
-      mainSbotPromise.then( ({ssb})=> {
-        getPermission(ssb, app, perm, cb)
-      })
+      getPermission(app, perm, cb)
     }
 
     const openApp = OpenApp(

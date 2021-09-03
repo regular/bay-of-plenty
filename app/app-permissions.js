@@ -2,20 +2,12 @@ const debug = require('debug')('bop:appperms')
 const pull = require('pull-stream')
 const {isMsgId} = require('ssb-ref')
 
-module.exports = function(electron, win) {
-  return function getPermission(ssb, appKv, perm, cb) {
+module.exports = function(electron, win, ssbPromise) {
+  return function getPermission(appKv, perm, cb) {
     const app = getAppKey(appKv)
     debug('query permission "%s" for app %s', perm, app)
-
-    ssb.appPermissions.socialValue({ key: perm, dest: getAppKey(appKv)  }, (err, value) => {
-    /*
-    pull(
-      ssb.appPermissions.read({dest: app}),
-      pull.drain( r =>{
-        console.log('.......')
-        console.dir(r)
-      }, err => {
-        */
+    ssbPromise.then(ssb=>{
+      ssb.appPermissions.socialValue({ key: perm, dest: getAppKey(appKv)  }, (err, value) => {
         if (err) {
           debug('faild: %s', err.message)
         } else {
@@ -34,8 +26,8 @@ module.exports = function(electron, win) {
             cb(null, value)
           })
         })
-      })
-    //)
+      }, cb)
+    })
   }
   function showPermissionDialog(app, perm, cb) {
     electron.dialog.showMessageBox(win, {
@@ -74,3 +66,10 @@ function padBuffer(b, len) {
   if (len<=b.length) return b.slice(0, len)
   return Buffer.concat([b, Buffer.alloc(len - b.length).fill(0)])
 }
+
+/*
+function wrap() {
+  return wrapAPI(ssb, manifest, wrapper)
+}
+*/
+
