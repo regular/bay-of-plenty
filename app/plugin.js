@@ -21,6 +21,7 @@ const getDatapath = require('./lib/get-data-path')
 const {deallocPort} = require('./port-allocator')
 const avatarUpdate = require('./avatar-update')
 const makeCSP = require('./lib/csp')
+const PermissionWrap = require('./is-allowed-wrapper')
 
 //jshint -W079
 const btoa = require('btoa')
@@ -280,21 +281,11 @@ module.exports = function(bop) {
       sv.addTab = addTab
       sv.log = log
 
+
       sv.setTitle = function(title, cb) {
         const tab = tabByBrowserKey[this.id]
-        if (tab == undefined) {
-          return cb(new Error('Could not identify tab'))
-        }
-        if (!tab.app) {
-          return cb(new Error('Could not identify calling webapp'))
-        }
-        bop.queryAppPermission(config.network, ssb.id, tab.app, 'setTitle', (err, isAllowed) =>{
-          if (err) return cb(err)
-          if (isAllowed) {
-            bop.setTabTitle(tab.id, {title, prefix: false})
-          }
-          cb(null)
-        })
+        bop.setTabTitle(tab.id, {title, prefix: false})
+        cb(null)
       }
       
       sv.openApp = function(invite, id, opts, cb) {
@@ -358,6 +349,19 @@ module.exports = function(bop) {
 
         return p.source
       }
+
+      function isAllowed(path, args, cb) {
+        const tab = tabByBrowserKey[this.id]
+        if (tab == undefined) {
+          return cb(new Error('Could not identify tab'))
+        }
+        if (!tab.app) {
+          return cb(new Error('Could not identify calling webapp'))
+        }
+        bop.queryAppPermission(config.network, ssb.id, tab.app, path, cb)
+      }
+      const permissionWrap = PermissionWrap(isAllowed)
+      sv.setTitle = permissionWrap(sv.setTitle, 'async', 'setTitle')
 
       return sv
     }

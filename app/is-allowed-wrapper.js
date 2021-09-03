@@ -6,14 +6,16 @@ module.exports = function(isAllowed) {
     if (type == 'sync') type = 'async'
     let f = function() {
       const args = Array.from(arguments)
-      isAllowed(path, args, err=>{
+      const ia_args = [path, args, err=>{
         if (!err) {
           return fn.apply(this, args)
         } else {
           const cb = args.slice(-1)[0]
           cb(err)
         }
-      })
+      }]
+      isAllowed.apply(this, ia_args)
+
     }
     if (type == 'source') {
       f = function() {
