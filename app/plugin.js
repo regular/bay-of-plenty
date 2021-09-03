@@ -288,7 +288,7 @@ module.exports = function(bop) {
         if (!tab.app) {
           return cb(new Error('Could not identify calling webapp'))
         }
-        bop.queryAppPermission(tab.app, 'setTitle', (err, isAllowed) =>{
+        bop.queryAppPermission(config.network, ssb.id, tab.app, 'setTitle', (err, isAllowed) =>{
           if (err) return cb(err)
           if (isAllowed) {
             bop.setTabTitle(tab.id, {title, prefix: false})

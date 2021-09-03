@@ -167,7 +167,8 @@ module.exports = function inject(electron, Sbot, argv) {
     const mainSbotPromise = getMainSbot()
     mainSbotPromise.then(({ssb})=>deferredMainSbot.resolve(ssb), err=>deferredMainSbot.reject(err))
 
-    function queryAppPermission(app, perm, cb) {
+    function queryAppPermission(network, id, app, perm, cb) {
+      console.log('network: %s, id: %s', network, id)
       getPermission(app, perm, cb)
     }
 
