@@ -17,13 +17,13 @@ module.exports = function(electron, win, ssbPromise) {
         if (err || value !== null) return cb(err, value)
         showPermissionDialog(appName, app, perm, (err, {persist, value})=>{
           if (!persist) return  cb(null, value)
-          ssb.publish({
+          ssb.private.publish({
             type: 'app-permissions',
             app,
             [perm]: value
-          }, (err, result) =>{
+          }, [ssb.id], (err, result) =>{
             if (err) console.error('Unable to persist app permission: %s', err.message)
-            debug('Published app permission %O', result)
+            debug('Store app permission for user %s %O', ssb.id, result)
             cb(null, value)
           })
         })
