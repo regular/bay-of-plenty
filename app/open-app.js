@@ -76,8 +76,9 @@ module.exports = function OpenApp(
 
           page.once('domcontentloaded', e  =>{
             debug('domcontentloaded (webapp)')
-            debug('removing loading tag')
+            debug('setting tabs.app to %o', appKv)
             tab.app = appKv
+            debug('removing loading tag')
             tabs.removeTag(tab.id, 'loading')
             //const tab = tabs.getTabByViewId(tab.id)
             //tab.emit('app-opened')
