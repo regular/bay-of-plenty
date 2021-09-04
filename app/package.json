@@ -43,6 +43,7 @@
     "ssb-caps": "^1.1.0",
     "ssb-config": "^3.4.5",
     "ssb-keys": "^8.2.0",
+    "ssb-private": "^1.1.0",
     "ssb-ref": "^2.16.0",
     "ssb-sandboxed-views": "^2.0.2",
     "ssb-social-index": "^1.2.0",

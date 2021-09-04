@@ -15,9 +15,10 @@ module.exports = function(argv) {
   return function(config, bop, cb) {
     loadOrCreateConfigFile(config, (err, config) => {
       if (err) return cb(err)
+      const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
       debug('Creating sbot with config' + JSON.stringify(config, null, 2))
       let createSbot = require('tre-bot')()
-        .use(require('./plugin')(bop))
+        .use(require('./plugin')(bop, keys))
         .use(authorize)
         .use({
           manifest: {getAddress: "sync"},
@@ -29,6 +30,7 @@ module.exports = function(argv) {
         .use(require('ssb-autoinvite'))
         .use(require('tre-boot'))
         .use(require('ssb-backlinks'))
+        .use(require('ssb-private'))
         .use(require('ssb-social-index')({
           namespace: 'about',
           type: 'about',
@@ -58,7 +60,6 @@ module.exports = function(argv) {
         }))
       }
 
-      const keys = ssbKeys.loadOrCreateSync(join(config.path, 'secret'))
       createSbot(config, keys, (err, ssb) => {
         if (err) return cb(err)
         debug('sbot manifest' + JSON.stringify(ssb.getManifest(), null, 2))

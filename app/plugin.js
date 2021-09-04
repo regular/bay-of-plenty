@@ -11,7 +11,7 @@ const hyperstream = require('hyperstream')
 const h = require('hyperscript')
 const crypto = require('crypto')
 const FlumeviewLevel = require('flumeview-level')
-const {generate} = require('ssb-keys')
+const ssbKeys = require('ssb-keys')
 const pull = require('pull-stream')
 const Pushable = require('pull-pushable')
 const toPull = require('stream-to-pull-stream')
@@ -40,7 +40,7 @@ function makeIndex() {
   })
 }
 
-module.exports = function(bop) {
+module.exports = function(bop, keys) {
   return {
     name: 'bayofplenty',
     version: require('./package.json').version,
@@ -56,6 +56,20 @@ module.exports = function(bop) {
 
     init: function (ssb, config) {
       debug('init')
+
+      // private app-permissions messages
+      // must be indexed by backlinks
+      ssb.addUnboxer({
+        key: function (content) {
+          const ret = ssbKeys.unboxKey(content, keys)
+          return ret
+        },
+        value: function (content, msg, key) {
+          const c =  ssbKeys.unboxBody(content, key)
+          if (c.type !== 'app-permissions') return
+          return c
+        }
+      })
 
       let tabByBrowserKey = {} // map browser ssb id to puppeteer page (tab content) and tabId (tab index)
       // taken from ssb-master
@@ -324,7 +338,7 @@ module.exports = function(bop) {
       }
 
       sv.addIdentity = function(network, cb) {
-        const pair = generate()
+        const pair = ssbKeys.generate()
         const datapath = getDatapath(network, pair.id)
         mkdirp.sync(datapath)
         fs.writeFileSync(join(datapath, 'secret'), JSON.stringify(pair), 'utf8')
@@ -367,6 +381,7 @@ module.exports = function(bop) {
       const permissionWrap = PermissionWrap(isAllowed)
       sv.setTitle = permissionWrap(sv.setTitle, 'async', 'setTitle')
       sv.openApp = permissionWrap(sv.openApp, 'async', 'openApp')
+      sv.listPublicKeys = permissionWrap(sv.listPublicKeys, 'source', 'listPublicKeys')
 
       return sv
     }
