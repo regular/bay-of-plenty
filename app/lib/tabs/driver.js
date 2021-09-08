@@ -20,7 +20,14 @@ module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
     debug('adding view')
     win.addBrowserView(view)
     // Needed to force a window redraw
-    view.setBounds(view.getBounds())
+    const bounds = win.getBounds()
+    const bogusBounds = Object.assign({}, bounds)
+    bogusBounds.x += 1
+    bogusBounds.width -= 1
+    win.setBounds(bogusBounds)
+    setTimeout( ()=>{
+      win.setBounds(bounds)
+    }, 0)
   }
 
   function makeView(newTabOpts) {
