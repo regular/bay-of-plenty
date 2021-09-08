@@ -1,18 +1,25 @@
 const debug = require('debug')('bop:appperms')
 const pull = require('pull-stream')
+const Pushable = require('pull-pushable')
 const {isMsgId} = require('ssb-ref')
 
 module.exports = function(electron, win, ssbPromise) {
-  return function getPermission(appKv, perm, cb) {
-    const app = getAppKey(appKv)
-    const appName = getAppName(appKv)
-    debug('query permission "%s" for app %s', perm, app)
-    ssbPromise.then(ssb=>{
-      ssb.appPermissions.socialValue({ key: perm, dest: getAppKey(appKv)  }, (err, value) => {
+  const dialogData = Pushable()
+
+  pull(
+    dialogData,
+    pull.asyncMap( (data, map_cb) => {
+      const {ssb, appName, app, perm} = data
+      function cb(a, b) {
+        data.cb(a,b)
+        map_cb(a,b)
+      }
+      // check persisted value again, it might has changed
+      ssb.appPermissions.socialValue({ key: perm, dest: app  }, (err, value) => {
         if (err) {
-          debug('faild: %s', err.message)
+          debug('appPermissions.socialValue faild: %s', err.message)
         } else {
-          debug('permission "%s" for app %s is %s', perm, app, value)
+          if (value) debug('permission "%s" for app %s has changed to  %s', perm, app, value)
         }
         if (err || value !== null) return cb(err, value)
         showPermissionDialog(appName, app, perm, (err, {persist, value})=>{
@@ -27,10 +34,37 @@ module.exports = function(electron, win, ssbPromise) {
             cb(null, value)
           })
         })
-      }, cb)
+      })
+    }),
+    pull.drain(()=>{}, err=>{
+      if (err) {
+        console.error(`permission dialog queue ended with error: %{err.message}`)
+      }
+    })
+  )
+
+  return function getPermission(appKv, perm, cb) {
+    const app = getAppKey(appKv)
+    const appName = getAppName(appKv)
+    debug('query permission "%s" for app %s', perm, app)
+    ssbPromise.then(ssb=>{
+      ssb.appPermissions.socialValue({ key: perm, dest: app  }, (err, value) => {
+        if (err) {
+          debug('faild: %s', err.message)
+        } else {
+          debug('permission "%s" for app %s is %s', perm, app, value)
+        }
+        if (err || value !== null) return cb(err, value)
+        debug('queueing permission dialog for %s', perm)
+        dialogData.push({
+          ssb, appName, app, perm, cb
+        })
+      })
     })
   }
+
   function showPermissionDialog(appName, app, perm, cb) {
+    debug('Showing dialog')
     electron.dialog.showMessageBox(win, {
       type: 'question',
       buttons: ['Yes', 'No'],
@@ -42,7 +76,7 @@ module.exports = function(electron, win, ssbPromise) {
       checkboxChecked: false,
       message: `Do you want to allow ${appName} to call ${perm}?`,
     }).then( ({response, checkboxChecked})=>{
-      console.log('response %d, persist: %s', response, checkboxChecked)
+      debug('response %d, persist: %s', response, checkboxChecked)
       value = response == 0
       const persist =checkboxChecked
       cb(null, {persist, value})
