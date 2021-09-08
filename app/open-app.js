@@ -92,7 +92,7 @@ module.exports = function OpenApp(
           }, browserKeys)
 
           function onMeta(meta) {
-            console.dir(meta)
+            debug('on meta: %O', meta)
             tabs.setTabTitle(tab.id, meta.name || 'debug / local')
             appKv = {
               key: opts.launchLocal,

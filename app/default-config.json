@@ -14,7 +14,7 @@
     "handshake": 5000
   },
   "logging": {
-    "level": "notice"
+    "level": "error"
   },
   "blobs": {
     "legacy": false,

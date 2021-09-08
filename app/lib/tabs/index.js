@@ -23,8 +23,8 @@ module.exports = async function initTabs(win, mainPage, opts) {
     tab.on('activate-tab', ()=>{
       activeTab = tab.id
       const title = tabTitles[tab.id]
+      debug('on activate-tab %d, setting window title to "%s"', activeTab, title)
       setWindowTitle(title)
-      console.log('XXX activeTab %d "%s"', activeTab, title)
       tabbar.onTabActivated(tab.id)
     })
     tab.on('close', ()=>{
@@ -68,7 +68,7 @@ module.exports = async function initTabs(win, mainPage, opts) {
     },
     setTabTitle: function(viewId, title) {
       tabTitles[viewId] = title
-      console.log('XXX setTabTitle of tab %d (%d is active): "%s"', viewId, activeTab, title)
+      debug('setTabTitle called for tab %d (%d is active): "%s"', viewId, activeTab, title)
       if (viewId == activeTab) {
         setWindowTitle(title)
       }
