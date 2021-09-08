@@ -1,6 +1,6 @@
 {
   "name": "bay-of-plenty",
-  "version": "2.0.0-pre-5",
+  "version": "1.13.0",
   "description": "Experimental client for the Scuttleverse",
   "main": "index.js",
   "scripts": {
