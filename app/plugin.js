@@ -46,7 +46,7 @@ module.exports = function(bop, keys) {
     version: require('./package.json').version,
     manifest: {
       openApp: 'async',
-      versions: 'sync',
+      versions: 'async',
       listPublicKeys: 'source',
       addIdentity: 'async',
       avatarUpdates: 'source',
@@ -322,12 +322,12 @@ module.exports = function(bop, keys) {
         })
       }
 
-      sv.versions = function() {
-        return Object.assign(
+      sv.versions = function(cb) {
+        cb(null, Object.assign(
           {},
           process.versions,
           {'bay-of-plenty': pkg.version}
-        )
+        ))
       }
 
       sv.listPublicKeys = function(network) {
@@ -379,9 +379,13 @@ module.exports = function(bop, keys) {
         })
       }
       const permissionWrap = PermissionWrap(isAllowed)
-      sv.setTitle = permissionWrap(sv.setTitle, 'async', 'setTitle')
       sv.openApp = permissionWrap(sv.openApp, 'async', 'openApp')
+      sv.versions = permissionWrap(sv.versions, 'async', 'versions')
       sv.listPublicKeys = permissionWrap(sv.listPublicKeys, 'source', 'listPublicKeys')
+      sv.addIdentity = permissionWrap(sv.addIdentity, 'async', 'addIdentity')
+      sv.avatarUpdates = permissionWrap(sv.avatarUpdates, 'source', 'avatarUpdates')
+      sv.logStream = permissionWrap(sv.logStream, 'source', 'logStream')
+      sv.setTitle = permissionWrap(sv.setTitle, 'async', 'setTitle')
 
       return sv
     }
