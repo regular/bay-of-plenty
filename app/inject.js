@@ -22,6 +22,7 @@ module.exports = function inject(electron, Sbot, argv) {
   const makeMenu = Menu(electron.Menu, electron.MenuItem)
 
   const webPreferences = {
+    enableBlinkFeatures: "WebAssemblyCSP",
     enableRemoteModule: false,
     nodeIntegration: false,
     contextIsolation: true,

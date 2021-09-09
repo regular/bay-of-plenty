@@ -7,9 +7,9 @@ module.exports = function(config, scriptHash) {
       `img-src 'self' data: blob: ${avatarUpdate.getPrefix()}; ` +
       `style-src 'self' 'unsafe-inline'; ` +
       `font-src 'self' data: blob:; ` +
-      `script-src 'sha256-${scriptHash}'; ` + // TODO: wasm-eval
+      `script-src 'wasm-eval' 'sha256-${scriptHash}'; ` +
       `connect-src 'self' data: blob: ws://localhost:${config.ws.port}; ` +
-      `worker-src 'self' blob:`
+      `worker-src 'self' blob: data: 'wasm-eval'`
 
   debug('csp: %s', csp)
   return csp
