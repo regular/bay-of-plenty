@@ -232,6 +232,10 @@ module.exports = function inject(electron, Sbot, argv) {
         tabid: tab.id,
         setAlert
       })
+    
+      tab.page.on('domcontentloaded', ()  =>{
+        tabs.removeTag(tab.id, 'alert')
+      })
 
       const launchLocalInAllTabs = argv['launch-local-in-all-tabs'] ?
         {launchLocal: filename} : {}
