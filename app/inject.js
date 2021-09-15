@@ -25,6 +25,7 @@ module.exports = function inject(electron, Sbot, argv) {
     enableBlinkFeatures: "WebAssemblyCSP",
     enableRemoteModule: false,
     nodeIntegration: false,
+    sandbox: true,
     contextIsolation: true,
     worldSafeExecuteJavaScript: true,
     partition: argv['clean-session'] ? 'foo' : undefined
@@ -159,7 +160,8 @@ module.exports = function inject(electron, Sbot, argv) {
     }
     
     function getMainSbot() {
-      const conf = localConfig(argv, {launchLocal: filename, canned: true})
+      const canned = !argv.config
+      const conf = localConfig(argv, {launchLocal: filename, canned})
       const {unref, promise} = getSbot(conf, null)
       unrefMainSbot = unref
       return promise

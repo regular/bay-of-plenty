@@ -15,7 +15,10 @@ module.exports = function(argv_, opts) {
     const msg = `Error loading local .trerc`
     throw new Error(msg)
   }
-  if (!opts.canned) conf.path = conf.path || join(dirname(conf.config), '.tre')
+  if (!opts.canned) {
+    conf.path = conf.path || join(dirname(conf.config), '.tre')
+    debug('setting path to %s', conf.path)
+  }
   conf.bayOfPlenty = conf.bayOfPlenty || {}
   conf.canned = opts.canned
 
