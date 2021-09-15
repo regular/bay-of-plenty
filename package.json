@@ -55,7 +55,7 @@
   "author": "regular",
   "license": "MIT",
   "dependencies": {
-    "electron": "^13.4.0",
+    "electron": "^14.0.1",
     "electron-builder": "^22.11.7",
     "electron-evil-feature-patcher": "^1.2.1",
     "electron-rebuild": "^3.2.2",
