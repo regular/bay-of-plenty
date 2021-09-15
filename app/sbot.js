@@ -37,9 +37,9 @@ module.exports = function(argv) {
           destField: 'about'
         }))
 
-      if (config.canned) {
+      if (config.bayOfPlenty && config.bayOfPlenty.appPermissions) {
         const netId = getNetId(config)
-        debug('default/canned network, adding appPermissions API')
+        debug('adding appPermissions API')
         createSbot = createSbot
         .use(require('ssb-social-index')({
           namespace: 'appPermissions',

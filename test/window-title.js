@@ -18,6 +18,11 @@ test('window title', t=>{
   fs.writeFileSync(configPath, JSON.stringify({
     network: `*${appkey}.random`,
     launchLocal: `${__dirname}/fixtures/window-title/index.js`,
+    bayOfPlenty: {
+      appPermissions: {
+        setTitle: true
+      }
+    }
   }), 'utf8')
 
   const bop = spawn_bop([

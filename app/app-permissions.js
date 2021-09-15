@@ -48,6 +48,11 @@ module.exports = function(electron, win, ssbPromise) {
     const appName = getAppName(appKv)
     debug('query permission "%s" for app %s', perm, app)
     ssbPromise.then(ssb=>{
+      const conf_bop = ssb.config.bayOfPlenty
+      const conf_perms =  (conf_bop && conf_bop.appPermissions)
+      if (conf_perms == 'all') return cb(null, true)
+      if (conf_perms[perm]) return cb(null, true)
+      
       ssb.appPermissions.socialValue({ key: perm, dest: app  }, (err, value) => {
         if (err) {
           debug('faild: %s', err.message)

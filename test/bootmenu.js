@@ -99,7 +99,10 @@ test('launch bootmenu', t=>{
   console.log('configPath', configPath)
   fs.writeFileSync(configPath, JSON.stringify({
     network: `*${appkey}.random`,
-    port
+    port,
+    bayOfPlenty: {
+      appPermissions: 'all'
+    }
   }), 'utf8')
 
   bop = spawn_bop([

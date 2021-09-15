@@ -34,5 +34,10 @@
         }
       ]
     }
+  },
+  "bayOfPlenty": {
+    "appPermissions": true
   }
+}
+
 }
