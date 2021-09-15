@@ -23,6 +23,7 @@ module.exports = function inject(electron, Sbot, argv) {
 
   const webPreferences = {
     nativeWindowOpen: true,
+    backgroundThrottling: true,
     enableBlinkFeatures: "WebAssemblyCSP",
     enableRemoteModule: false,
     nodeIntegration: false,
@@ -99,11 +100,15 @@ module.exports = function inject(electron, Sbot, argv) {
 
     win = new BrowserWindow({
       backgroundColor: '#333', 
+      show: false,
       title: 'Bay of Plenty',
       width: 1200,
       height: Math.round(1200*9/16),
       darkTheme: true,
       webPreferences
+    })
+    win.once('ready-to-show', ()=>{
+      win.show()
     })
     win.on('closed', () => {
       debug('window closed')
@@ -137,8 +142,36 @@ module.exports = function inject(electron, Sbot, argv) {
       }
     })
 
+    function shakeWindow(view) {
+      // Needed to force a window redraw
+    const size = win.getContentSize()
+      const topMargin=32
+      const bottomMargin = 0
+    const viewBounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
+    debug('make new view with bounds %o', viewBounds)
+    view.setBounds(viewBounds)
+    view.setAutoResize({width: true, height: true})
+      
+      const bounds = win.getBounds()
+      const bogusBounds = Object.assign({}, bounds)
+      //bogusBounds.x += 1
+      //bogusBounds.width -= 1
+      win.setBounds(bogusBounds)
+      setTimeout( ()=>{
+        win.setBounds(bounds)
+      }, 0)
+    }
+
     function makeView() {
-      return new BrowserView({webPreferences})
+      const view =  new BrowserView({
+        webPreferences
+      })
+      view.setBounds({x:0, y:0, width:1, height: 1})
+      view.webContents.once('ready-to-show', ()=>{
+        console.log('ready to show')
+        shakeWindow(view)
+      })
+      return view
     }
 
     const tabs = await makeTabs(win, mainPage, {
