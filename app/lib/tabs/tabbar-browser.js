@@ -155,11 +155,11 @@ function styles() {
       text-align: center;
       font-size: 20px;
       background: #111;
-      stroke: #333;
+      color: #333;
       place-self: stretch;
     }
     .topbar .button:hover {
-      stroke: #aaa;
+      color: #aaa;
     }
     .tabbar, .tab {
       height: 29px;
