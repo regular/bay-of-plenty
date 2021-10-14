@@ -7,7 +7,7 @@
   "author": "Jan Bölsche <jan@lagomorph.de> (https://regular.codes/)",
   "license": "ISC",
   "dependencies": {
-    "tre-client": "^4.0.0"
+    "tre-client": "^4.1.0"
   },
   "devDependencies": {
     "browserify-swap": "github:regular/browserify-swap",
