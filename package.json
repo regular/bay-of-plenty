@@ -1,6 +1,6 @@
 {
   "name": "bay-of-plenty",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "description": "A multi-network, multi-application client for secure scuttlebutt",
   "main": "index.js",
   "scripts": {
