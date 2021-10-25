@@ -21,7 +21,8 @@ test('client-app', t=>{
 
   const bop = spawn_bop([
     `${__dirname}/fixtures/client-app/index.js`,
-    `--config=${configPath}`
+    `--config=${configPath}`,
+    '--fail-on-error'
   ], {
     env: Object.assign({}, process.env, {
       DEBUG: 'bop:browser-console',
