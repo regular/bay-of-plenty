@@ -9,10 +9,19 @@ const detectErrors = require('./page-detect-errors')
 
 const colorSupportLevel = (supportsColor.stderr && supportsColor.stderr.level) || 0
 
+// completly ignore annoying and useless
+// certain warnings by Electron
+function filter(type, text) {
+  if (type == 'warning') {
+    if (text.startsWith('Electron Security Warning (enableBlinkFeatures)')) return false
+  }
+  return true
+}
+
 module.exports = async function initLogging(page, opts) {
   const {tabid, setAlert} = opts
   PageLog(page)
-    .use(LogFunAnsi(tabid), {colorSupportLevel})
+    .use(LogFunAnsi(tabid), {colorSupportLevel, filter})
     .use(({text, type})=>{
       if (type == 'error') {
         if (text.startsWith("error loading sodium bindings")) return
@@ -21,7 +30,6 @@ module.exports = async function initLogging(page, opts) {
           console.log('Browser does not supprt CSP keyword "wasm-eval"')
           return
         }
-
         const csp_violation = text.match(/violates the following Content Security Policy directive: "([^"]+)".*a hash \('([^']+)'\)/) 
 
         if (csp_violation) {
@@ -34,7 +42,7 @@ module.exports = async function initLogging(page, opts) {
         }
         setAlert(text)
       }
-    }, {colorSupportLevel: 0})
+    }, {colorSupportLevel: 0, filter})
 
   const reflection = ConsoleReflection(page, err=>{
     console.error(`page reflection ended: ${err.message}`)

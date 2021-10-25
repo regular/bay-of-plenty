@@ -4,10 +4,10 @@ const Format = require('console-with-style')
 
 module.exports = function(t) {
   const formatters = []
-  function use(log, {colorSupportLevel}) {
+  function use(log, {colorSupportLevel, filter}) {
     const format = Format(colorSupportLevel)
     const stringify = Stringify(colorSupportLevel)
-    formatters.push({format, log, stringify})
+    formatters.push({format, log, stringify, filter})
   }
   function runFormatters({consoleMessage, values}) {
     if (!values.length) {
@@ -15,10 +15,12 @@ module.exports = function(t) {
     }
     const location = consoleMessage.location()
     const type = consoleMessage.type()
-    formatters.forEach( ({format, log, stringify}) => {
+    formatters.forEach( ({format, log, stringify, filter}) => {
       const text = typeof values[0] == 'string' ? format.apply(null, values)
         : values.map(stringify).join(' ')
-      log({type, location, text})
+      if (!filter || filter(type, text)) {
+        log({type, location, text})
+      }
     })
   }
   return {use, runFormatters}
