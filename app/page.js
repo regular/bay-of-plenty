@@ -5,7 +5,8 @@ const d_cdp = require('debug')('bop:cdp')
 const d_cdp_scopes = {
   Network: d_cdp.extend('network'),
   Runtime: d_cdp.extend('runtime'),
-  Page: d_cdp.extend('page')
+  Page: d_cdp.extend('page'),
+  Audits: d_cdp.extend('audits')
 }
 
 const cache = new WeakMap()
@@ -62,6 +63,22 @@ module.exports = function(webContents) {
       const {status, statusText, url} = event.response
       debug('Network Response: %s %s %s', status, statusText, url.substr(0,80))
     }
+    if (name == 'Audits.issueAdded') {
+      const {code, details} = event.issue
+      if (code == 'ContentSecurityPolicyIssue') {
+        const {contentSecurityPolicyIssueDetails} = details
+        const {
+          contentSecurityPolicyViolationType,
+          violatedDirective,
+          sourceCodeLocation
+        } = contentSecurityPolicyIssueDetails
+        if (contentSecurityPolicyViolationType == 'kEvalViolation') {
+          console.log('EVAL was called in %O', sourceCodeLocation)
+        }
+      }
+
+      d_cdp_scopes.Audits('Page Audit Issue: %O', event.issue)
+    }
     client.emit(name, event)
   })
   let onClose
@@ -79,6 +96,9 @@ module.exports = function(webContents) {
 
   const page = Page.create(client, target, ignoreHTTPSErrors, defaultViewport, screenshotTaskQueue)
   cache[webContents.id] = page
+
+  client.send('Audits.enable')
+
   return page
 }
 
