@@ -12,6 +12,7 @@ const Pool = require('./sbot-pool')
 const OpenApp = require('./open-app')
 const localConfig = require('./lib/local-config')
 const AppPermissions = require('./app-permissions')
+const dummyPage = require('./lib/dummy-page')
 
 process.env.ELECTRON_ENABLE_SECURITY_WARNINGS = 1
 
@@ -112,7 +113,8 @@ module.exports = function inject(electron, Sbot, argv) {
     if (DEBUG_TABS) {
       win.openDevTools()
     }
-    win.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E')
+    win.webContents.loadURL(dummyPage)
+
     const mainPage = await Page(win.webContents)
   
     const deferredMainSbot = defer()

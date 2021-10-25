@@ -1,5 +1,6 @@
 const debug = require('debug')('bop:tab-driver')
 const Page = require('../../page')
+const dummyPage = require('../dummy-page')
 
 module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
   return {
@@ -64,7 +65,7 @@ module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
       })
       initNewTab(tab, newTabOpts)
     })
-    view.webContents.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3C%2Fhtml%3E').catch(err=>{
+    view.webContents.loadURL(dummyPage).catch(err=>{
       console.error('Error loading page from data: URL', err.message)
     })
   }
