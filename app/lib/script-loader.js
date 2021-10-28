@@ -30,11 +30,14 @@ module.exports = async function(page, filename, opts) {
       debug('sending response')
       await req.respond({
         status: 200,
+        // TODO: this doesn't seem to have an effect!
         headers: {
           'Content-Security-Policy':
             `script-src 'sha256-${result.sha}';`,
           'x-bay-of-plenty-script-loader': filename
         },
+        priority: 1,
+      
         contentType: 'text/html',
         body: result.body
       })
