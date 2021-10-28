@@ -35,6 +35,9 @@ module.exports = function tab_driver(win, makeBrowserView, initNewTab, opts) {
     const size = win.getContentSize()
     const {topMargin, bottomMargin} = opts
     const bounds = {x: 0, y: topMargin, width: size[0], height: size[1] - topMargin - bottomMargin}
+    if (process.env.DEBUG_TABS) {
+      bounds.height = 100
+    }
     const view = makeBrowserView()
     debug('make new view with bounds %o', bounds)
     view.setBounds(bounds)
