@@ -222,7 +222,9 @@ module.exports = function(bop, keys) {
 
       function addTab(tab, browserKeys) {
         const id = browserKeys.id
-      
+     
+        ssb.connScheduler.pin(id)
+
         // did a page change its identity?
         const removes = []
         for(let i in tabByBrowserKey) {

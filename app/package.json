@@ -51,7 +51,7 @@
     "thumbnail-server": "file:../thumbnail-server",
     "tre-activity-indicator": "^1.0.0",
     "tre-boot": "^1.9.1",
-    "tre-bot": "^3.0.2",
+    "tre-bot": "^3.1.0",
     "tre-client": "^4.1.0",
     "tre-compile": "^2.3.0",
     "tre-invite-code": "^1.1.1",
