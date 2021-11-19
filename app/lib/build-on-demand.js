@@ -27,7 +27,7 @@ module.exports = async function(ssb, page, filename, opts) {
 
     const metaPromise = getMeta(filename)
 
-    compile(filename, async (err, result) => {
+    compile(filename, {debug: true}, async (err, result) => {
       if (err) { 
         debug('compile failed')
         console.error(`error compiling: ${err.message} ${err.annotated}`)
