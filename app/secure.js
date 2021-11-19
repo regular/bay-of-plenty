@@ -9,8 +9,10 @@ const SECURE = true
 function isURLAllowed(url) {
   if (url.startsWith('chrome-devtools://')) return true
   if (url.startsWith('https://127.0.0.1/')) return true
+  if (url.startsWith('https://localhost/')) return true
   // TODO: remove non-https
   if (url.startsWith('http://127.0.0.1')) return true
+  if (url.startsWith('http://localhost')) return true
   debug('URL not ok', url)
   return false
 }

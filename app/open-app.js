@@ -104,7 +104,7 @@ module.exports = function OpenApp(
 
           if (opts.launchLocal) {
             buildOnDemand(ssb, page, opts.launchLocal, {
-              origin: `http://127.0.0.1:${config.ws.port}/`,
+              origin: `http://localhost:${config.ws.port}/`,
               onMeta
             })
           }
@@ -122,7 +122,7 @@ module.exports = function OpenApp(
           debug(`launch local: ${opts.launchLocal}`)
           tabs.setTabTitle(tab.id, 'compiling ...')
           setupEventHandlers()
-          const url = `http://127.0.0.1:${config.ws.port}/launch/`
+          const url = `http://localhost:${config.ws.port}/launch/`
           cb(null, {url})
           return
         }
@@ -135,7 +135,7 @@ module.exports = function OpenApp(
             debug(err.message)
             return cb(err)
           }
-          const url = `http://127.0.0.1:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
+          const url = `http://localhost:${config.ws.port}/launch/${encodeURIComponent(bootKey)}`
           debug('webapp: %O', result.kv.value.content)
           const title = result.kv.value.content.name
           tabs.setTabTitle(tab.id, title)

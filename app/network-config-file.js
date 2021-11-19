@@ -71,7 +71,7 @@ function configurePorts(config, cb) {
     if (!config.ws) config.ws = {}
     if (!config.ws.port) config.ws.port = config.port + 1
 
-    allocPort('127.0.0.1', config.ws.port, (err, port) => {
+    allocPort('localhost', config.ws.port, (err, port) => {
       if (err) return cb(err)
       config.ws.port = port
 
