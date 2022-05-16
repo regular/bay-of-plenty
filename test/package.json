@@ -12,7 +12,7 @@
   "dependencies": {
     "content-security-policy-parser": "^0.4.0",
     "html-extract-meta": "^2.0.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "pull-spawn-process": "^0.3.0",
     "pull-stream": "^3.6.14",
     "puppeteer-core": "^5.3.1",
